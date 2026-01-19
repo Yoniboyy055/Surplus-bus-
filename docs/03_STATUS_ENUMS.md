@@ -1,0 +1,28 @@
+# Status Enums
+
+## Deal.status
+- NEW_SUBMISSION
+- NEEDS_CLARIFICATION
+- REJECTED
+- QUALIFIED
+- MANDATE_CONFIRMED
+- MATCHING
+- OFFER_SENT
+- OFFER_VIEWED
+- EXCLUSIVE_WINDOW_ACTIVE
+- BUYER_COMMITTED
+- BID_PLACED
+- WON_PENDING_CLOSE
+- CLOSED_PAID
+- LOST
+- WITHDRAWN
+- ON_HOLD
+
+## Buyer.track
+- A (ready/serious)
+- B (warm/slower)
+
+## Referrer.tier
+- starter
+- proven
+- elite
