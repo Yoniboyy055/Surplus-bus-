@@ -15,21 +15,18 @@ const isPermissionError = (error: SupabaseErrorLike) => {
 
 export async function GET() {
   if (!isSupabaseConfigured) {
-    return NextResponse.json({ ok: false, reason: "supabase_not_configured" });
+    return NextResponse.json({ ok: false });
   }
 
   const supabase = createClient();
   if (!supabase) {
-    return NextResponse.json({ ok: false, reason: "supabase_not_configured" });
+    return NextResponse.json({ ok: false });
   }
 
   const { error } = await supabase.from("profiles").select("id", { head: true }).limit(1);
 
   if (error && !isPermissionError(error)) {
-    return NextResponse.json(
-      { ok: false, supabase: "error", detail: error.message ?? "unknown error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });
