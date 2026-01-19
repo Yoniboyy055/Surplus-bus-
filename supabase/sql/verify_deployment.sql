@@ -190,8 +190,9 @@ BEGIN
   FOREACH func IN ARRAY expected_functions
   LOOP
     IF NOT EXISTS (
-      SELECT 1 FROM pg_proc 
-      WHERE proname = func AND pronamespace = 'public'::regnamespace
+      SELECT 1 FROM pg_proc p
+      JOIN pg_namespace n ON p.pronamespace = n.oid
+      WHERE p.proname = func AND n.nspname = 'public'
     ) THEN
       missing_functions := missing_functions || func || ', ';
     END IF;

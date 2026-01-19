@@ -108,19 +108,42 @@ After deployment, verify the following:
 ### 6. Post-Deployment Setup
 
 #### Create Initial Operator User
+
+**Method 1: Via Supabase Dashboard (Recommended)**
+1. Go to Authentication > Users in your Supabase dashboard
+2. Click "Add user" and create a new user with email/password
+3. Copy the user's UUID from the users list
+4. Run this SQL to create their operator profile:
+
 ```sql
--- Insert a profile for the operator
-INSERT INTO auth.users (id, email) VALUES (gen_random_uuid(), 'operator@example.com');
-
--- Get the user ID
-SELECT id FROM auth.users WHERE email = 'operator@example.com';
-
--- Create operator profile (replace <user-id> with actual ID)
+-- Create operator profile (replace <user-id> with actual UUID from Auth dashboard)
 INSERT INTO public.profiles (id, role, email, full_name)
 VALUES ('<user-id>', 'operator', 'operator@example.com', 'System Operator');
 ```
 
-**Important**: You should create the operator user through Supabase Auth UI or your application's signup flow instead of direct SQL for production.
+**Method 2: Via Application Signup**
+1. Create signup flow in your application
+2. After user signs up via Supabase Auth, automatically create profile:
+
+```javascript
+// Example using Supabase JS client
+const { data: { user } } = await supabase.auth.signUp({
+  email: 'operator@example.com',
+  password: 'secure-password'
+});
+
+// Create profile immediately after signup
+await supabase
+  .from('profiles')
+  .insert({
+    id: user.id,
+    role: 'operator',
+    email: user.email,
+    full_name: 'System Operator'
+  });
+```
+
+**Important**: Never insert directly into `auth.users` table - Supabase manages this internally. Always use Supabase Auth UI or Auth API.
 
 ### 7. Security Considerations
 
