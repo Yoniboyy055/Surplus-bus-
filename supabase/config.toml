@@ -1,0 +1,43 @@
+# Supabase CLI Configuration
+# This file is used if you want to use Supabase CLI for local development
+
+[api]
+# Default to port 54321 for local development
+port = 54321
+# Schemas to expose in your API. Tables, views and stored procedures in this schema will get API endpoints.
+schemas = ["public", "storage"]
+# Extra schemas to add to the search_path of every request.
+extra_search_path = ["public"]
+# The maximum number of rows to return from a request. This overrides the max_rows parameter.
+max_rows = 1000
+
+[db]
+# Port to use for the local database. Defaults to 54322.
+port = 54322
+# The database major version to use. This has to be the same as your remote database's.
+major_version = 15
+
+[studio]
+# Port to use for Supabase Studio. Defaults to 54323.
+port = 54323
+
+[inbucket]
+# Port to use for Inbucket (local email testing). Defaults to 54324.
+port = 54324
+
+[auth]
+# Allow users to sign up. Defaults to true.
+enable_signup = true
+# Time before a session expires. Defaults to 604800 (1 week).
+site_url = "http://localhost:3000"
+# Additional redirect URLs. Defaults to [].
+additional_redirect_urls = []
+
+[auth.email]
+# Allow users to sign up with email and password. Defaults to true.
+enable_signup = true
+# Require email confirmation before sign in. Defaults to false.
+enable_confirmations = true
+
+# Note: For production deployments, configure these settings in your Supabase dashboard
+# This config file is primarily for local development with Supabase CLI

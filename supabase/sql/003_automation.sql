@@ -1,4 +1,16 @@
-create extension if not exists pg_cron;
+-- Note: pg_cron extension is only available on Supabase Pro plan and higher
+-- For projects without pg_cron, use an external cron service to call process_exclusive_expiries()
+-- via Supabase Edge Functions or API
+do $$
+begin
+  create extension if not exists pg_cron;
+exception
+  when insufficient_privilege then
+    raise notice 'pg_cron extension requires elevated privileges. Use external cron service instead.';
+  when others then
+    raise notice 'pg_cron extension not available: %. Use external cron service instead.', sqlerrm;
+end
+$$;
 
 create or replace function public.calc_tier(points int)
 returns text
@@ -188,8 +200,25 @@ begin
 end;
 $$;
 
-select cron.schedule(
-  'process_exclusive_expiries_every_10m',
-  '*/10 * * * *',
-  $$select public.process_exclusive_expiries();$$
-);
+-- Schedule the cron job only if pg_cron extension is available
+do $$
+begin
+  if exists (select 1 from pg_extension where extname = 'pg_cron') then
+    -- Unschedule existing job if it exists
+    perform cron.unschedule('process_exclusive_expiries_every_10m');
+    
+    -- Schedule new job
+    perform cron.schedule(
+      'process_exclusive_expiries_every_10m',
+      '*/10 * * * *',
+      $$select public.process_exclusive_expiries();$$
+    );
+    raise notice 'Cron job scheduled successfully';
+  else
+    raise notice 'pg_cron not available. Set up external cron to call process_exclusive_expiries() every 10 minutes.';
+  end if;
+exception
+  when others then
+    raise notice 'Could not schedule cron job: %. Use external cron service instead.', sqlerrm;
+end
+$$;
