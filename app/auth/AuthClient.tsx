@@ -50,10 +50,7 @@ export default function AuthClient() {
 
   return (
     <section className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">Sign in</h1>
-        <p className="text-slate-300">Use your email to receive a magic link.</p>
-      </div>
+      <p className="text-slate-300">Use your email to receive a magic link.</p>
 
       {!supabaseReady && (
         <div className="rounded border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100">
