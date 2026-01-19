@@ -29,4 +29,24 @@ This repo contains the locked blueprint + governance rules + Supabase SQL for a 
 - docs/04_MANDATE_TEXT.md
 
 ## Environment
-See .env.example
+Create a `.env.local` file (see `.env.example`) with:
+- NEXT_PUBLIC_SUPABASE_URL=
+- NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+## MVP Scaffold (Current)
+- Next.js 14 App Router + TypeScript
+- Tailwind CSS styling
+- Supabase Auth (magic link email)
+- Role bootstrap: first login inserts a `profiles` row with `role='buyer'`
+- Basic routes (`/`, `/auth`, `/dashboard`) and `/api/health` check
+
+## Local Development
+1) Install dependencies: `npm install`
+2) Configure `.env.local`
+3) Run the dev server: `npm run dev`
+4) Visit `http://localhost:3000`
+
+## Supabase Manual Setup
+- Enable Email auth (magic link).
+- Add redirect URL: `http://localhost:3000/auth/callback`
+- Ensure the SQL in `supabase/sql` is applied (schema + RLS + automation).
