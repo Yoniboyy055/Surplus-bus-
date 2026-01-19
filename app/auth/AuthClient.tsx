@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { isSupabaseConfigured } from "@/lib/env";
+import { isSupabaseConfigured, env } from "@/lib/env";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AuthClient() {
@@ -19,7 +19,7 @@ export default function AuthClient() {
     setStatus("loading");
     setMessage("");
 
-    if (!supabaseReady) {
+    if (!supabaseReady || !env) {
       setStatus("error");
       setMessage("Supabase is not configured yet. Add env vars to enable auth.");
       return;
@@ -31,10 +31,13 @@ export default function AuthClient() {
       setMessage("Supabase client is unavailable.");
       return;
     }
+
+    const redirectTo = `${env.NEXT_PUBLIC_SITE_URL}/auth/callback`;
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: redirectTo,
       },
     });
 
