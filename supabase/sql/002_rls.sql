@@ -71,6 +71,9 @@ using (id = auth.uid());
 create policy self_update_profile on public.profiles for update to authenticated
 using (id = auth.uid()) with check (id = auth.uid());
 
+create policy self_insert_profile on public.profiles for insert to authenticated
+with check (id = auth.uid() and role = 'buyer');
+
 -- Referrer: see own record only
 create policy referrer_select_self on public.referrers for select to authenticated
 using (profile_id = auth.uid());

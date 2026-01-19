@@ -1,0 +1,46 @@
+{
+  "name": "surplus-referral-platform",
+  "version": "1.0.0",
+  "description": "This repo contains the locked blueprint + governance rules + Supabase SQL for a surplus property sourcing/advisory platform.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yoniboyy055/Surplus-bus-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Yoniboyy055/Surplus-bus-/issues"
+  },
+  "homepage": "https://github.com/Yoniboyy055/Surplus-bus-#readme",
+  "private": true,
+  "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.90.1",
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^25.0.9",
+    "@types/react": "^18.3.27",
+    "autoprefixer": "^10.4.23",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3"
+  }
+}
