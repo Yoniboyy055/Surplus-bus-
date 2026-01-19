@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
 type SupabaseErrorLike = {
@@ -13,7 +14,15 @@ const isPermissionError = (error: SupabaseErrorLike) => {
 };
 
 export async function GET() {
+  if (!isSupabaseConfigured) {
+    return NextResponse.json({ ok: false, reason: "supabase_not_configured" });
+  }
+
   const supabase = createClient();
+  if (!supabase) {
+    return NextResponse.json({ ok: false, reason: "supabase_not_configured" });
+  }
+
   const { error } = await supabase.from("profiles").select("id", { head: true }).limit(1);
 
   if (error && !isPermissionError(error)) {
@@ -23,5 +32,5 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json({ ok: true, supabase: "connected" });
+  return NextResponse.json({ ok: true });
 }

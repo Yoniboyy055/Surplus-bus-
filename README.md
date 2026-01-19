@@ -32,6 +32,7 @@ This repo contains the locked blueprint + governance rules + Supabase SQL for a 
 Create a `.env.local` file (see `.env.example`) with:
 - NEXT_PUBLIC_SUPABASE_URL=
 - NEXT_PUBLIC_SUPABASE_ANON_KEY=
+If env vars are missing, the app runs in disabled mode and skips Supabase calls.
 
 ## MVP Scaffold (Current)
 - Next.js 14 App Router + TypeScript
@@ -45,6 +46,11 @@ Create a `.env.local` file (see `.env.example`) with:
 2) Configure `.env.local`
 3) Run the dev server: `npm run dev`
 4) Visit `http://localhost:3000`
+
+## Vercel Deployment
+1) Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel env vars.
+2) Add production redirect URL in Supabase: `https://<your-domain>/auth/callback`.
+3) Deploy the project from the repo root.
 
 ## Supabase Manual Setup
 - Enable Email auth (magic link).
