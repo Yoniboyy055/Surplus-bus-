@@ -4,6 +4,9 @@ export default function HomePage() {
   return (
     <section className="space-y-6">
       <h1 className="text-3xl font-semibold">Surplus Referral Platform</h1>
+      <p className="text-sm text-slate-300">
+        This is a minimal MVP scaffold for auth, roles, and health checks.
+      </p>
       <ul className="space-y-3 text-sm">
         <li>
           <Link
