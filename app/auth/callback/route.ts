@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth?error=supabase_not_configured", url.origin));
   }
 
-  // Create response object early so we can write cookies to it
+  // Create response object early so we can write cookies to it during auth operations
   const response = NextResponse.redirect(new URL(next, url.origin));
 
   // Create Supabase client with cookie bridging for Route Handlers
@@ -48,6 +48,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth?error=profile_init_failed", url.origin));
   }
 
-  // Return response with auth cookies set by Supabase
+  // Return response with auth cookies set by Supabase during exchangeCodeForSession
   return response;
 }
