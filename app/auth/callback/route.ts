@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { isSupabaseConfigured } from "@/lib/env";
 import { ensureProfile } from "@/lib/auth/ensureProfile";
+import { routeByRole } from "@/lib/auth/routeByRole";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
 /**
@@ -16,7 +17,7 @@ import { createRouteHandlerClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const next = url.searchParams.get("next") ?? "/dashboard";
+  const next = url.searchParams.get("next");
 
   if (!code) {
     return NextResponse.redirect(new URL("/auth?error=missing_code", url.origin));
@@ -26,8 +27,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth?error=supabase_not_configured", url.origin));
   }
 
-  // Create response object early so we can write cookies to it during auth operations
-  const response = NextResponse.redirect(new URL(next, url.origin));
+  // Create a temporary response for cookie bridging (redirect URL will be determined later)
+  const response = NextResponse.next();
 
   // Create Supabase client with cookie bridging for Route Handlers
   const supabase = createRouteHandlerClient(request, response);
@@ -48,6 +49,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth?error=profile_init_failed", url.origin));
   }
 
-  // Return response with auth cookies set by Supabase during exchangeCodeForSession
-  return response;
+  // Determine redirect: use 'next' param if provided, otherwise route by role
+  let redirectPath: string;
+  if (next) {
+    redirectPath = next;
+  } else {
+    redirectPath = await routeByRole(supabase, data.user.id);
+  }
+
+  // Return redirect with auth cookies set by Supabase during exchangeCodeForSession
+  return NextResponse.redirect(new URL(redirectPath, url.origin), response);
 }

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function DashboardPage() {
+export default async function ReferrerPage() {
   if (!isSupabaseConfigured) {
     redirect("/auth?error=supabase_not_configured");
   }
@@ -19,18 +19,25 @@ export default async function DashboardPage() {
     redirect("/auth");
   }
 
+  // Fetch role to verify access
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
   return (
     <section className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-slate-300">Authenticated access only.</p>
+        <h1 className="text-2xl font-semibold">Referrer Portal</h1>
+        <p className="text-slate-300">Submit and track your referrals.</p>
       </div>
       <div className="rounded border border-slate-800 bg-slate-900 p-4 text-sm text-slate-200">
         <div>
-          <span className="text-slate-400">Email:</span> {data.user.email}
+          <span className="text-slate-400">Role:</span> {profile?.role || "unknown"}
         </div>
         <div>
-          <span className="text-slate-400">User ID:</span> {data.user.id}
+          <span className="text-slate-400">Email:</span> {data.user.email}
         </div>
       </div>
     </section>
