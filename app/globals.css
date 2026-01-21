@@ -1,8 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Root Styles */
+* {
+  @apply transition-colors duration-base;
+}
+
+html {
+  @apply scroll-smooth;
+}
+
 body {
-  background-color: #020617;
-  color: #f8fafc;
+  @apply bg-quantum-950 text-quantum-50 font-sans;
+  background: linear-gradient(135deg, #0A0E27 0%, #0F1535 100%);
+}
+
+/* Typography */
+h1 {
+  @apply text-5xl font-bold text-quantum-50 tracking-tight;
+}
+
+h2 {
+  @apply text-4xl font-bold text-quantum-50 tracking-tight;
+}
+
+h3 {
+  @apply text-3xl font-bold text-quantum-100;
+}
+
+h4 {
+  @apply text-2xl font-semibold text-quantum-100;
+}
+
+h5 {
+  @apply text-xl font-semibold text-quantum-200;
+}
+
+h6 {
+  @apply text-lg font-semibold text-quantum-300;
+}
+
+p {
+  @apply text-base text-quantum-300 leading-relaxed;
+}
+
+small {
+  @apply text-xs text-quantum-500;
+}
+
+/* Links */
+a {
+  @apply text-cyan-500 hover:text-cyan-400 transition-colors duration-fast;
+}
+
+/* Buttons */
+button, [role="button"] {
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-quantum-950 focus:ring-cyan-500;
+  @apply transition-all duration-base;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center px-lg py-md font-semibold rounded-full;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-quantum-950 focus:ring-cyan-500;
+  @apply transition-all duration-base;
+}
+
+.btn-primary {
+  @apply bg-cyan-500 text-quantum-950 hover:bg-cyan-400 active:scale-95;
+}
+
+.btn-secondary {
+  @apply bg-quantum-800 text-quantum-50 border border-quantum-700 hover:bg-quantum-700 active:scale-95;
+}
+
+.btn-danger {
+  @apply bg-accent-danger text-quantum-50 hover:bg-red-600 active:scale-95;
+}
+
+.btn-ghost {
+  @apply text-quantum-300 hover:text-quantum-50 hover:bg-quantum-800/50 active:scale-95;
+}
+
+.btn-sm {
+  @apply px-md py-sm text-sm;
+}
+
+.btn-lg {
+  @apply px-2xl py-lg text-lg;
+}
+
+/* Cards */
+.card {
+  @apply bg-quantum-800 border border-quantum-700 rounded-lg p-lg;
+  @apply shadow-card hover:shadow-card-hover transition-shadow duration-base;
+}
+
+.card-interactive {
+  @apply cursor-pointer hover:border-cyan-500/50 hover:shadow-card-hover;
+}
+
+/* Inputs */
+input, textarea, select {
+  @apply bg-quantum-900 border border-quantum-700 rounded-md px-lg py-md;
+  @apply text-quantum-50 placeholder-quantum-600;
+  @apply focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent;
+  @apply transition-all duration-base;
+}
+
+input::placeholder, textarea::placeholder {
+  @apply text-quantum-600;
+}
+
+/* Forms */
+.form-group {
+  @apply mb-lg;
+}
+
+.form-label {
+  @apply block text-sm font-semibold text-quantum-200 mb-md;
+}
+
+.form-error {
+  @apply text-accent-danger text-xs mt-sm;
+}
+
+.form-hint {
+  @apply text-quantum-500 text-xs mt-sm;
+}
+
+/* Modals & Overlays */
+.modal-overlay {
+  @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-40;
+  @apply animate-fade-in;
+}
+
+.modal-content {
+  @apply bg-quantum-800 rounded-lg shadow-lg p-2xl;
+  @apply animate-slide-up;
+}
+
+/* Status Indicators */
+.status-badge {
+  @apply inline-flex items-center px-md py-sm rounded-full text-xs font-semibold;
+}
+
+.status-active {
+  @apply bg-accent-success/20 text-accent-success;
+}
+
+.status-pending {
+  @apply bg-accent-warning/20 text-accent-warning;
+}
+
+.status-error {
+  @apply bg-accent-danger/20 text-accent-danger;
+}
+
+.status-info {
+  @apply bg-accent-info/20 text-accent-info;
+}
+
+/* Dividers */
+.divider {
+  @apply border-t border-quantum-700;
+}
+
+/* Utility Classes */
+.text-muted {
+  @apply text-quantum-500;
+}
+
+.text-secondary {
+  @apply text-quantum-400;
+}
+
+.bg-surface {
+  @apply bg-quantum-800;
+}
+
+.border-subtle {
+  @apply border-quantum-700;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-quantum-900;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-quantum-700 rounded hover:bg-quantum-600;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  h1 {
+    @apply text-4xl;
+  }
+
+  h2 {
+    @apply text-3xl;
+  }
+
+  .card {
+    @apply p-md;
+  }
+
+  .modal-content {
+    @apply p-lg;
+  }
 }
