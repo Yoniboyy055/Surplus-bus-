@@ -43,8 +43,8 @@ export const Toast: React.FC<ToastProps> = ({
   };
 
   return (
-    <div className={`fixed bottom-lg right-lg max-w-sm p-lg rounded-lg border ${typeStyles[type]} shadow-lg animate-slide-up z-50`}>
-      <div className="flex items-start gap-md">
+    <div className={`fixed bottom-4 right-4 max-w-sm p-4 rounded-lg border ${typeStyles[type]} shadow-lg animate-slide-up z-50`}>
+      <div className="flex items-start gap-3">
         <span className="text-xl font-bold">{typeIcons[type]}</span>
         <p className="text-sm font-medium">{message}</p>
       </div>

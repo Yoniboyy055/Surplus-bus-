@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap');
+@import './animations.css';
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +7,7 @@
 
 /* Root Styles */
 * {
-  @apply transition-colors duration-base;
+  @apply transition-colors duration-200;
 }
 
 html {
@@ -53,19 +54,19 @@ small {
 
 /* Links */
 a {
-  @apply text-cyan-500 hover:text-cyan-400 transition-colors duration-fast;
+  @apply text-cyan-500 hover:text-cyan-400 transition-colors duration-150;
 }
 
 /* Buttons */
 button, [role="button"] {
   @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-quantum-950 focus:ring-cyan-500;
-  @apply transition-all duration-base;
+  @apply transition-all duration-200;
 }
 
 .btn {
-  @apply inline-flex items-center justify-center px-lg py-md font-semibold rounded-full;
+  @apply inline-flex items-center justify-center px-4 py-3 font-semibold rounded-full;
   @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-quantum-950 focus:ring-cyan-500;
-  @apply transition-all duration-base;
+  @apply transition-all duration-200;
 }
 
 .btn-primary {
@@ -85,17 +86,17 @@ button, [role="button"] {
 }
 
 .btn-sm {
-  @apply px-md py-sm text-sm;
+  @apply px-3 py-2 text-sm;
 }
 
 .btn-lg {
-  @apply px-2xl py-lg text-lg;
+  @apply px-8 py-4 text-lg;
 }
 
 /* Cards */
 .card {
-  @apply bg-quantum-800 border border-quantum-700 rounded-lg p-lg;
-  @apply shadow-card hover:shadow-card-hover transition-shadow duration-base;
+  @apply bg-quantum-800 border border-quantum-700 rounded-lg p-4;
+  @apply shadow-card hover:shadow-card-hover transition-shadow duration-200;
 }
 
 .card-interactive {
@@ -104,10 +105,10 @@ button, [role="button"] {
 
 /* Inputs */
 input, textarea, select {
-  @apply bg-quantum-900 border border-quantum-700 rounded-md px-lg py-md;
+  @apply bg-quantum-900 border border-quantum-700 rounded-md px-4 py-3;
   @apply text-quantum-50 placeholder-quantum-600;
   @apply focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent;
-  @apply transition-all duration-base;
+  @apply transition-all duration-200;
 }
 
 input::placeholder, textarea::placeholder {
@@ -116,19 +117,19 @@ input::placeholder, textarea::placeholder {
 
 /* Forms */
 .form-group {
-  @apply mb-lg;
+  @apply mb-4;
 }
 
 .form-label {
-  @apply block text-sm font-semibold text-quantum-200 mb-md;
+  @apply block text-sm font-semibold text-quantum-200 mb-3;
 }
 
 .form-error {
-  @apply text-accent-danger text-xs mt-sm;
+  @apply text-accent-danger text-xs mt-2;
 }
 
 .form-hint {
-  @apply text-quantum-500 text-xs mt-sm;
+  @apply text-quantum-500 text-xs mt-2;
 }
 
 /* Modals & Overlays */
@@ -138,13 +139,13 @@ input::placeholder, textarea::placeholder {
 }
 
 .modal-content {
-  @apply bg-quantum-800 rounded-lg shadow-lg p-2xl;
+  @apply bg-quantum-800 rounded-lg shadow-lg p-8;
   @apply animate-slide-up;
 }
 
 /* Status Indicators */
 .status-badge {
-  @apply inline-flex items-center px-md py-sm rounded-full text-xs font-semibold;
+  @apply inline-flex items-center px-3 py-2 rounded-full text-xs font-semibold;
 }
 
 .status-active {
@@ -241,10 +242,10 @@ input::placeholder, textarea::placeholder {
   }
 
   .card {
-    @apply p-md;
+    @apply p-3;
   }
 
   .modal-content {
-    @apply p-lg;
+    @apply p-4;
   }
 }

@@ -54,21 +54,21 @@ export const Modal: React.FC<ModalProps> = ({
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-fade-in"
         onClick={handleBackdropClick}
       />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-lg">
-        <div className={`${sizeStyles[size]} bg-quantum-800 rounded-lg shadow-lg p-2xl animate-slide-up max-h-[90vh] overflow-y-auto`}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className={`${sizeStyles[size]} bg-quantum-800 rounded-lg shadow-lg p-8 animate-slide-up max-h-[90vh] overflow-y-auto`}>
           {(title || subtitle) && (
-            <div className="mb-2xl">
+            <div className="mb-8">
               {title && <h2 className="text-2xl font-bold text-quantum-50">{title}</h2>}
-              {subtitle && <p className="text-quantum-500 mt-md">{subtitle}</p>}
+              {subtitle && <p className="text-quantum-500 mt-3">{subtitle}</p>}
             </div>
           )}
 
-          <div className="mb-2xl">
+          <div className="mb-8">
             {children}
           </div>
 
           {footer && (
-            <div className="flex gap-md justify-end border-t border-quantum-700 pt-lg">
+            <div className="flex gap-3 justify-end border-t border-quantum-700 pt-4">
               {footer}
             </div>
           )}
