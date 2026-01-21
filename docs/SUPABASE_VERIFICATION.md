@@ -10,6 +10,7 @@ This document provides SQL commands to verify the security, integrity, and harde
 | **Audit Logs** | Verify Immutability (Update) | `UPDATE public.audit_logs SET action = 'TAMPERED' WHERE id = '<uuid>';` | Fails with `0 rows affected` or RLS violation. |
 | **Audit Logs** | Verify Immutability (Delete) | `DELETE FROM public.audit_logs WHERE id = '<uuid>';` | Fails with `0 rows affected` or RLS violation. |
 | **Functions** | Verify Fixed Search Path | `SELECT proname, proconfig FROM pg_proc WHERE proname = 'is_operator';` | `proconfig` contains `{search_path=public}`. |
+| **Triggers** | Verify Profile Bootstrap | `SELECT trigger_name FROM information_schema.triggers WHERE event_object_table = 'users' AND event_object_schema = 'auth';` | Returns `on_auth_user_created`. |
 
 ## 💰 Financial & Data Integrity
 

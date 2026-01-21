@@ -28,10 +28,31 @@ export const ensureProfile = async (supabase: SupabaseClient, user: User) => {
       role: "buyer",
     })
     .select("id, role")
-    .single();
+    .maybeSingle();
 
   if (insertError) {
-    throw insertError;
+    // If insert fails because it already exists (race condition with trigger), 
+    // try to fetch it one last time.
+    const { data: retry, error: retryError } = await supabase
+      .from("profiles")
+      .select("id, role")
+      .eq("id", user.id)
+      .single();
+    
+    if (retryError) throw retryError;
+    return { profile: retry as Profile, created: false };
+  }
+
+  if (!inserted) {
+    // This could happen if RLS blocks the insert or if it was already there
+    const { data: retry, error: retryError } = await supabase
+      .from("profiles")
+      .select("id, role")
+      .eq("id", user.id)
+      .single();
+    
+    if (retryError) throw retryError;
+    return { profile: retry as Profile, created: false };
   }
 
   return { profile: inserted as Profile, created: true };
