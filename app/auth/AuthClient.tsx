@@ -45,47 +45,68 @@ export default function AuthClient() {
     }
 
     setStatus("sent");
-    setMessage("Magic link sent. Check your inbox to continue.");
+    setMessage("Magic link sent. Check your inbox (and spam folder) for a secure login link.");
   };
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">Sign in</h1>
-        <p className="text-slate-300">Use your email to receive a magic link.</p>
-      </div>
-
+    <section className="space-y-lg">
       {!supabaseReady && (
-        <div className="rounded border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100">
-          Supabase is not configured. Add the env vars to enable magic link auth.
+        <div className="rounded-lg border border-accent-warning/40 bg-accent-warning/10 p-lg text-sm text-accent-warning">
+          ⚠ Supabase is not configured. Add the env vars to enable magic link auth.
         </div>
       )}
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <label className="flex flex-col gap-2 text-sm text-slate-200">
-          Email address
+      <form className="space-y-lg" onSubmit={handleSubmit}>
+        <div>
+          <label className="block text-sm font-semibold text-quantum-200 mb-md">
+            Email Address
+          </label>
           <input
             type="email"
             required
-            placeholder="you@example.com"
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 outline-none focus:border-slate-500"
+            placeholder="your.email@institution.com"
+            className="w-full bg-quantum-900 border border-quantum-700 rounded-md px-lg py-md text-quantum-50 placeholder-quantum-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-base disabled:opacity-50 disabled:cursor-not-allowed"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            disabled={!supabaseReady}
+            disabled={!supabaseReady || status === "loading"}
           />
-        </label>
+        </div>
+
         <button
           type="submit"
           disabled={!supabaseReady || status === "loading"}
-          className="rounded bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full inline-flex items-center justify-center font-semibold rounded-full transition-all duration-base focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-quantum-950 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed bg-cyan-500 text-quantum-950 hover:bg-cyan-400 active:scale-95 px-lg py-md text-base"
         >
-          {status === "loading" ? "Sending..." : "Send magic link"}
+          {status === "loading" ? (
+            <>
+              <svg className="animate-spin h-4 w-4 mr-md" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Sending...
+            </>
+          ) : (
+            <>
+              Send Secure Link
+              <span className="ml-md">→</span>
+            </>
+          )}
         </button>
       </form>
 
-      {(message || errorParam) && (
-        <div className="rounded border border-slate-800 bg-slate-900 p-4 text-sm text-slate-200">
-          {message || `Sign-in failed: ${errorParam}`}
+      {message && (
+        <div className={`rounded-lg border p-lg text-sm ${
+          status === "sent"
+            ? "border-accent-success/40 bg-accent-success/10 text-accent-success"
+            : "border-accent-danger/40 bg-accent-danger/10 text-accent-danger"
+        }`}>
+          {status === "sent" ? "✓" : "✕"} {message}
+        </div>
+      )}
+
+      {errorParam && (
+        <div className="rounded-lg border border-accent-danger/40 bg-accent-danger/10 p-lg text-sm text-accent-danger">
+          ✕ Sign-in failed: {errorParam}
         </div>
       )}
     </section>
