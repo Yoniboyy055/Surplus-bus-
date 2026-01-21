@@ -22,8 +22,8 @@ export async function routeByRole(
     .eq("id", userId)
     .maybeSingle();
 
-  // If profile doesn't exist, create it
-  if (!profile && !selectError) {
+  // If profile doesn't exist (successful query with no result), create it
+  if (!profile && selectError === null) {
     const { data: user } = await supabase.auth.getUser();
     if (user.user) {
       await ensureProfile(supabase, user.user);

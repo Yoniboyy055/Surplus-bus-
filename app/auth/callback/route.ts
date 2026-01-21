@@ -27,11 +27,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth?error=supabase_not_configured", url.origin));
   }
 
-  // Create a temporary response for cookie bridging (redirect URL will be determined later)
-  const response = NextResponse.next();
-
+  // We need to create the final redirect response first, then use it for cookie bridging
+  // This ensures cookies set during exchangeCodeForSession are included in the response
+  let redirectPath = "/dashboard"; // temporary default
+  
+  // Create a temporary response for cookie operations
+  const tempResponse = NextResponse.next();
+  
   // Create Supabase client with cookie bridging for Route Handlers
-  const supabase = createRouteHandlerClient(request, response);
+  const supabase = createRouteHandlerClient(request, tempResponse);
   if (!supabase) {
     return NextResponse.redirect(new URL("/auth?error=supabase_not_configured", url.origin));
   }
@@ -50,13 +54,19 @@ export async function GET(request: NextRequest) {
   }
 
   // Determine redirect: use 'next' param if provided, otherwise route by role
-  let redirectPath: string;
   if (next) {
     redirectPath = next;
   } else {
     redirectPath = await routeByRole(supabase, data.user.id);
   }
 
-  // Return redirect with auth cookies set by Supabase during exchangeCodeForSession
-  return NextResponse.redirect(new URL(redirectPath, url.origin), response);
+  // Create final redirect response and copy cookies from temp response
+  const finalResponse = NextResponse.redirect(new URL(redirectPath, url.origin));
+  
+  // Copy all cookies from temp response to final response
+  tempResponse.cookies.getAll().forEach((cookie) => {
+    finalResponse.cookies.set(cookie);
+  });
+
+  return finalResponse;
 }
