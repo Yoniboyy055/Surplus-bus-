@@ -149,7 +149,7 @@ export default function BuyerPortal() {
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [router, supabase]);
 
   if (loading) return <div className="text-center py-20 text-slate-500">Loading Portal...</div>;
 

@@ -52,7 +52,7 @@ export default function ReferrerPortal() {
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [router, supabase]);
 
   const generateLink = async () => {
     const res = await fetch("/api/referral-links", { method: "POST" });

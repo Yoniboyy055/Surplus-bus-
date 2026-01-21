@@ -37,7 +37,7 @@ export default function OperatorPortal() {
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [router, supabase]);
 
   const handleStatusChange = async (dealId: string, newStatus: string) => {
     // 4️⃣ Operator Status Guards
