@@ -13,6 +13,7 @@ export default function OperatorPortal() {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!supabase) return;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push("/auth");
