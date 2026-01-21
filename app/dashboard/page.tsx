@@ -26,12 +26,16 @@ export default async function DashboardPage() {
     switch (profile.role) {
       case "operator":
         redirect("/operator");
+        break;
       case "referrer":
         redirect("/referrer");
+        break;
       case "buyer":
         redirect("/buyer");
+        break;
       default:
         redirect("/");
+        break;
     }
   } catch (error) {
     console.error("Profile lookup failed", error);

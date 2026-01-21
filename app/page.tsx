@@ -19,12 +19,14 @@ export default function HomePage() {
         >
           Get Started
         </Link>
-        <Link
-          href="/docs/02_BLUEPRINT.md"
+        <a
+          href="https://github.com/Yoniboyy055/Surplus-bus-/blob/main/docs/02_BLUEPRINT.md"
+          target="_blank"
+          rel="noopener noreferrer"
           className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-semibold transition"
         >
           View Blueprint
-        </Link>
+        </a>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mt-20">
