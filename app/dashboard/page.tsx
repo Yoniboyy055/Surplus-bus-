@@ -19,29 +19,22 @@ export default async function DashboardPage() {
     redirect("/auth");
   }
 
-  let role = "buyer";
-
   try {
     const { profile } = await ensureProfile(supabase, data.user);
-    role = profile.role;
+    
+    // Redirect based on role
+    switch (profile.role) {
+      case "operator":
+        redirect("/operator");
+      case "referrer":
+        redirect("/referrer");
+      case "buyer":
+        redirect("/buyer");
+      default:
+        redirect("/");
+    }
   } catch (error) {
     console.error("Profile lookup failed", error);
+    redirect("/auth?error=profile_lookup_failed");
   }
-
-  return (
-    <section className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-slate-300">Authenticated access only.</p>
-      </div>
-      <div className="rounded border border-slate-800 bg-slate-900 p-4 text-sm text-slate-200">
-        <div>
-          <span className="text-slate-400">User ID:</span> {data.user.id}
-        </div>
-        <div>
-          <span className="text-slate-400">Role:</span> {role}
-        </div>
-      </div>
-    </section>
-  );
 }
