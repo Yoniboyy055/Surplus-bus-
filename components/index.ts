@@ -4,3 +4,8 @@ export { Modal } from './Modal';
 export { Toast } from './Toast';
 export { Badge } from './Badge';
 export { Input } from './Input';
+export { StatusPill } from './StatusPill';
+export { ConfirmModal } from './ConfirmModal';
+export { AuditTimeline } from './AuditTimeline';
+export { KanbanBoard } from './KanbanBoard';
+export { DealDetailDrawer } from './DealDetailDrawer';
