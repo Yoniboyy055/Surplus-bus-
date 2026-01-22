@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState, useCallback } from "react";
@@ -138,7 +138,7 @@ export default function OperatorPropertyReviewPage() {
               <div className="flex justify-between items-start mb-3">
                 <div className="flex gap-3">
                    {candidate.property_data?.photos?.[0] && (
-{/* eslint-disable-next-line @next/next/no-img-element */}
+                     // eslint-disable-next-line @next/next/no-img-element
                      <img 
                        src={candidate.property_data.photos[0]}
                        alt="Thumbnail"
