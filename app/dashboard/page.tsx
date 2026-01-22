@@ -22,6 +22,8 @@ export default async function DashboardPage() {
   try {
     const { profile } = await ensureProfile(supabase, data.user);
     
+    console.log(`Dashboard Redirect: uid=${data.user.id}, email=${data.user.email}, role=${profile.role}`);
+
     // Redirect based on role
     switch (profile.role) {
       case "operator":
@@ -39,6 +41,12 @@ export default async function DashboardPage() {
     }
   } catch (error) {
     console.error("Profile lookup failed", error);
+    // If we can't get the profile, we can't route them.
+    // But ensureProfile should have created it.
+    // If it's a redirect error (NEXT_REDIRECT), let it pass
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+        throw error;
+    }
     redirect("/auth?error=profile_lookup_failed");
   }
 }
