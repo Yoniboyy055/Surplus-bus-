@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { DealDetailDrawer } from './DealDetailDrawer';
 import { Badge } from './Badge';
-import { Clock, AlertTriangle, CheckCircle, DollarSign } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 interface DealKanbanProps {
   deals: any[];

@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DealKanban } from "@/components/DealKanban";
+import { EmptyState } from "@/components/EmptyState";
+import { Inbox } from "lucide-react";
 
 export default function OperatorPortal() {
   const [user, setUser] = useState<any>(null);
@@ -57,7 +59,6 @@ export default function OperatorPortal() {
     });
 
     if (res.ok) {
-      alert("Status updated successfully!");
       // Reload to refresh the board
       window.location.reload();
     } else {
@@ -78,7 +79,16 @@ export default function OperatorPortal() {
       </header>
 
       <div className="flex-1 overflow-hidden">
-         <DealKanban deals={deals} onStatusChange={handleStatusChange} />
+        {deals.length === 0 ? (
+          <EmptyState
+            icon={Inbox}
+            title="No Active Deals"
+            description="The pipeline is currently empty. Wait for new criteria submissions."
+            className="mt-12"
+          />
+        ) : (
+          <DealKanban deals={deals} onStatusChange={handleStatusChange} />
+        )}
       </div>
     </div>
   );

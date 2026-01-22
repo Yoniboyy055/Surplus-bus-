@@ -3,8 +3,11 @@
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, HelpCircle } from "lucide-react";
+import { AlertCircle, HelpCircle, Inbox, Send } from "lucide-react";
 import { Badge } from "@/components/Badge";
+import { ConfirmModal } from "@/components/ConfirmModal";
+import { EmptyState } from "@/components/EmptyState";
+import { StatusPill } from "@/components/StatusPill";
 
 function CriteriaForm() {
   const [loading, setLoading] = useState(false);
@@ -37,10 +40,7 @@ function CriteriaForm() {
 
       if (res.ok) {
         setSuccess("Criteria submitted successfully!");
-        // Optional: Clear form
-        // (e.target as HTMLFormElement).reset();
         router.refresh();
-        // Force reload to update the deals list in parent
         window.location.reload(); 
       } else {
         const err = await res.json();
@@ -86,18 +86,21 @@ function CriteriaForm() {
 function DealStatus({ deal }: { deal: any }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [showFeeModal, setShowFeeModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleCommit = async () => {
-    // 5️⃣ Buyer Commit Confirmation
-    const confirmed = window.confirm("By confirming, you agree to the 5% success fee and must upload Proof of Funds within 4 hours.");
-    if (!confirmed) return;
+    setShowFeeModal(true);
+  };
 
-    const acceptedFee = window.confirm("Do you explicitly accept the 5% buyer-paid success fee?");
-    if (!acceptedFee) {
-      setError("You must accept the success fee to commit to a bid.");
-      return;
-    }
+  const onFeeAccepted = () => {
+    setShowFeeModal(false);
+    setShowConfirmModal(true);
+  }
 
+  const performCommit = async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/deals", {
         method: "PUT",
@@ -114,44 +117,67 @@ function DealStatus({ deal }: { deal: any }) {
       }
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setLoading(false);
+      setShowConfirmModal(false);
     }
-  };
+  }
 
   return (
-    <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 space-y-4">
-      <div className="flex justify-between items-start">
-         <h2 className="text-lg font-semibold text-white">Deal <span className="font-mono text-slate-400">#{deal.id.substring(0,8).toUpperCase()}</span></h2>
-         <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider">
-          {deal.status.replace('_', ' ')}
-        </span>
-      </div>
-
-      <div className="space-y-2 text-sm text-slate-400">
-        <p><strong>Type:</strong> {deal.criteria?.property_type || 'N/A'}</p>
-        <p><strong>Max Price:</strong> {deal.criteria?.max_price ? `$${deal.criteria.max_price}` : 'N/A'}</p>
-        {deal.criteria?.location && <p><strong>Location:</strong> {deal.criteria.location}</p>}
-      </div>
-
-      {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg flex items-center gap-2">
-          <AlertCircle size={16} /> {error}
+    <>
+      <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 space-y-4">
+        <div className="flex justify-between items-start">
+           <h2 className="text-lg font-semibold text-white">Deal <span className="font-mono text-slate-400">#{deal.id.substring(0,8).toUpperCase()}</span></h2>
+           <StatusPill status={deal.status} size="sm" />
         </div>
-      )}
 
-      {deal.status === 'EXCLUSIVE_WINDOW_ACTIVE' && (
-        <div className="space-y-4 pt-4 border-t border-slate-800">
-          <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-            <p className="text-xs text-yellow-500 font-medium flex items-center gap-2">
-              <span className="animate-pulse">●</span> EXCLUSIVE WINDOW ACTIVE
-            </p>
-            <p className="text-sm text-yellow-200 mt-1">Ends: {new Date(deal.exclusive_ends_at).toLocaleString()}</p>
+        <div className="space-y-2 text-sm text-slate-400">
+          <p><strong>Type:</strong> {deal.criteria?.property_type || 'N/A'}</p>
+          <p><strong>Max Price:</strong> {deal.criteria?.max_price ? `$${deal.criteria.max_price}` : 'N/A'}</p>
+          {deal.criteria?.location && <p><strong>Location:</strong> {deal.criteria.location}</p>}
+        </div>
+
+        {error && (
+          <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg flex items-center gap-2">
+            <AlertCircle size={16} /> {error}
           </div>
-          <button onClick={handleCommit} className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg transition font-bold shadow-lg shadow-green-900/20">
-            Commit to Bid (5% Success Fee)
-          </button>
-        </div>
-      )}
-    </div>
+        )}
+
+        {deal.status === 'EXCLUSIVE_WINDOW_ACTIVE' && (
+          <div className="space-y-4 pt-4 border-t border-slate-800">
+            <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <p className="text-xs text-yellow-500 font-medium flex items-center gap-2">
+                <span className="animate-pulse">●</span> EXCLUSIVE WINDOW ACTIVE
+              </p>
+              <p className="text-sm text-yellow-200 mt-1">Ends: {new Date(deal.exclusive_ends_at).toLocaleString()}</p>
+            </div>
+            <button onClick={handleCommit} className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg transition font-bold shadow-lg shadow-green-900/20">
+              Commit to Bid (5% Success Fee)
+            </button>
+          </div>
+        )}
+      </div>
+
+      <ConfirmModal
+        isOpen={showFeeModal}
+        onClose={() => setShowFeeModal(false)}
+        onConfirm={onFeeAccepted}
+        title="Accept Success Fee"
+        message="Do you explicitly accept the 5% buyer-paid success fee upon closing?"
+        confirmText="I Accept"
+        variant="info"
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={performCommit}
+        title="Confirm Commitment"
+        message="By confirming, you commit to placing a bid and must upload Proof of Funds within 4 hours. Failure to do so may impact your reputation score."
+        confirmText="Commit to Deal"
+        loading={loading}
+      />
+    </>
   );
 }
 
@@ -231,11 +257,11 @@ export default function BuyerPortal() {
               </div>
             </>
           ) : (
-            <div className="p-12 text-center rounded-xl border border-slate-800 bg-slate-900/50">
-               <div className="text-4xl mb-4">📭</div>
-               <h3 className="text-lg font-medium text-white mb-2">No Active Deals</h3>
-               <p className="text-slate-400 text-sm">Submit your criteria to get matched with surplus properties.</p>
-            </div>
+            <EmptyState
+              icon={Inbox}
+              title="No Active Deals"
+              description="Submit your criteria to get matched with surplus properties."
+            />
           )}
         </div>
         

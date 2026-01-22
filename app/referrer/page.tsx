@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Copy, Plus } from "lucide-react";
 
 const maskStatus = (status: string) => {
   const terminalStatuses = ['CLOSED_PAID', 'LOST', 'WITHDRAWN'];
@@ -20,6 +21,9 @@ export default function ReferrerPortal() {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
   const router = useRouter();
+  
+  // Use a fallback URL if env is not loaded on client, but prefer window.location.origin
+  const appUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,7 +75,7 @@ export default function ReferrerPortal() {
   return (
     <div className="space-y-8">
       <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Referrer Portal</h1>
+        <h1 className="text-3xl font-bold text-white">Referrer Portal</h1>
         <div className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-medium uppercase tracking-wider">
           {referrerData?.tier || 'Starter'} Tier
         </div>
@@ -80,48 +84,50 @@ export default function ReferrerPortal() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
           <h3 className="text-slate-400 text-sm font-medium">Points Earned</h3>
-          <p className="text-2xl font-bold mt-2">{referrerData?.points_closed_paid || 0}</p>
+          <p className="text-2xl font-bold mt-2 text-white">{referrerData?.points_closed_paid || 0}</p>
         </div>
         <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
           <h3 className="text-slate-400 text-sm font-medium">Commission Rate</h3>
-          <p className="text-2xl font-bold mt-2">{referrerData?.commission_rate || 20}%</p>
+          <p className="text-2xl font-bold mt-2 text-white">{referrerData?.commission_rate || 20}%</p>
         </div>
         <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
           <h3 className="text-slate-400 text-sm font-medium">Total Referrals</h3>
-          <p className="text-2xl font-bold mt-2">{referredDeals.length}</p>
+          <p className="text-2xl font-bold mt-2 text-white">{referredDeals.length}</p>
         </div>
       </div>
 
       <section className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 space-y-4">
-        <h2 className="text-xl font-semibold">Referral Links</h2>
+        <h2 className="text-xl font-semibold text-white">Referral Links</h2>
         <div className="space-y-3">
           {links.map((link) => (
             <div key={link.code} className="flex gap-4">
               <input 
                 type="text" 
                 readOnly 
-                value={`https://surplus-bus.com/ref/${link.code}`} 
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-400"
+                value={`${appUrl}/ref/${link.code}`} 
+                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-400 focus:outline-none"
               />
               <button 
                 onClick={() => {
-                  navigator.clipboard.writeText(`https://surplus-bus.com/ref/${link.code}`);
+                  navigator.clipboard.writeText(`${appUrl}/ref/${link.code}`);
                   alert("Link copied!");
                 }}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition text-sm font-medium"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition text-sm font-medium flex items-center gap-2"
               >
+                <Copy size={16} />
                 Copy
               </button>
             </div>
           ))}
         </div>
-        <button onClick={generateLink} className="w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition text-sm font-medium">
+        <button onClick={generateLink} className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition text-sm font-medium flex items-center justify-center gap-2">
+          <Plus size={16} />
           Generate New Link
         </button>
       </section>
 
       <section className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 space-y-4">
-        <h2 className="text-xl font-semibold">Referred Deals</h2>
+        <h2 className="text-xl font-semibold text-white">Referred Deals</h2>
         <div className="space-y-2">
           {referredDeals.length === 0 ? (
             <p className="text-sm text-slate-500">No referrals yet.</p>
