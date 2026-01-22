@@ -14,7 +14,7 @@ export default function UnauthorizedPage() {
         <div className="space-y-4">
           <h1 className="text-4xl font-bold text-white">401 Unauthorized</h1>
           <p className="text-slate-400">
-            Please log in to access this resource. Your session may have expired or you haven't authenticated yet.
+            Please log in to access this resource. Your session may have expired or you haven&apos;t authenticated yet.
           </p>
         </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, Clock, AlertCircle, CheckCircle, Shield, FileText, User } from 'lucide-react';
 import { Badge } from './Badge';
 import { Button } from './Button';
@@ -24,6 +24,16 @@ export function DealDetailDrawer({ isOpen, onClose, deal, onStatusChange }: Deal
   
   const supabase = createClient();
 
+  const fetchAuditLogs = useCallback(async () => {
+    if (!deal || !supabase) return;
+    const { data } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .eq('deal_id', deal.id)
+      .order('created_at', { ascending: false });
+    setAuditLogs(data || []);
+  }, [deal, supabase]);
+
   useEffect(() => {
     if (isOpen && deal) {
       document.body.style.overflow = 'hidden';
@@ -34,17 +44,7 @@ export function DealDetailDrawer({ isOpen, onClose, deal, onStatusChange }: Deal
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, deal]);
-
-  const fetchAuditLogs = async () => {
-    if (!deal || !supabase) return;
-    const { data } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .eq('deal_id', deal.id)
-      .order('created_at', { ascending: false });
-    setAuditLogs(data || []);
-  };
+  }, [isOpen, deal, fetchAuditLogs]);
 
   if (!isOpen || !deal) return null;
 
@@ -187,7 +187,7 @@ export function DealDetailDrawer({ isOpen, onClose, deal, onStatusChange }: Deal
                           <p className="text-slate-300 font-medium">{log.action}</p>
                           <p className="text-xs text-slate-500">{new Date(log.created_at).toLocaleString()} • {log.actor_role}</p>
                           {log.metadata?.internal_note && (
-                            <p className="mt-1 text-xs text-slate-400 italic">"{log.metadata.internal_note}"</p>
+                            <p className="mt-1 text-xs text-slate-400 italic">&quot;{log.metadata.internal_note}&quot;</p>
                           )}
                        </div>
                     </div>
