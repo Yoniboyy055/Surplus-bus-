@@ -231,6 +231,32 @@ input::placeholder, textarea::placeholder {
   }
 }
 
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.2s ease-out;
+}
+
+.animate-slide-out-right {
+  animation: slideOutRight 0.2s ease-in;
+}
+
 /* Responsive Utilities */
 @media (max-width: 768px) {
   h1 {

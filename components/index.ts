@@ -4,3 +4,8 @@ export { Modal } from './Modal';
 export { Toast } from './Toast';
 export { Badge } from './Badge';
 export { Input } from './Input';
+export { StatusPill, maskStatusForReferrer } from './StatusPill';
+export type { DealStatus, PayoutStatus } from './StatusPill';
+export { ConfirmModal } from './ConfirmModal';
+export { AppShell } from './AppShell';
+export { DealDetailDrawer } from './DealDetailDrawer';
