@@ -23,12 +23,7 @@ USING (id = auth.uid());
 DROP POLICY IF EXISTS operator_select_all_profiles ON public.profiles;
 CREATE POLICY operator_select_all_profiles ON public.profiles 
 FOR SELECT TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'operator'
-  )
-);
+USING (public.is_operator());
 
 -- This allows operators to view all profiles for deal management and admin tasks.
 

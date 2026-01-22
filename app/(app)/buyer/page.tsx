@@ -17,14 +17,14 @@ function CriteriaForm() {
       max_price: formData.get("max_price"),
       criteria: {
         location: formData.get("location"),
-        notes: formData.get("notes")
-      }
+        notes: formData.get("notes"),
+      },
     };
 
     const res = await fetch("/api/deals", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
 
     if (res.ok) {
@@ -73,7 +73,7 @@ function DealStatus({ deal }: { deal: any }) {
     const res = await fetch("/api/deals", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dealId: deal.id, action: "COMMIT_TO_BID", acceptedFee: true })
+      body: JSON.stringify({ dealId: deal.id, action: "COMMIT_TO_BID", acceptedFee: true }),
     });
 
     if (res.ok) {
@@ -91,10 +91,10 @@ function DealStatus({ deal }: { deal: any }) {
       <div className="flex justify-between items-center">
         <span className="text-sm text-slate-400">Current Status:</span>
         <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider">
-          {deal.status.replace('_', ' ')}
+          {deal.status.replace("_", " ")}
         </span>
       </div>
-      {deal.status === 'EXCLUSIVE_WINDOW_ACTIVE' && (
+      {deal.status === "EXCLUSIVE_WINDOW_ACTIVE" && (
         <div className="space-y-4 pt-4 border-t border-slate-800">
           <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
             <p className="text-xs text-yellow-500 font-medium">EXCLUSIVE WINDOW ACTIVE</p>
@@ -110,7 +110,6 @@ function DealStatus({ deal }: { deal: any }) {
 }
 
 export default function BuyerPortal() {
-  const [user, setUser] = useState<any>(null);
   const [buyerData, setBuyerData] = useState<any>(null);
   const [deal, setDeal] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -125,7 +124,6 @@ export default function BuyerPortal() {
         router.push("/auth");
         return;
       }
-      setUser(user);
 
       const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
       if (profile?.role !== "buyer") {
@@ -137,15 +135,15 @@ export default function BuyerPortal() {
       setBuyerData(bData);
 
       const { data: activeDeals } = await supabase
-        .from('deals')
-        .select('*')
-        .eq('buyer_profile_id', user.id)
-        .neq('status', 'CLOSED_PAID')
-        .neq('status', 'LOST')
-        .neq('status', 'WITHDRAWN')
-        .order('created_at', { ascending: false })
+        .from("deals")
+        .select("*")
+        .eq("buyer_profile_id", user.id)
+        .neq("status", "CLOSED_PAID")
+        .neq("status", "LOST")
+        .neq("status", "WITHDRAWN")
+        .order("created_at", { ascending: false })
         .limit(1);
-      
+
       setDeal(activeDeals?.[0]);
       setLoading(false);
     };
@@ -160,7 +158,7 @@ export default function BuyerPortal() {
         <h1 className="text-3xl font-bold">Buyer Portal</h1>
         <div className="flex gap-2">
           <div className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium uppercase tracking-wider">
-            Track {buyerData?.track || 'B'}
+            Track {buyerData?.track || "B"}
           </div>
           <div className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-medium uppercase tracking-wider">
             Reputation: {buyerData?.reputation_score || 50}
@@ -170,7 +168,7 @@ export default function BuyerPortal() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {deal ? <DealStatus deal={deal} /> : <CriteriaForm />}
-        
+
         <section className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
           <h2 className="text-xl font-semibold mb-4">Portal Info</h2>
           <div className="space-y-4 text-sm text-slate-400">
@@ -186,3 +184,4 @@ export default function BuyerPortal() {
     </div>
   );
 }
+

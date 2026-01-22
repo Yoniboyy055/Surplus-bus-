@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function OperatorPortal() {
-  const [user, setUser] = useState<any>(null);
   const [actionDeals, setActionDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -14,12 +13,13 @@ export default function OperatorPortal() {
   useEffect(() => {
     const fetchData = async () => {
       if (!supabase) return;
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         router.push("/auth");
         return;
       }
-      setUser(user);
 
       const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
       if (profile?.role !== "operator") {
@@ -27,13 +27,9 @@ export default function OperatorPortal() {
         return;
       }
 
-      const actionRequiredStatuses = ['NEW_SUBMISSION', 'NEEDS_CLARIFICATION', 'WON_PENDING_CLOSE'];
-      const { data: deals } = await supabase
-        .from('deals')
-        .select('*')
-        .in('status', actionRequiredStatuses)
-        .order('created_at', { ascending: true });
-      
+      const actionRequiredStatuses = ["NEW_SUBMISSION", "NEEDS_CLARIFICATION", "WON_PENDING_CLOSE"];
+      const { data: deals } = await supabase.from("deals").select("*").in("status", actionRequiredStatuses).order("created_at", { ascending: true });
+
       setActionDeals(deals || []);
       setLoading(false);
     };
@@ -58,13 +54,15 @@ export default function OperatorPortal() {
     }
 
     // 1️⃣ Status Change Confirmation Copy
-    const confirmed = window.confirm(`This action is permanent and logged.\nConfirm you intend to move this deal to: ${newStatus.replace('_', ' ')}.`);
+    const confirmed = window.confirm(
+      `This action is permanent and logged.\nConfirm you intend to move this deal to: ${newStatus.replace("_", " ")}.`
+    );
     if (!confirmed) return;
 
     const res = await fetch("/api/deals", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dealId, status: newStatus, message, internal_note: internalNote })
+      body: JSON.stringify({ dealId, status: newStatus, message, internal_note: internalNote }),
     });
 
     if (res.ok) {
@@ -103,15 +101,15 @@ export default function OperatorPortal() {
                     <span className="px-2 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] font-bold uppercase tracking-widest">
                       DEAL ID: {deal.id.substring(0, 8)}
                     </span>
-                    <h3 className="text-lg font-bold mt-1">{deal.status.replace('_', ' ')}</h3>
+                    <h3 className="text-lg font-bold mt-1">{deal.status.replace("_", " ")}</h3>
                     {/* 3️⃣ BUYER_COMMITTED Warning */}
-                    {deal.status === 'BUYER_COMMITTED' && (
+                    {deal.status === "BUYER_COMMITTED" && (
                       <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded text-[10px] text-red-400 font-bold uppercase tracking-wider">
                         Buyer committed. Proof of Funds required. Failure to complete may downgrade buyer track.
                       </div>
                     )}
                     {/* 2️⃣ NEEDS_CLARIFICATION Copy */}
-                    {deal.status === 'NEEDS_CLARIFICATION' && (
+                    {deal.status === "NEEDS_CLARIFICATION" && (
                       <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-[10px] text-yellow-400 font-bold uppercase tracking-wider">
                         Waiting on buyer response — deal is paused until clarification is received.
                       </div>
@@ -119,28 +117,28 @@ export default function OperatorPortal() {
                   </div>
                   <span className="text-xs text-slate-500">Submitted: {new Date(deal.created_at).toLocaleDateString()}</span>
                 </div>
-                
+
                 <div className="text-sm text-slate-400 bg-slate-900/50 p-3 rounded border border-slate-800">
                   <p className="font-medium text-slate-300 mb-1">Criteria Snapshot:</p>
                   <pre className="text-xs overflow-auto">{JSON.stringify(deal.criteria, null, 2)}</pre>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <button 
+                  <button
                     onClick={() => handleStatusChange(deal.id, "QUALIFIED")}
                     className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold transition"
                   >
                     Qualify
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleStatusChange(deal.id, "NEEDS_CLARIFICATION")}
                     className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-500 rounded text-xs font-bold transition"
                     title="Waiting on buyer response — deal is paused until clarification is received."
                   >
                     Request Info
                   </button>
-                  {deal.status === 'WON_PENDING_CLOSE' && (
-                    <button 
+                  {deal.status === "WON_PENDING_CLOSE" && (
+                    <button
                       onClick={() => handleStatusChange(deal.id, "CLOSED_PAID")}
                       className="px-3 py-1.5 bg-green-600 hover:bg-green-500 rounded text-xs font-bold transition"
                       title="This action creates a permanent audit log entry."
@@ -148,7 +146,7 @@ export default function OperatorPortal() {
                       Mark as Paid (Irreversible)
                     </button>
                   )}
-                  <button 
+                  <button
                     onClick={() => handleStatusChange(deal.id, "REJECTED")}
                     className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs font-bold transition"
                   >
@@ -163,3 +161,4 @@ export default function OperatorPortal() {
     </div>
   );
 }
+

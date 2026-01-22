@@ -27,11 +27,11 @@ export default function AuthPage() {
         {/* Footer */}
         <div className="text-center text-quantum-500 text-sm">
           <p>
-            By signing in, you agree to our{' '}
+            By signing in, you agree to our{" "}
             <a href="#" className="text-cyan-500 hover:text-cyan-400">
               Terms of Service
-            </a>{' '}
-            and{' '}
+            </a>{" "}
+            and{" "}
             <a href="#" className="text-cyan-500 hover:text-cyan-400">
               Privacy Policy
             </a>
@@ -41,3 +41,4 @@ export default function AuthPage() {
     </div>
   );
 }
+

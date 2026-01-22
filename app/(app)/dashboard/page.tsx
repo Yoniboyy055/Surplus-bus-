@@ -21,7 +21,7 @@ export default async function DashboardPage() {
 
   try {
     const { profile } = await ensureProfile(supabase, data.user);
-    
+
     // Redirect based on role
     switch (profile.role) {
       case "operator":
@@ -42,3 +42,4 @@ export default async function DashboardPage() {
     redirect("/auth?error=profile_lookup_failed");
   }
 }
+
