@@ -2,11 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { env } from "@/lib/env";
+import { env, type Env } from "@/lib/env";
 
-function createSupabaseRouteClient() {
+function createSupabaseRouteClient(nonNullEnv: Env) {
   const cookieStore = cookies();
-  return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+  return createServerClient(nonNullEnv.NEXT_PUBLIC_SUPABASE_URL, nonNullEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       get(name) {
         return cookieStore.get(name)?.value;
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   if (!env) {
     return NextResponse.redirect(new URL("/auth?error=supabase_not_configured", request.url));
   }
-  const supabase = createSupabaseRouteClient();
+  const supabase = createSupabaseRouteClient(env);
   await supabase.auth.signOut();
   return NextResponse.redirect(new URL("/auth", request.url));
 }
