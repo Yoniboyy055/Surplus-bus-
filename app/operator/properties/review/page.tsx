@@ -139,9 +139,9 @@ export default function OperatorPropertyReviewPage() {
                 <div className="flex gap-3">
                    {candidate.property_data?.photos?.[0] && (
                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                     <img 
-                       src={candidate.property_data.photos[0]} 
-                       alt="Thumbnail" 
+                     <img
+                       src={candidate.property_data.photos[0]}
+                       alt="Thumbnail"
                        className="w-24 h-24 object-cover rounded bg-slate-950"
                      />
                    )}
