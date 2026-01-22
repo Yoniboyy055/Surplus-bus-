@@ -1,165 +1,295 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import AppShell from "@/app/components/AppShell";
+import { createClient } from "@/lib/supabase/client";
+import { ConfirmModal, DealDetailDrawer, KanbanBoard, StatusPill } from "@/components";
+
+type Deal = {
+  id: string;
+  status: string;
+  created_at: string;
+  criteria?: Record<string, unknown> | null;
+  buyer_track_snapshot?: string | null;
+  buyer_profile_id?: string | null;
+  referrer_profile_id?: string | null;
+  internal_notes?: string | null;
+  exclusive_ends_at?: string | null;
+};
+
+type AuditEntry = {
+  id: string;
+  action: string;
+  actor_role?: string | null;
+  from_status?: string | null;
+  to_status?: string | null;
+  metadata?: Record<string, unknown> | null;
+  created_at: string;
+};
+
+const pipelineStatuses = [
+  "NEW_SUBMISSION",
+  "NEEDS_CLARIFICATION",
+  "QUALIFIED",
+  "MATCHING",
+  "BUYER_COMMITTED",
+  "WON_PENDING_CLOSE",
+];
+
 export default function OperatorPortal() {
-  const [user, setUser] = useState<any>(null);
-  const [actionDeals, setActionDeals] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!supabase) return;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-      setUser(user);
+  const [loading, setLoading] = useState(true);
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-      if (profile?.role !== "operator") {
-        router.push("/dashboard");
-        return;
-      }
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [internalNote, setInternalNote] = useState("");
+  const [clarificationMessage, setClarificationMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-      const actionRequiredStatuses = ['NEW_SUBMISSION', 'NEEDS_CLARIFICATION', 'WON_PENDING_CLOSE'];
-      const { data: deals } = await supabase
-        .from('deals')
-        .select('*')
-        .in('status', actionRequiredStatuses)
-        .order('created_at', { ascending: true });
-      
-      setActionDeals(deals || []);
-      setLoading(false);
-    };
-    fetchData();
-  }, [router, supabase]);
+  const fetchDeals = async () => {
+    if (!supabase) return;
+    setLoading(true);
 
-  const handleStatusChange = async (dealId: string, newStatus: string) => {
-    // 4️⃣ Operator Status Guards
-    let message = "";
-    if (newStatus === "NEEDS_CLARIFICATION") {
-      message = window.prompt("Enter clarification message for the buyer (Mandatory):") || "";
-      if (!message) {
-        alert("Error: A clarification message is required.");
-        return;
-      }
-    }
-
-    const internalNote = window.prompt("Enter internal note for audit log (Mandatory):") || "";
-    if (!internalNote) {
-      alert("Error: An internal note is required for all status changes.");
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) {
+      router.push("/auth");
       return;
     }
 
-    // 1️⃣ Status Change Confirmation Copy
-    const confirmed = window.confirm(`This action is permanent and logged.\nConfirm you intend to move this deal to: ${newStatus.replace('_', ' ')}.`);
-    if (!confirmed) return;
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", auth.user.id).single();
+    if (profile?.role !== "operator") {
+      router.push("/dashboard");
+      return;
+    }
+
+    const { data: dealsData, error: dealsError } = await supabase
+      .from("deals")
+      .select("*")
+      .in("status", pipelineStatuses)
+      .order("created_at", { ascending: true });
+
+    if (dealsError) {
+      setError(dealsError.message);
+      setDeals([]);
+    } else {
+      setDeals((dealsData ?? []) as Deal[]);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchDeals();
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!selectedDeal || !supabase) return;
+    let mounted = true;
+
+    const fetchAudit = async () => {
+      setAuditLoading(true);
+      const { data: entries, error: auditError } = await supabase
+        .from("audit_logs")
+        .select("*")
+        .eq("deal_id", selectedDeal.id)
+        .order("created_at", { ascending: false });
+
+      if (!mounted) return;
+      if (auditError) {
+        setAuditEntries([]);
+        setError(auditError.message);
+      } else {
+        setAuditEntries((entries ?? []) as AuditEntry[]);
+      }
+      setAuditLoading(false);
+    };
+
+    fetchAudit();
+    return () => {
+      mounted = false;
+    };
+  }, [selectedDeal, supabase]);
+
+  const actionCounts = {
+    NEW_SUBMISSION: deals.filter((deal) => deal.status === "NEW_SUBMISSION").length,
+    NEEDS_CLARIFICATION: deals.filter((deal) => deal.status === "NEEDS_CLARIFICATION").length,
+    BUYER_COMMITTED: deals.filter((deal) => deal.status === "BUYER_COMMITTED").length,
+  };
+
+  const openStatusModal = (status: string) => {
+    setPendingStatus(status);
+    setInternalNote("");
+    setClarificationMessage("");
+  };
+
+  const closeStatusModal = () => {
+    setPendingStatus(null);
+    setInternalNote("");
+    setClarificationMessage("");
+  };
+
+  const handleStatusChange = async () => {
+    if (!pendingStatus || !selectedDeal) return;
+    if (!internalNote.trim()) {
+      setError("An internal note is required for every status change.");
+      return;
+    }
+
+    if (pendingStatus === "NEEDS_CLARIFICATION" && !clarificationMessage.trim()) {
+      setError("A clarification message to the buyer is required.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
 
     const res = await fetch("/api/deals", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dealId, status: newStatus, message, internal_note: internalNote })
+      body: JSON.stringify({
+        dealId: selectedDeal.id,
+        status: pendingStatus,
+        message: clarificationMessage,
+        internal_note: internalNote,
+      }),
     });
 
-    if (res.ok) {
-      alert("Status updated successfully!");
-      window.location.reload();
-    } else {
+    if (!res.ok) {
       const err = await res.json();
-      alert(`Error: ${err.error}`);
+      setError(err.error || "Unable to update deal status.");
+      setSubmitting(false);
+      return;
     }
+
+    setSuccess(`Status updated to ${pendingStatus.replace(/_/g, " ")}.`);
+    setSubmitting(false);
+    closeStatusModal();
+    setSelectedDeal(null);
+    await fetchDeals();
   };
 
-  if (loading) return <div className="text-center py-20 text-slate-500">Loading Operator Portal...</div>;
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="py-20 text-center text-quantum-500">Loading Operator Portal...</div>
+      </AppShell>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Operator Portal</h1>
-        <div className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-medium uppercase tracking-wider">
-          System Administrator
-        </div>
-      </header>
+    <AppShell>
+      <div className="space-y-8">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-quantum-50">Operator Portal</h1>
+            <p className="text-sm text-quantum-400">Action queue, audit visibility, and pipeline control.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusPill status="ACTION REQUIRED" size="sm" />
+            <span className="rounded-full bg-quantum-800 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-quantum-200">
+              System Administrator
+            </span>
+          </div>
+        </header>
 
-      <section className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-        <h2 className="text-xl font-semibold mb-4 text-red-400">Action Required Pipeline ({actionDeals.length})</h2>
-        <div className="space-y-4">
-          {actionDeals.length === 0 ? (
-            <div className="text-center text-slate-500 py-10">
-              <p>No deals require action right now.</p>
-              <p className="text-sm mt-1">You’re clear.</p>
+        {error && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-sm text-green-300">
+            {success}
+          </div>
+        )}
+
+        <section className="rounded-xl border border-quantum-800 bg-quantum-900/60 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-red-400">Action Required</p>
+              <h2 className="text-xl font-semibold text-quantum-50">Pipeline Alerts</h2>
             </div>
-          ) : (
-            actionDeals.map((deal) => (
-              <div key={deal.id} className="p-4 border border-slate-700 rounded-lg space-y-4 bg-slate-950/50">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="px-2 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px] font-bold uppercase tracking-widest">
-                      DEAL ID: {deal.id.substring(0, 8)}
-                    </span>
-                    <h3 className="text-lg font-bold mt-1">{deal.status.replace('_', ' ')}</h3>
-                    {/* 3️⃣ BUYER_COMMITTED Warning */}
-                    {deal.status === 'BUYER_COMMITTED' && (
-                      <div className="mt-2 p-2 bg-red-500/10 border border-red-500/20 rounded text-[10px] text-red-400 font-bold uppercase tracking-wider">
-                        Buyer committed. Proof of Funds required. Failure to complete may downgrade buyer track.
-                      </div>
-                    )}
-                    {/* 2️⃣ NEEDS_CLARIFICATION Copy */}
-                    {deal.status === 'NEEDS_CLARIFICATION' && (
-                      <div className="mt-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-[10px] text-yellow-400 font-bold uppercase tracking-wider">
-                        Waiting on buyer response — deal is paused until clarification is received.
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-xs text-slate-500">Submitted: {new Date(deal.created_at).toLocaleDateString()}</span>
-                </div>
-                
-                <div className="text-sm text-slate-400 bg-slate-900/50 p-3 rounded border border-slate-800">
-                  <p className="font-medium text-slate-300 mb-1">Criteria Snapshot:</p>
-                  <pre className="text-xs overflow-auto">{JSON.stringify(deal.criteria, null, 2)}</pre>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <button 
-                    onClick={() => handleStatusChange(deal.id, "QUALIFIED")}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold transition"
-                  >
-                    Qualify
-                  </button>
-                  <button 
-                    onClick={() => handleStatusChange(deal.id, "NEEDS_CLARIFICATION")}
-                    className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-500 rounded text-xs font-bold transition"
-                    title="Waiting on buyer response — deal is paused until clarification is received."
-                  >
-                    Request Info
-                  </button>
-                  {deal.status === 'WON_PENDING_CLOSE' && (
-                    <button 
-                      onClick={() => handleStatusChange(deal.id, "CLOSED_PAID")}
-                      className="px-3 py-1.5 bg-green-600 hover:bg-green-500 rounded text-xs font-bold transition"
-                      title="This action creates a permanent audit log entry."
-                    >
-                      Mark as Paid (Irreversible)
-                    </button>
-                  )}
-                  <button 
-                    onClick={() => handleStatusChange(deal.id, "REJECTED")}
-                    className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs font-bold transition"
-                  >
-                    Reject
-                  </button>
-                </div>
+            <div className="flex flex-wrap gap-2">
+              <div className="rounded-full border border-quantum-700 bg-quantum-950 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-quantum-300">
+                New Submissions: <span className="text-quantum-100">{actionCounts.NEW_SUBMISSION}</span>
               </div>
-            ))
-          )}
+              <div className="rounded-full border border-quantum-700 bg-quantum-950 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-quantum-300">
+                Needs Clarification: <span className="text-quantum-100">{actionCounts.NEEDS_CLARIFICATION}</span>
+              </div>
+              <div className="rounded-full border border-quantum-700 bg-quantum-950 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-quantum-300">
+                Buyer Committed: <span className="text-quantum-100">{actionCounts.BUYER_COMMITTED}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-quantum-800 bg-quantum-900/60 p-6">
+          <h2 className="text-xl font-semibold text-quantum-50">Deal Pipeline</h2>
+          <p className="text-sm text-quantum-400">
+            Move deals through the lifecycle. Click any card to view the deal drawer, audit logs, and actions.
+          </p>
+          <div className="mt-6">
+            <KanbanBoard deals={deals} onSelectDeal={setSelectedDeal} />
+          </div>
+        </section>
+      </div>
+
+      <DealDetailDrawer
+        isOpen={Boolean(selectedDeal)}
+        deal={selectedDeal}
+        auditEntries={auditEntries}
+        isLoadingAudit={auditLoading}
+        onClose={() => setSelectedDeal(null)}
+        onRequestStatusChange={openStatusModal}
+      />
+
+      <ConfirmModal
+        isOpen={Boolean(pendingStatus)}
+        title="Confirm Status Change"
+        description={`This action is permanent and logged. Confirm moving the deal to ${pendingStatus?.replace(/_/g, " ")}.`}
+        confirmLabel={submitting ? "Updating..." : "Confirm Update"}
+        intent={pendingStatus === "REJECTED" ? "danger" : "primary"}
+        confirmDisabled={
+          submitting ||
+          !internalNote.trim() ||
+          (pendingStatus === "NEEDS_CLARIFICATION" && !clarificationMessage.trim())
+        }
+        onConfirm={handleStatusChange}
+        onCancel={closeStatusModal}
+      >
+        {pendingStatus === "NEEDS_CLARIFICATION" && (
+          <div className="mb-4">
+            <label className="text-xs uppercase tracking-widest text-quantum-500">Buyer Clarification Message</label>
+            <textarea
+              value={clarificationMessage}
+              onChange={(event) => setClarificationMessage(event.target.value)}
+              rows={3}
+              className="mt-2 w-full rounded-md border border-quantum-700 bg-quantum-900 px-3 py-2 text-sm text-quantum-100"
+              placeholder="Provide the buyer with the specific clarification needed."
+            />
+          </div>
+        )}
+        <div>
+          <label className="text-xs uppercase tracking-widest text-quantum-500">Internal Note (Required)</label>
+          <textarea
+            value={internalNote}
+            onChange={(event) => setInternalNote(event.target.value)}
+            rows={3}
+            className="mt-2 w-full rounded-md border border-quantum-700 bg-quantum-900 px-3 py-2 text-sm text-quantum-100"
+            placeholder="Add an internal note for the audit trail."
+          />
         </div>
-      </section>
-    </div>
+      </ConfirmModal>
+    </AppShell>
   );
 }
