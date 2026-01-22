@@ -4,6 +4,11 @@ import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
+// Simple check for owner email, centralized here or imported if preferred.
+// Since ensureProfile handles the role upgrade, we rely on the profile role here.
+// But for extra safety, we can check email too.
+const OWNER_EMAIL = "nohabe056@gmail.com";
+
 export default async function DashboardPage() {
   if (!isSupabaseConfigured) {
     redirect("/auth?error=supabase_not_configured");
@@ -25,6 +30,11 @@ export default async function DashboardPage() {
     console.log(`Dashboard Redirect: uid=${data.user.id}, email=${data.user.email}, role=${profile.role}`);
 
     // Redirect based on role
+    // Force owner to operator dashboard regardless of what DB says initially (though ensureProfile should fix it)
+    if (data.user.email === OWNER_EMAIL) {
+        redirect("/operator");
+    }
+
     switch (profile.role) {
       case "operator":
         redirect("/operator");
@@ -41,8 +51,6 @@ export default async function DashboardPage() {
     }
   } catch (error) {
     console.error("Profile lookup failed", error);
-    // If we can't get the profile, we can't route them.
-    // But ensureProfile should have created it.
     // If it's a redirect error (NEXT_REDIRECT), let it pass
     if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
         throw error;

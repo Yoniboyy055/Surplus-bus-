@@ -1,6 +1,13 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const OWNER_EMAIL = process.env.OWNER_EMAIL?.toLowerCase().trim() || null;
+
+function isOwnerEmail(email: string | null | undefined): boolean {
+  if (!OWNER_EMAIL || !email) return false;
+  return email.toLowerCase().trim() === OWNER_EMAIL;
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
@@ -41,7 +48,20 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/auth', request.url))
   }
 
-  // Role-based access control
+  // OWNER EMAIL HARDENING: Force owner to /operator, block other portals
+  if (user && isOwnerEmail(user.email)) {
+    const path = request.nextUrl.pathname;
+    // If owner tries to access buyer or referrer portals, redirect to operator
+    if (path.startsWith('/buyer') || path.startsWith('/referrer')) {
+      return NextResponse.redirect(new URL('/operator', request.url));
+    }
+    // Owner can always access /operator regardless of role in database
+    if (path.startsWith('/operator')) {
+      return response;
+    }
+  }
+
+  // Role-based access control (for non-owner users)
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
