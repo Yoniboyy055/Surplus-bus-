@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { ensureProfile } from "@/lib/auth/ensureProfile";
+import { isOwnerEmail } from "@/lib/auth/ownerEmail";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,6 +22,11 @@ export default async function DashboardPage() {
 
   try {
     const { profile } = await ensureProfile(supabase, data.user);
+    
+    // OWNER EMAIL HARDENING: Owner always goes to /operator
+    if (isOwnerEmail(data.user.email)) {
+      redirect("/operator");
+    }
     
     // Redirect based on role
     switch (profile.role) {

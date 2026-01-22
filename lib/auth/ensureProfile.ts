@@ -1,4 +1,5 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { isOwnerEmail } from "./ownerEmail";
 
 type Profile = {
   id: string;
@@ -21,18 +22,32 @@ export const ensureProfile = async (supabase: SupabaseClient, user: User) => {
   }
 
   if (existing) {
+    // OWNER EMAIL HARDENING: Force owner to always have operator role
+    if (isOwnerEmail(user.email) && existing.role !== 'operator') {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: 'operator' })
+        .eq('id', user.id);
+      
+      if (!updateError) {
+        return { profile: { ...existing, role: 'operator' } as Profile, created: false };
+      }
+    }
     return { profile: existing as Profile, created: false };
   }
 
   // 2. Insert if not found
   console.log("ensureProfile: Profile not found, inserting for", user.id);
   
+  // OWNER EMAIL HARDENING: Force owner to always have operator role
+  const ownerRole = isOwnerEmail(user.email) ? 'operator' : 'buyer';
+  
   const { data: inserted, error: insertError } = await supabase
     .from("profiles")
     .insert({
       id: user.id,
       email: user.email ?? null,
-      role: "buyer", // Default role
+      role: ownerRole, // Owner gets 'operator', others get 'buyer' by default
     })
     .select("id, role")
     .maybeSingle();
