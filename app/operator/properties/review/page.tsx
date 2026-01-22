@@ -19,7 +19,6 @@ export default function OperatorPropertyReviewPage() {
   const [pendingAction, setPendingAction] = useState<'approved' | 'rejected' | null>(null);
   
   const supabase = createClient();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const router = useRouter();
 
   const fetchCandidates = useCallback(async () => {

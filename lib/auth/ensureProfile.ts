@@ -1,11 +1,10 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { isOwnerEmail } from "./ownerEmail";
 
 type Profile = {
   id: string;
   role: "operator" | "referrer" | "buyer";
 };
-
-const OWNER_EMAIL = "nohabe056@gmail.com";
 
 export const ensureProfile = async (supabase: SupabaseClient, user: User) => {
   // 1. Try to read existing profile
@@ -22,7 +21,7 @@ export const ensureProfile = async (supabase: SupabaseClient, user: User) => {
 
   if (existing) {
     // Check if we need to upgrade to operator
-    if (user.email === OWNER_EMAIL && existing.role !== 'operator') {
+    if (isOwnerEmail(user.email) && existing.role !== 'operator') {
        console.log(`ensureProfile: Upgrading ${user.email} to operator`);
        const { data: updated } = await supabase
          .from("profiles")
@@ -36,7 +35,7 @@ export const ensureProfile = async (supabase: SupabaseClient, user: User) => {
   }
 
   // 2. Insert if not found
-  const role = user.email === OWNER_EMAIL ? "operator" : "buyer"; // Default to buyer, but operator if owner
+  const role = isOwnerEmail(user.email) ? "operator" : "buyer"; // Default to buyer, but operator if owner
   console.log(`ensureProfile: Profile not found, inserting for ${user.id} with role ${role}`);
   
   const { data: inserted, error: insertError } = await supabase

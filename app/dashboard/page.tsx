@@ -1,13 +1,8 @@
 import { redirect } from "next/navigation";
-
 import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
-
-// Simple check for owner email, centralized here or imported if preferred.
-// Since ensureProfile handles the role upgrade, we rely on the profile role here.
-// But for extra safety, we can check email too.
-const OWNER_EMAIL = "nohabe056@gmail.com";
+import { isOwnerEmail } from "@/lib/auth/ownerEmail";
 
 export default async function DashboardPage() {
   if (!isSupabaseConfigured) {
@@ -31,7 +26,7 @@ export default async function DashboardPage() {
 
     // Redirect based on role
     // Force owner to operator dashboard regardless of what DB says initially (though ensureProfile should fix it)
-    if (data.user.email === OWNER_EMAIL) {
+    if (isOwnerEmail(data.user.email)) {
         redirect("/operator");
     }
 

@@ -1,8 +1,12 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { isOwnerEmail } from './lib/auth/ownerEmail'
 
+const OWNER_EMAIL = process.env.OWNER_EMAIL?.toLowerCase().trim() || null;
 
+function isOwnerEmail(email: string | null | undefined): boolean {
+  if (!OWNER_EMAIL || !email) return false;
+  return email.toLowerCase().trim() === OWNER_EMAIL;
+}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
