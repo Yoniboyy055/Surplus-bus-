@@ -8,6 +8,7 @@ import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
 import { Inbox, CheckCircle, Search, RefreshCw } from "lucide-react";
 import { ConfirmModal } from "@/components/ConfirmModal";
+import Image from "next/image";
 
 export default function OperatorPropertyReviewPage() {
   const [candidates, setCandidates] = useState<any[]>([]);
@@ -138,11 +139,15 @@ export default function OperatorPropertyReviewPage() {
               <div className="flex justify-between items-start mb-3">
                 <div className="flex gap-3">
                    {candidate.property_data?.photos?.[0] && (
-                     <img 
-                       src={candidate.property_data.photos[0]} 
-                       alt="Thumbnail" 
-                       className="w-24 h-24 object-cover rounded bg-slate-950"
-                     />
+                     <div className="relative w-24 h-24 rounded overflow-hidden bg-slate-950">
+                        <Image 
+                          src={candidate.property_data.photos[0]} 
+                          alt="Thumbnail" 
+                          fill
+                          className="object-cover"
+                          unoptimized // External images need domain config or unoptimized
+                        />
+                     </div>
                    )}
                    <div>
                      <div className="flex items-center gap-2 mb-1">
