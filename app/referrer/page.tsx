@@ -31,7 +31,7 @@ export default function ReferrerPortal() {
   // Use a fallback URL if env is not loaded on client, but prefer window.location.origin
   const appUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!supabase) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -60,11 +60,11 @@ export default function ReferrerPortal() {
     setReferredDeals(rDeals || []);
 
     setLoading(false);
-  };
+  }, [router, supabase]);
 
   useEffect(() => {
     fetchData();
-  }, [router, supabase]);
+  }, [fetchData]);
 
   const generateLink = async () => {
     const res = await fetch("/api/referral-links", { method: "POST" });
