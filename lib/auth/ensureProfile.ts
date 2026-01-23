@@ -22,7 +22,6 @@ export const ensureProfile = async (supabase: SupabaseClient, user: User) => {
   if (existing) {
     // Check if we need to upgrade to operator
     if (isOwnerEmail(user.email) && existing.role !== 'operator') {
-       console.log(`ensureProfile: Upgrading ${user.email} to operator`);
        const { data: updated } = await supabase
          .from("profiles")
          .update({ role: 'operator' })
@@ -36,7 +35,6 @@ export const ensureProfile = async (supabase: SupabaseClient, user: User) => {
 
   // 2. Insert if not found
   const role = isOwnerEmail(user.email) ? "operator" : "buyer"; // Default to buyer, but operator if owner
-  console.log(`ensureProfile: Profile not found, inserting for ${user.id} with role ${role}`);
   
   // Use Upsert with onConflict to handle race conditions atomically
   const { data: inserted, error: insertError } = await supabase

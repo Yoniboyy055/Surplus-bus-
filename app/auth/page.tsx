@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import AuthClient from "./AuthClient";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -28,13 +29,13 @@ export default function AuthPage() {
         <div className="text-center text-quantum-500 text-sm">
           <p>
             By signing in, you agree to our{' '}
-            <a href="#" className="text-cyan-500 hover:text-cyan-400">
+            <Link href="/" className="text-cyan-500 hover:text-cyan-400">
               Terms of Service
-            </a>{' '}
+            </Link>{' '}
             and{' '}
-            <a href="#" className="text-cyan-500 hover:text-cyan-400">
+            <Link href="/" className="text-cyan-500 hover:text-cyan-400">
               Privacy Policy
-            </a>
+            </Link>
           </p>
         </div>
       </div>

@@ -22,7 +22,6 @@ export default async function DashboardPage() {
   try {
     const { profile } = await ensureProfile(supabase, data.user);
     
-    console.log(`Dashboard Redirect: uid=${data.user.id}, email=${data.user.email}, role=${profile.role}`);
 
     // Redirect based on role
     // Force owner to operator dashboard regardless of what DB says initially (though ensureProfile should fix it)
