@@ -4,6 +4,10 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Copy, Plus } from "lucide-react";
+import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
+import { Card } from "@/components/Card";
+import { Badge } from "@/components/Badge";
 
 const maskStatus = (status: string) => {
   const terminalStatuses = ['CLOSED_PAID', 'LOST', 'WITHDRAWN'];
@@ -70,74 +74,74 @@ export default function ReferrerPortal() {
     }
   };
 
-  if (loading) return <div className="text-center py-20 text-slate-500">Loading Referrer Portal...</div>;
+  if (loading) return <div className="text-center py-20 text-quantum-500">Loading Referrer Portal...</div>;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-5xl mx-auto">
       <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Referrer Portal</h1>
-        <div className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-medium uppercase tracking-wider">
+        <h1 className="text-3xl font-bold text-quantum-50">Referrer Portal</h1>
+        <Badge variant="warning" className="uppercase tracking-wider">
           {referrerData?.tier || 'Starter'} Tier
-        </div>
+        </Badge>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-          <h3 className="text-slate-400 text-sm font-medium">Points Earned</h3>
-          <p className="text-2xl font-bold mt-2 text-white">{referrerData?.points_closed_paid || 0}</p>
-        </div>
-        <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-          <h3 className="text-slate-400 text-sm font-medium">Commission Rate</h3>
-          <p className="text-2xl font-bold mt-2 text-white">{referrerData?.commission_rate || 20}%</p>
-        </div>
-        <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-          <h3 className="text-slate-400 text-sm font-medium">Total Referrals</h3>
-          <p className="text-2xl font-bold mt-2 text-white">{referredDeals.length}</p>
-        </div>
+        <Card>
+          <h3 className="text-quantum-400 text-sm font-medium">Points Earned</h3>
+          <p className="text-2xl font-bold mt-2 text-quantum-50">{referrerData?.points_closed_paid || 0}</p>
+        </Card>
+        <Card>
+          <h3 className="text-quantum-400 text-sm font-medium">Commission Rate</h3>
+          <p className="text-2xl font-bold mt-2 text-quantum-50">{referrerData?.commission_rate || 20}%</p>
+        </Card>
+        <Card>
+          <h3 className="text-quantum-400 text-sm font-medium">Total Referrals</h3>
+          <p className="text-2xl font-bold mt-2 text-quantum-50">{referredDeals.length}</p>
+        </Card>
       </div>
 
-      <section className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 space-y-4">
-        <h2 className="text-xl font-semibold text-white">Referral Links</h2>
+      <section className="p-6 rounded-xl border border-quantum-700 bg-quantum-900/50 space-y-4">
+        <h2 className="text-xl font-semibold text-quantum-50">Referral Links</h2>
         <div className="space-y-3">
           {links.map((link) => (
             <div key={link.code} className="flex gap-4">
-              <input 
-                type="text" 
-                readOnly 
-                value={`${appUrl}/ref/${link.code}`} 
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-400 focus:outline-none"
-              />
-              <button 
+              <div className="flex-1">
+                 <Input 
+                   readOnly 
+                   value={`${appUrl}/ref/${link.code}`} 
+                   fullWidth
+                 />
+              </div>
+              <Button 
                 onClick={() => {
                   navigator.clipboard.writeText(`${appUrl}/ref/${link.code}`);
                   alert("Link copied!");
                 }}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition text-sm font-medium flex items-center gap-2"
+                variant="primary"
+                icon={<Copy size={16} />}
               >
-                <Copy size={16} />
                 Copy
-              </button>
+              </Button>
             </div>
           ))}
         </div>
-        <button onClick={generateLink} className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition text-sm font-medium flex items-center justify-center gap-2">
-          <Plus size={16} />
+        <Button onClick={generateLink} variant="secondary" fullWidth icon={<Plus size={16} />}>
           Generate New Link
-        </button>
+        </Button>
       </section>
 
-      <section className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 space-y-4">
-        <h2 className="text-xl font-semibold text-white">Referred Deals</h2>
+      <section className="p-6 rounded-xl border border-quantum-700 bg-quantum-900/50 space-y-4">
+        <h2 className="text-xl font-semibold text-quantum-50">Referred Deals</h2>
         <div className="space-y-2">
           {referredDeals.length === 0 ? (
-            <p className="text-sm text-slate-500">No referrals yet.</p>
+            <p className="text-sm text-quantum-500">No referrals yet.</p>
           ) : (
             referredDeals.map((deal) => (
-              <div key={deal.id} className="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
-                <span className="text-slate-400 font-mono">REF-{deal.id.substring(0, 6).toUpperCase()}</span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${deal.status === 'CLOSED_PAID' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+              <div key={deal.id} className="flex justify-between items-center text-sm border-b border-quantum-700 pb-2">
+                <span className="text-quantum-400 font-mono">REF-{deal.id.substring(0, 6).toUpperCase()}</span>
+                <Badge variant={deal.status === 'CLOSED_PAID' ? 'success' : 'warning'} size="sm" className="font-bold uppercase text-[10px]">
                   {maskStatus(deal.status)}
-                </span>
+                </Badge>
               </div>
             ))
           )}
