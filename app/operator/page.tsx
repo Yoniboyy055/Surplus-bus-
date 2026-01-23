@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Inbox, Activity, Database, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/Badge";
+import { Toast } from "@/components/Toast";
 
 export default function OperatorPortal() {
   const [user, setUser] = useState<any>(null);
@@ -15,57 +16,59 @@ export default function OperatorPortal() {
   const [loading, setLoading] = useState(true);
   const [agentHealth, setAgentHealth] = useState<any>(null);
   const [queueCount, setQueueCount] = useState(0);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const supabase = createClient();
   const router = useRouter();
 
+  const fetchData = async () => {
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+    setUser(user);
+
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    if (profile?.role !== "operator") {
+      router.push("/dashboard");
+      return;
+    }
+
+    // Fetch all active deals for the Kanban board
+    const { data: allDeals } = await supabase
+      .from('deals')
+      .select('*')
+      .neq('status', 'CLOSED_PAID')
+      .neq('status', 'REJECTED')
+      .neq('status', 'LOST')
+      .neq('status', 'WITHDRAWN')
+      .order('created_at', { ascending: false });
+    
+    setDeals(allDeals || []);
+
+    // Fetch Agent Health
+    try {
+      const res = await fetch('/api/agents/health');
+      if (res.ok) {
+        const data = await res.json();
+        setAgentHealth(data.health);
+      }
+    } catch (e) {
+      console.error('Failed to fetch agent health', e);
+    }
+
+    // Fetch Queue Count
+    const { count } = await supabase
+      .from('property_candidates')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'queued');
+    setQueueCount(count || 0);
+
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!supabase) return;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-      setUser(user);
-
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-      if (profile?.role !== "operator") {
-        router.push("/dashboard");
-        return;
-      }
-
-      // Fetch all active deals for the Kanban board
-      const { data: allDeals } = await supabase
-        .from('deals')
-        .select('*')
-        .neq('status', 'CLOSED_PAID')
-        .neq('status', 'REJECTED')
-        .neq('status', 'LOST')
-        .neq('status', 'WITHDRAWN')
-        .order('created_at', { ascending: false });
-      
-      setDeals(allDeals || []);
-
-      // Fetch Agent Health
-      try {
-        const res = await fetch('/api/agents/health');
-        if (res.ok) {
-          const data = await res.json();
-          setAgentHealth(data.health);
-        }
-      } catch (e) {
-        console.error('Failed to fetch agent health', e);
-      }
-
-      // Fetch Queue Count
-      const { count } = await supabase
-        .from('property_candidates')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'queued');
-      setQueueCount(count || 0);
-
-      setLoading(false);
-    };
     fetchData();
   }, [router, supabase]);
 
@@ -82,10 +85,12 @@ export default function OperatorPortal() {
     });
 
     if (res.ok) {
-      window.location.reload();
+      setToast({ message: "Deal status updated successfully.", type: "success" });
+      router.refresh();
+      fetchData(); // Reload data
     } else {
       const err = await res.json();
-      alert(`Error: ${err.error}`);
+      setToast({ message: `Error: ${err.error}`, type: "error" });
     }
   };
 
@@ -93,6 +98,14 @@ export default function OperatorPortal() {
 
   return (
     <div className="space-y-6 h-full flex flex-col">
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
+
       <header className="flex items-center justify-between shrink-0">
         <div>
            <h1 className="text-2xl font-bold text-quantum-50">Operator Portal</h1>

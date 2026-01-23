@@ -11,18 +11,16 @@ import { StatusPill } from "@/components/StatusPill";
 import { Card } from "@/components/Card";
 import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
+import { Toast } from "@/components/Toast";
 
-function CriteriaForm() {
+function CriteriaForm({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setSuccess(null);
     
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -42,9 +40,9 @@ function CriteriaForm() {
       });
 
       if (res.ok) {
-        setSuccess("Criteria submitted successfully!");
-        router.refresh();
-        window.location.reload(); 
+        onSuccess();
+        // Reset form
+        (e.target as HTMLFormElement).reset();
       } else {
         const err = await res.json();
         setError(err.error || "Failed to submit criteria");
@@ -64,21 +62,45 @@ function CriteriaForm() {
           <AlertCircle size={16} /> {error}
         </div>
       )}
-      {success && (
-        <div className="p-3 bg-accent-success/10 border border-accent-success/20 text-accent-success text-sm rounded-lg flex items-center gap-2">
-          <AlertCircle size={16} /> {success}
+      
+      <div>
+        <label className="block text-sm font-semibold text-quantum-200 mb-3">
+          Property Type
+        </label>
+        <div className="relative">
+          <select 
+            name="property_type" 
+            className="w-full bg-quantum-900 border border-quantum-700 rounded-md px-4 py-3 text-quantum-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-200 appearance-none" 
+            required
+          >
+            <option value="">Select Property Type</option>
+            <option value="land">Land</option>
+            <option value="commercial">Commercial</option>
+            <option value="residential">Residential</option>
+            <option value="industrial">Industrial</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-quantum-500">
+            <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+            </svg>
+          </div>
         </div>
-      )}
-      <select name="property_type" className="w-full p-3 rounded-lg bg-quantum-950 border border-quantum-700 text-quantum-200 text-sm focus:ring-2 focus:ring-cyan-500 outline-none" required>
-        <option value="">Select Property Type</option>
-        <option value="land">Land</option>
-        <option value="commercial">Commercial</option>
-        <option value="residential">Residential</option>
-        <option value="industrial">Industrial</option>
-      </select>
-      <Input name="max_price" type="number" placeholder="Max Price (USD)" required />
-      <Input name="location" type="text" placeholder="Preferred Location" />
-      <textarea name="notes" placeholder="Additional Notes" className="w-full p-3 rounded-lg bg-quantum-950 border border-quantum-700 text-quantum-200 text-sm h-24 focus:ring-2 focus:ring-cyan-500 outline-none" />
+      </div>
+
+      <Input name="max_price" type="number" placeholder="Max Price (USD)" label="Maximum Price" required />
+      <Input name="location" type="text" placeholder="Preferred Location" label="Target Location" />
+      
+      <div>
+        <label className="block text-sm font-semibold text-quantum-200 mb-3">
+          Additional Notes
+        </label>
+        <textarea 
+          name="notes" 
+          placeholder="Specific requirements or preferences..." 
+          className="w-full bg-quantum-900 border border-quantum-700 rounded-md px-4 py-3 text-quantum-50 placeholder-quantum-600 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-200 h-24" 
+        />
+      </div>
+
       <Button type="submit" loading={loading} fullWidth className="shadow-lg shadow-cyan-900/20">
         Submit Criteria
       </Button>
@@ -86,8 +108,7 @@ function CriteriaForm() {
   );
 }
 
-function DealStatus({ deal }: { deal: any }) {
-  const router = useRouter();
+function DealStatus({ deal, onUpdate }: { deal: any, onUpdate: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [showFeeModal, setShowFeeModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -112,8 +133,7 @@ function DealStatus({ deal }: { deal: any }) {
       });
 
       if (res.ok) {
-        alert("Commitment sent! Status updated to BUYER_COMMITTED.");
-        router.refresh();
+        onUpdate();
       } else {
         const err = await res.json();
         setError(err.error || "Failed to commit");
@@ -189,47 +209,70 @@ export default function BuyerPortal() {
   const [buyerData, setBuyerData] = useState<any>(null);
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const supabase = createClient();
   const router = useRouter();
 
+  const fetchData = async () => {
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+    setUser(user);
+
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    if (profile?.role !== "buyer") {
+      router.push("/dashboard");
+      return;
+    }
+
+    const { data: bData } = await supabase.from("buyers").select("*").eq("profile_id", user.id).single();
+    setBuyerData(bData);
+
+    const { data: activeDeals } = await supabase
+      .from('deals')
+      .select('*')
+      .eq('buyer_profile_id', user.id)
+      .neq('status', 'CLOSED_PAID')
+      .neq('status', 'LOST')
+      .neq('status', 'WITHDRAWN')
+      .order('created_at', { ascending: false });
+    
+    setDeals(activeDeals || []);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!supabase) return;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-      setUser(user);
-
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-      if (profile?.role !== "buyer") {
-        router.push("/dashboard");
-        return;
-      }
-
-      const { data: bData } = await supabase.from("buyers").select("*").eq("profile_id", user.id).single();
-      setBuyerData(bData);
-
-      const { data: activeDeals } = await supabase
-        .from('deals')
-        .select('*')
-        .eq('buyer_profile_id', user.id)
-        .neq('status', 'CLOSED_PAID')
-        .neq('status', 'LOST')
-        .neq('status', 'WITHDRAWN')
-        .order('created_at', { ascending: false });
-      
-      setDeals(activeDeals || []);
-      setLoading(false);
-    };
     fetchData();
   }, [router, supabase]);
+
+  const handleCriteriaSuccess = () => {
+    setToast({ message: "Criteria submitted successfully!", type: "success" });
+    router.refresh(); // Soft refresh
+    // Optionally refetch local data if router.refresh() isn't enough for client-side state
+    fetchData(); 
+  };
+
+  const handleDealUpdate = () => {
+    setToast({ message: "Commitment sent! Status updated.", type: "success" });
+    router.refresh();
+    fetchData();
+  };
 
   if (loading) return <div className="text-center py-20 text-quantum-500">Loading Portal...</div>;
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
+      
       <header className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-quantum-50">Buyer Portal</h1>
         <div className="flex gap-2">
@@ -256,7 +299,13 @@ export default function BuyerPortal() {
                 <h2 className="text-xl font-semibold text-quantum-50">Active Deals ({deals.length})</h2>
               </div>
               <div className="grid gap-4">
-                 {deals.map(deal => <DealStatus key={deal.id} deal={deal} />)}
+                 {deals.map(deal => (
+                   <DealStatus 
+                     key={deal.id} 
+                     deal={deal} 
+                     onUpdate={handleDealUpdate}
+                   />
+                 ))}
               </div>
             </>
           ) : (
@@ -269,7 +318,7 @@ export default function BuyerPortal() {
         </div>
         
         <div className="space-y-6">
-           <CriteriaForm />
+           <CriteriaForm onSuccess={handleCriteriaSuccess} />
            
            <section className="p-6 rounded-xl border border-quantum-700 bg-quantum-900/50">
               <h2 className="text-lg font-semibold text-quantum-50 mb-4">Portal Info</h2>

@@ -8,6 +8,7 @@ import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
+import { Toast } from "@/components/Toast";
 
 const maskStatus = (status: string) => {
   const terminalStatuses = ['CLOSED_PAID', 'LOST', 'WITHDRAWN'];
@@ -23,54 +24,57 @@ export default function ReferrerPortal() {
   const [links, setLinks] = useState<any[]>([]);
   const [referredDeals, setReferredDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const supabase = createClient();
   const router = useRouter();
   
   // Use a fallback URL if env is not loaded on client, but prefer window.location.origin
   const appUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
 
+  const fetchData = async () => {
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
+    setUser(user);
+
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    if (profile?.role !== "referrer") {
+      router.push("/dashboard");
+      return;
+    }
+
+    const { data: rData } = await supabase.from("referrers").select("*").eq("profile_id", user.id).single();
+    setReferrerData(rData);
+
+    const { data: rLinks } = await supabase.from('referral_links').select('code').eq('referrer_profile_id', user.id);
+    setLinks(rLinks || []);
+
+    const { data: rDeals } = await supabase
+      .from('deals')
+      .select('id, status, created_at')
+      .eq('referrer_profile_id', user.id)
+      .order('created_at', { ascending: false });
+    setReferredDeals(rDeals || []);
+
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!supabase) return;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-      setUser(user);
-
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-      if (profile?.role !== "referrer") {
-        router.push("/dashboard");
-        return;
-      }
-
-      const { data: rData } = await supabase.from("referrers").select("*").eq("profile_id", user.id).single();
-      setReferrerData(rData);
-
-      const { data: rLinks } = await supabase.from('referral_links').select('code').eq('referrer_profile_id', user.id);
-      setLinks(rLinks || []);
-
-      const { data: rDeals } = await supabase
-        .from('deals')
-        .select('id, status, created_at')
-        .eq('referrer_profile_id', user.id)
-        .order('created_at', { ascending: false });
-      setReferredDeals(rDeals || []);
-
-      setLoading(false);
-    };
     fetchData();
   }, [router, supabase]);
 
   const generateLink = async () => {
     const res = await fetch("/api/referral-links", { method: "POST" });
     if (res.ok) {
-      alert("New referral link generated!");
-      window.location.reload();
+      setToast({ message: "New referral link generated!", type: "success" });
+      router.refresh();
+      fetchData(); // Reload data
     } else {
       const err = await res.json();
-      alert(`Error: ${err.error}`);
+      setToast({ message: `Error: ${err.error}`, type: "error" });
     }
   };
 
@@ -78,6 +82,14 @@ export default function ReferrerPortal() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
+
       <header className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-quantum-50">Referrer Portal</h1>
         <Badge variant="warning" className="uppercase tracking-wider">
@@ -115,7 +127,7 @@ export default function ReferrerPortal() {
               <Button 
                 onClick={() => {
                   navigator.clipboard.writeText(`${appUrl}/ref/${link.code}`);
-                  alert("Link copied!");
+                  setToast({ message: "Link copied to clipboard!", type: "success" });
                 }}
                 variant="primary"
                 icon={<Copy size={16} />}
