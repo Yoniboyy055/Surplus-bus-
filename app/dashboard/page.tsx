@@ -10,45 +10,51 @@ export default async function DashboardPage() {
   }
 
   const supabase = createClient();
-  if (!supabase) {
-    redirect("/auth?error=supabase_not_configured");
-  }
   const { data } = await supabase.auth.getUser();
 
   if (!data.user) {
     redirect("/auth");
   }
 
+  // FORCE OWNER REDIRECT IMMEDIATELY
+  // This happens even before profile check to ensure safety/speed
+  if (isOwnerEmail(data.user.email)) {
+    // We still want to ensure their profile exists in the background logic of ensureProfile,
+    // but we know where they are going.
+    try {
+      await ensureProfile(supabase, data.user);
+    } catch (e) {
+      console.error("Owner profile sync failed, but proceeding to /operator", e);
+    }
+    redirect("/operator");
+  }
+
   try {
     const { profile } = await ensureProfile(supabase, data.user);
     
-
-    // Redirect based on role
-    // Force owner to operator dashboard regardless of what DB says initially (though ensureProfile should fix it)
-    if (isOwnerEmail(data.user.email)) {
-        redirect("/operator");
-    }
-
+    // Standard RBAC Routing
     switch (profile.role) {
       case "operator":
         redirect("/operator");
         break;
-      case "referrer":
-        redirect("/referrer");
-        break;
       case "buyer":
         redirect("/buyer");
         break;
+      case "referrer":
+        redirect("/referrer");
+        break;
       default:
-        redirect("/");
+        // Fallback for unknown roles
+        redirect("/referrer"); 
         break;
     }
   } catch (error) {
     console.error("Profile lookup failed", error);
     // If it's a redirect error (NEXT_REDIRECT), let it pass
-    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message.includes('NEXT_REDIRECT'))) {
         throw error;
     }
-    redirect("/auth?error=profile_lookup_failed");
+    // Show a user-friendly error or redirect to auth
+    redirect("/auth?error=profile_init_failed");
   }
 }
