@@ -38,35 +38,35 @@ export const ensureProfile = async (supabase: SupabaseClient, user: User) => {
   const role = isOwnerEmail(user.email) ? "operator" : "buyer"; // Default to buyer, but operator if owner
   console.log(`ensureProfile: Profile not found, inserting for ${user.id} with role ${role}`);
   
+  // Use Upsert with onConflict to handle race conditions atomically
   const { data: inserted, error: insertError } = await supabase
     .from("profiles")
-    .insert({
-      id: user.id,
-      email: user.email ?? null,
-      role: role,
-    })
+    .upsert(
+      {
+        id: user.id,
+        email: user.email ?? null,
+        role: role,
+      },
+      { onConflict: 'id', ignoreDuplicates: true }
+    )
     .select("id, role")
     .maybeSingle();
 
   if (insertError) {
-    if (insertError.code === '23505') { // Unique violation
-        console.log("ensureProfile: Insert race condition detected, retrying select.");
-        const { data: retry, error: retryError } = await supabase
-            .from("profiles")
-            .select("id, role")
-            .eq("id", user.id)
-            .single();
-        
-        if (retryError) throw retryError;
-        return { profile: retry as Profile, created: false };
-    }
-    console.error("ensureProfile: INSERT failed", insertError);
+    console.error("ensureProfile: INSERT/UPSERT failed", insertError);
     throw insertError;
   }
 
+  // If ignoreDuplicates: true and row existed, inserted might be null if it didn't update anything
+  // In that case, we need to select again
   if (!inserted) {
-    console.error("ensureProfile: Inserted but no data returned. RLS likely blocking SELECT.");
-    throw new Error("Profile inserted but could not be read. Check RLS 'SELECT' policies.");
+    const { data: retry } = await supabase
+        .from("profiles")
+        .select("id, role")
+        .eq("id", user.id)
+        .single();
+    if (!retry) throw new Error("Profile creation failed: upsert returned null and select failed");
+    return { profile: retry as Profile, created: false };
   }
 
   return { profile: inserted as Profile, created: true };

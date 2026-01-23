@@ -1,5 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { z } from "zod";
+
+const criteriaSchema = z.object({
+  property_type: z.string(),
+  max_price: z.coerce.number().positive(),
+  location: z.string().max(200).optional(),
+  notes: z.string().max(1000).optional(),
+});
+
+const submissionSchema = z.object({
+  property_type: z.string(),
+  max_price: z.string().or(z.number()), // Accept string or number from form data
+  criteria: z.object({
+    location: z.string().optional(),
+    notes: z.string().optional()
+  }).optional()
+});
 
 export async function POST(request: Request) {
   const supabase = createClient();
@@ -8,15 +25,35 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
-  const { property_type, max_price, criteria } = body;
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
+  }
+
+  const parseResult = submissionSchema.safeParse(body);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: "Validation failed", details: parseResult.error.format() }, { status: 400 });
+  }
+
+  const { property_type, max_price, criteria } = parseResult.data;
 
   // 3️⃣ Buyer Criteria Guard
+  // (Redundant check as Zod handles it, but keeping for logic flow clarity)
   if (!property_type || !max_price) {
     return NextResponse.json({ 
       error: "Missing required fields: property_type and max_price are mandatory." 
     }, { status: 400 });
   }
+
+  // Validate criteria structure to prevent JSON injection/bloat
+  const cleanCriteria = {
+    location: criteria?.location?.substring(0, 200),
+    notes: criteria?.notes?.substring(0, 1000),
+    property_type,
+    max_price: Number(max_price)
+  };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -40,7 +77,7 @@ export async function POST(request: Request) {
       buyer_track_snapshot: "B",
       referrer_fee_split_percent: referrer?.commission_rate || 20,
       operator_fee_split_percent: 100 - (referrer?.commission_rate || 20),
-      criteria: { ...criteria, property_type, max_price }
+      criteria: cleanCriteria
     })
     .select()
     .single();
@@ -57,7 +94,13 @@ export async function PUT(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const { dealId, action, acceptedFee } = body;
 
   if (action === "COMMIT_TO_BID") {
@@ -121,7 +164,13 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Unauthorized: Operator access only" }, { status: 403 });
   }
 
-  const body = await request.json();
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const { dealId, status, message, internal_note } = body;
 
   // 4️⃣ Operator Status Guards
