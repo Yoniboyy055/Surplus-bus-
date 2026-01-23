@@ -29,9 +29,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   loading = false,
 }) => {
   const variantStyles = {
-    danger: 'bg-red-500/10 border-red-500/20 text-red-400',
-    warning: 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400',
-    info: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    danger: 'bg-accent-danger/10 border-accent-danger/20 text-accent-danger',
+    warning: 'bg-accent-warning/10 border-accent-warning/20 text-accent-warning',
+    info: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
   };
 
   return (
@@ -56,7 +56,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
       }
     >
       <div className="space-y-4">
-        <p className="text-slate-300 text-sm">
+        <p className="text-quantum-300 text-sm">
           {message}
         </p>
         

@@ -91,19 +91,19 @@ export function AppShell({ children, user, profile }: AppShellProps) {
 
   if (isPublic) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50">
+      <div className="min-h-screen flex flex-col bg-quantum-950 text-quantum-50">
         <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-6 py-10">
-          <header className="flex items-center justify-between border-b border-slate-800 pb-6">
-            <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-200">
-               <span>Surplus Bus <span className="text-blue-500">System</span></span>
+          <header className="flex items-center justify-between border-b border-quantum-700 pb-6">
+            <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-quantum-200">
+               <span>Surplus Bus <span className="text-cyan-500">System</span></span>
             </div>
-            <nav className="flex gap-6 text-xs font-medium uppercase tracking-wider text-slate-400">
-              <Link href="/" className="hover:text-white transition">Home</Link>
-              <Link href="/auth" className="hover:text-white transition">Login</Link>
+            <nav className="flex gap-6 text-xs font-medium uppercase tracking-wider text-quantum-400">
+              <Link href="/" className="hover:text-quantum-50 transition">Home</Link>
+              <Link href="/auth" className="hover:text-quantum-50 transition">Login</Link>
             </nav>
           </header>
           <main className="flex flex-1 flex-col gap-6">{children}</main>
-          <footer className="border-t border-slate-800 pt-6 text-center text-[10px] uppercase tracking-widest text-slate-500">
+          <footer className="border-t border-quantum-700 pt-6 text-center text-[10px] uppercase tracking-widest text-quantum-500">
             &copy; 2026 Surplus Referral Platform. All rights reserved.
           </footer>
         </div>
@@ -112,7 +112,7 @@ export function AppShell({ children, user, profile }: AppShellProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-slate-950 text-slate-50">
+    <div className="min-h-screen flex flex-col md:flex-row bg-quantum-950 text-quantum-50">
       {sidebarOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -122,20 +122,20 @@ export function AppShell({ children, user, profile }: AppShellProps) {
 
       <aside 
         className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 transform transition-transform duration-200 ease-in-out
+          fixed inset-y-0 left-0 z-50 w-64 bg-quantum-900 border-r border-quantum-700 transform transition-transform duration-200 ease-in-out
           md:translate-x-0 md:static md:h-auto md:min-h-screen
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-slate-200">
-              <Building2 className="text-blue-500" size={20} />
+          <div className="p-6 border-b border-quantum-700 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-quantum-200">
+              <Building2 className="text-cyan-500" size={20} />
               <span className="hidden md:inline">Surplus</span>
             </div>
             <button 
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-slate-400 hover:text-white"
+              className="md:hidden text-quantum-400 hover:text-quantum-50"
             >
               <X size={24} />
             </button>
@@ -152,8 +152,8 @@ export function AppShell({ children, user, profile }: AppShellProps) {
                   className={`
                     flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors
                     ${isActive 
-                      ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' 
+                      : 'text-quantum-400 hover:text-quantum-50 hover:bg-quantum-800'
                     }
                   `}
                 >
@@ -164,11 +164,11 @@ export function AppShell({ children, user, profile }: AppShellProps) {
             })}
           </nav>
 
-          <div className="p-4 border-t border-slate-800">
+          <div className="p-4 border-t border-quantum-700">
              <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase tracking-wider text-slate-500">Environment</span>
-                    <Badge variant="default" size="sm" className="text-[10px] py-0 px-2 h-5 bg-slate-800 text-slate-300 border border-slate-700">
+                    <span className="text-[10px] uppercase tracking-wider text-quantum-500">Environment</span>
+                    <Badge variant="default" size="sm" className="text-[10px] py-0 px-2 h-5 bg-quantum-800 text-quantum-300 border border-quantum-700">
                       PRODUCTION
                     </Badge>
                 </div>
@@ -178,12 +178,12 @@ export function AppShell({ children, user, profile }: AppShellProps) {
       </aside>
 
       <div className="flex-1 flex flex-col min-h-screen transition-all duration-200">
-        <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-sm border-b border-slate-800 px-6 py-4">
+        <header className="sticky top-0 z-30 bg-quantum-950/80 backdrop-blur-sm border-b border-quantum-700 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setSidebarOpen(true)}
-                className="md:hidden text-slate-400 hover:text-white"
+                className="md:hidden text-quantum-400 hover:text-quantum-50"
               >
                 <Menu size={24} />
               </button>
@@ -191,8 +191,8 @@ export function AppShell({ children, user, profile }: AppShellProps) {
 
             <div className="flex items-center gap-6">
               <div className="hidden md:flex flex-col items-end">
-                <span className="text-sm font-medium text-slate-200">{user.email}</span>
-                <span className="text-xs text-slate-500 capitalize">{profile.role}</span>
+                <span className="text-sm font-medium text-quantum-200">{user.email}</span>
+                <span className="text-xs text-quantum-500 capitalize">{profile.role}</span>
               </div>
               
               <Badge variant={getRoleBadgeVariant(profile.role)} size="sm" className="capitalize">
@@ -203,7 +203,7 @@ export function AppShell({ children, user, profile }: AppShellProps) {
                 variant="ghost" 
                 size="sm" 
                 onClick={handleLogout}
-                className="!p-2 text-slate-400 hover:text-red-400"
+                className="!p-2 text-quantum-400 hover:text-red-400"
                 title="Sign Out"
               >
                 <LogOut size={20} />

@@ -29,7 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-slate-950 text-slate-50 antialiased">
+      <body className="min-h-screen bg-quantum-950 text-quantum-50 antialiased">
          <AppShell user={user} profile={profile}>
             {children}
          </AppShell>

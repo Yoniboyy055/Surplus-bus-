@@ -8,6 +8,9 @@ import { Badge } from "@/components/Badge";
 import { ConfirmModal } from "@/components/ConfirmModal";
 import { EmptyState } from "@/components/EmptyState";
 import { StatusPill } from "@/components/StatusPill";
+import { Card } from "@/components/Card";
+import { Input } from "@/components/Input";
+import { Button } from "@/components/Button";
 
 function CriteriaForm() {
   const [loading, setLoading] = useState(false);
@@ -54,31 +57,31 @@ function CriteriaForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-      <h2 className="text-xl font-semibold text-white">Submit New Criteria</h2>
+    <form onSubmit={handleSubmit} className="space-y-4 p-6 rounded-xl border border-quantum-700 bg-quantum-900/50">
+      <h2 className="text-xl font-semibold text-quantum-50">Submit New Criteria</h2>
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg flex items-center gap-2">
+        <div className="p-3 bg-accent-danger/10 border border-accent-danger/20 text-accent-danger text-sm rounded-lg flex items-center gap-2">
           <AlertCircle size={16} /> {error}
         </div>
       )}
       {success && (
-        <div className="p-3 bg-green-500/10 border border-green-500/20 text-green-400 text-sm rounded-lg flex items-center gap-2">
+        <div className="p-3 bg-accent-success/10 border border-accent-success/20 text-accent-success text-sm rounded-lg flex items-center gap-2">
           <AlertCircle size={16} /> {success}
         </div>
       )}
-      <select name="property_type" className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+      <select name="property_type" className="w-full p-3 rounded-lg bg-quantum-950 border border-quantum-700 text-quantum-200 text-sm focus:ring-2 focus:ring-cyan-500 outline-none" required>
         <option value="">Select Property Type</option>
         <option value="land">Land</option>
         <option value="commercial">Commercial</option>
         <option value="residential">Residential</option>
         <option value="industrial">Industrial</option>
       </select>
-      <input name="max_price" type="number" placeholder="Max Price (USD)" className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required />
-      <input name="location" type="text" placeholder="Preferred Location" className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-      <textarea name="notes" placeholder="Additional Notes" className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-sm h-24 focus:ring-2 focus:ring-blue-500 outline-none" />
-      <button type="submit" disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition text-sm font-semibold disabled:opacity-50 shadow-lg shadow-blue-900/20">
-        {loading ? "Submitting..." : "Submit Criteria"}
-      </button>
+      <Input name="max_price" type="number" placeholder="Max Price (USD)" required />
+      <Input name="location" type="text" placeholder="Preferred Location" />
+      <textarea name="notes" placeholder="Additional Notes" className="w-full p-3 rounded-lg bg-quantum-950 border border-quantum-700 text-quantum-200 text-sm h-24 focus:ring-2 focus:ring-cyan-500 outline-none" />
+      <Button type="submit" loading={loading} fullWidth className="shadow-lg shadow-cyan-900/20">
+        Submit Criteria
+      </Button>
     </form>
   );
 }
@@ -125,35 +128,35 @@ function DealStatus({ deal }: { deal: any }) {
 
   return (
     <>
-      <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 space-y-4">
+      <div className="p-6 rounded-xl border border-quantum-700 bg-quantum-900/50 space-y-4">
         <div className="flex justify-between items-start">
-           <h2 className="text-lg font-semibold text-white">Deal <span className="font-mono text-slate-400">#{deal.id.substring(0,8).toUpperCase()}</span></h2>
+           <h2 className="text-lg font-semibold text-quantum-50">Deal <span className="font-mono text-quantum-400">#{deal.id.substring(0,8).toUpperCase()}</span></h2>
            <StatusPill status={deal.status} size="sm" />
         </div>
 
-        <div className="space-y-2 text-sm text-slate-400">
+        <div className="space-y-2 text-sm text-quantum-400">
           <p><strong>Type:</strong> {deal.criteria?.property_type || 'N/A'}</p>
           <p><strong>Max Price:</strong> {deal.criteria?.max_price ? `$${deal.criteria.max_price}` : 'N/A'}</p>
           {deal.criteria?.location && <p><strong>Location:</strong> {deal.criteria.location}</p>}
         </div>
 
         {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg flex items-center gap-2">
+          <div className="p-3 bg-accent-danger/10 border border-accent-danger/20 text-accent-danger text-sm rounded-lg flex items-center gap-2">
             <AlertCircle size={16} /> {error}
           </div>
         )}
 
         {deal.status === 'EXCLUSIVE_WINDOW_ACTIVE' && (
-          <div className="space-y-4 pt-4 border-t border-slate-800">
-            <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-              <p className="text-xs text-yellow-500 font-medium flex items-center gap-2">
+          <div className="space-y-4 pt-4 border-t border-quantum-700">
+            <div className="p-3 bg-accent-warning/10 border border-accent-warning/20 rounded-lg">
+              <p className="text-xs text-accent-warning font-medium flex items-center gap-2">
                 <span className="animate-pulse">●</span> EXCLUSIVE WINDOW ACTIVE
               </p>
-              <p className="text-sm text-yellow-200 mt-1">Ends: {new Date(deal.exclusive_ends_at).toLocaleString()}</p>
+              <p className="text-sm text-accent-warning mt-1">Ends: {new Date(deal.exclusive_ends_at).toLocaleString()}</p>
             </div>
-            <button onClick={handleCommit} className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg transition font-bold shadow-lg shadow-green-900/20">
+            <Button onClick={handleCommit} fullWidth variant="primary" className="font-bold shadow-lg shadow-green-900/20">
               Commit to Bid (5% Success Fee)
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -223,14 +226,14 @@ export default function BuyerPortal() {
     fetchData();
   }, [router, supabase]);
 
-  if (loading) return <div className="text-center py-20 text-slate-500">Loading Portal...</div>;
+  if (loading) return <div className="text-center py-20 text-quantum-500">Loading Portal...</div>;
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Buyer Portal</h1>
+        <h1 className="text-3xl font-bold text-quantum-50">Buyer Portal</h1>
         <div className="flex gap-2">
-          <div className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-medium uppercase tracking-wider border border-green-500/20">
+          <div className="px-3 py-1 bg-accent-success/20 text-accent-success rounded-full text-xs font-medium uppercase tracking-wider border border-accent-success/20">
             Track {buyerData?.track || 'B'}
           </div>
           <div 
@@ -238,7 +241,7 @@ export default function BuyerPortal() {
           >
             Reputation: {buyerData?.reputation_score || 50}
             <HelpCircle size={12} />
-            <div className="absolute top-full mt-2 right-0 w-64 p-3 bg-slate-900 border border-slate-700 rounded-lg text-slate-300 text-[10px] normal-case tracking-normal shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+            <div className="absolute top-full mt-2 right-0 w-64 p-3 bg-quantum-900 border border-quantum-700 rounded-lg text-quantum-300 text-[10px] normal-case tracking-normal shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
               Score based on deal closure rate, speed of proof-of-funds submission, and adherence to mandate terms. Higher scores unlock Track A priority access.
             </div>
           </div>
@@ -250,7 +253,7 @@ export default function BuyerPortal() {
           {deals.length > 0 ? (
             <>
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-white">Active Deals ({deals.length})</h2>
+                <h2 className="text-xl font-semibold text-quantum-50">Active Deals ({deals.length})</h2>
               </div>
               <div className="grid gap-4">
                  {deals.map(deal => <DealStatus key={deal.id} deal={deal} />)}
@@ -268,11 +271,11 @@ export default function BuyerPortal() {
         <div className="space-y-6">
            <CriteriaForm />
            
-           <section className="p-6 rounded-xl border border-slate-800 bg-slate-900/50">
-              <h2 className="text-lg font-semibold text-white mb-4">Portal Info</h2>
-              <div className="space-y-4 text-sm text-slate-400">
+           <section className="p-6 rounded-xl border border-quantum-700 bg-quantum-900/50">
+              <h2 className="text-lg font-semibold text-quantum-50 mb-4">Portal Info</h2>
+              <div className="space-y-4 text-sm text-quantum-400">
                 <p>Welcome to your surplus acquisition dashboard. Here you can manage your property criteria and track active matches.</p>
-                <ul className="list-disc list-inside space-y-1 marker:text-blue-500">
+                <ul className="list-disc list-inside space-y-1 marker:text-cyan-500">
                   <li>Track A: Priority matching</li>
                   <li>Track B: Standard matching</li>
                   <li>Reputation affects your track status</li>
