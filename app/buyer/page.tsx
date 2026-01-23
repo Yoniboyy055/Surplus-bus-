@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, HelpCircle, Inbox, Send } from "lucide-react";
 import { Badge } from "@/components/Badge";
@@ -213,7 +213,7 @@ export default function BuyerPortal() {
   const supabase = createClient();
   const router = useRouter();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!supabase) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -242,11 +242,11 @@ export default function BuyerPortal() {
     
     setDeals(activeDeals || []);
     setLoading(false);
-  };
+  }, [router, supabase]);
 
   useEffect(() => {
     fetchData();
-  }, [router, supabase]);
+  }, [fetchData]);
 
   const handleCriteriaSuccess = () => {
     setToast({ message: "Criteria submitted successfully!", type: "success" });

@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { DealKanban } from "@/components/DealKanban";
 import { EmptyState } from "@/components/EmptyState";
@@ -20,7 +20,7 @@ export default function OperatorPortal() {
   const supabase = createClient();
   const router = useRouter();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!supabase) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -66,11 +66,11 @@ export default function OperatorPortal() {
     setQueueCount(count || 0);
 
     setLoading(false);
-  };
+  }, [router, supabase]);
 
   useEffect(() => {
     fetchData();
-  }, [router, supabase]);
+  }, [fetchData]);
 
   const handleStatusChange = async (dealId: string, newStatus: string, message?: string, internalNote?: string) => {
     const res = await fetch("/api/deals", {
