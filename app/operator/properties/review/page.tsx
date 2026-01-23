@@ -51,32 +51,35 @@ export default function OperatorPropertyReviewPage() {
 
   const handleAction = async (candidateId: string, decision: 'approved' | 'rejected') => {
     setActionLoading(true);
-    if (!supabase) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const res = await fetch('/api/agents/candidates', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ candidateId, decision }),
+      });
 
-    // If approved, we might also want to insert into the actual properties table
-    // For now, we just mark the candidate as processed
-    
-    const { error } = await supabase
-      .from('property_candidates')
-      .update({
-        status: decision,
-        operator_decision: decision,
-        reviewed_by: user?.id,
-        reviewed_at: new Date().toISOString()
-      })
-      .eq('id', candidateId);
+      const data = await res.json();
 
-    if (error) {
-      alert(`Error processing candidate: ${error.message}`);
-    } else {
-      // Remove from local state
+      if (!res.ok) {
+        alert(`Error: ${data.error || 'Failed to process candidate'}`);
+        return;
+      }
+
+      // Success - remove from local state
       setCandidates(prev => prev.filter(c => c.id !== candidateId));
       setSelectedCandidate(null);
+
+      // Show success message
+      if (decision === 'approved' && data.property_id) {
+        alert(`Property created successfully! ID: ${data.property_id.substring(0, 8)}`);
+      }
+    } catch (error) {
+      alert(`Network error: ${error instanceof Error ? error.message : 'Unknown'}`);
+    } finally {
+      setActionLoading(false);
+      setShowConfirm(false);
     }
-    setActionLoading(false);
-    setShowConfirm(false);
   };
 
   const openConfirm = (candidate: any, action: 'approved' | 'rejected') => {

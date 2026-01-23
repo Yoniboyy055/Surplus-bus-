@@ -31,7 +31,10 @@
     "target": "ES2017"
   },
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "vitest.config.ts"
   ],
   "include": [
     "next-env.d.ts",

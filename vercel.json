@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/agents/listing/scrape-alberta",
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/agents/listing/scrape-gc",
+      "schedule": "0 12 * * *"
+    }
+  ]
+}
