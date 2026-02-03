@@ -6,6 +6,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   OWNER_EMAIL: z.string().email().optional(), // Optional to prevent crash if not set in dev, but strictly should be set
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  CRON_SECRET: z.string().min(1).optional(), // Server-side only, required for cron authentication
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -16,6 +17,7 @@ const parsed = envSchema.safeParse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   OWNER_EMAIL: process.env.OWNER_EMAIL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  CRON_SECRET: process.env.CRON_SECRET,
 });
 
 if (!parsed.success) {
