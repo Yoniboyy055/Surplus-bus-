@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/AppShell";
 import "./globals.css";
@@ -33,6 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
          <AppShell user={user} profile={profile}>
             {children}
          </AppShell>
+         <Analytics />
       </body>
     </html>
   );
