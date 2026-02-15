@@ -4,8 +4,8 @@ import { AppShell } from "@/components/AppShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Surplus Referral Platform",
-  description: "High-level surplus property sourcing and advisory platform.",
+  title: "Surplus Bus",
+  description: "Public-surplus intelligence platform for alerts and analytics.",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
