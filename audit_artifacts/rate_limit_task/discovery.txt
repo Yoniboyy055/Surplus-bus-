@@ -1,0 +1,26 @@
+## API routes keyword scan
+app/landing/page.tsx:11:    await fetch("/api/beta-signups", {
+app/api/beta-signups/route.ts:7:const signupSchema = z.object({
+app/api/beta-signups/route.ts:16:    key: `beta-signups:${ip}`,
+app/api/beta-signups/route.ts:26:  const parsed = signupSchema.safeParse(body);
+app/api/beta-signups/route.ts:44:      .from("beta_signups")
+app/api/beta-signups/route.ts:48:      captureError("/api/beta-signups", error, { event: "upsert_failed" });
+app/api/beta-signups/route.ts:49:      return NextResponse.json({ error: "signup_failed" }, { status: 400 });
+app/api/beta-signups/route.ts:54:    captureError("/api/beta-signups", error, { event: "unexpected_exception" });
+app/api/beta-signups/route.ts:7:const signupSchema = z.object({
+app/api/beta-signups/route.ts:16:    key: `beta-signups:${ip}`,
+app/api/beta-signups/route.ts:26:  const parsed = signupSchema.safeParse(body);
+app/api/beta-signups/route.ts:44:      .from("beta_signups")
+app/api/beta-signups/route.ts:48:      captureError("/api/beta-signups", error, { event: "upsert_failed" });
+app/api/beta-signups/route.ts:49:      return NextResponse.json({ error: "signup_failed" }, { status: 400 });
+app/api/beta-signups/route.ts:54:    captureError("/api/beta-signups", error, { event: "unexpected_exception" });
+\n## Frontend call scan
+app/buyer/page.tsx:36:      const res = await fetch("/api/deals", {
+app/buyer/page.tsx:129:      const res = await fetch("/api/deals", {
+app/landing/page.tsx:11:    await fetch("/api/beta-signups", {
+app/api/beta-signups/route.ts:48:      captureError("/api/beta-signups", error, { event: "upsert_failed" });
+app/api/beta-signups/route.ts:54:    captureError("/api/beta-signups", error, { event: "unexpected_exception" });
+app/referrer/page.tsx:70:    const res = await fetch("/api/referral-links", { method: "POST" });
+app/operator/page.tsx:52:      const res = await fetch('/api/agents/health');
+app/operator/page.tsx:75:    const res = await fetch("/api/deals", {
+app/operator/payouts/PayoutsList.tsx:41:      const res = await fetch('/api/payouts', {
