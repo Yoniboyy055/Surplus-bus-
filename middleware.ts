@@ -1,89 +1,62 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
-import { isOwnerEmail } from './lib/auth/ownerEmail'
+import { NextResponse, type NextRequest } from "next/server";
 
+const WINDOW_MS = 60_000;
+const LIMIT = 30;
+const SIGNUP_PATH = "/api/beta-signups";
 
+type Bucket = { count: number; resetAt: number };
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+const storeKey = "__surplus_beta_signup_rl__";
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
+function getStore(): Map<string, Bucket> {
+  const globalRef = globalThis as unknown as Record<string, Map<string, Bucket> | undefined>;
+  if (!globalRef[storeKey]) {
+    globalRef[storeKey] = new Map<string, Bucket>();
+  }
+  return globalRef[storeKey]!;
+}
 
-  const { data: { user } } = await supabase.auth.getUser()
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return req.ip ?? "unknown";
+}
 
-  // Protected routes check
-  const protectedRoutes = ['/dashboard', '/operator', '/buyer', '/referrer']
-  const isProtectedRoute = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route))
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-  if (isProtectedRoute && !user) {
-    return NextResponse.redirect(new URL('/auth', request.url))
+  if (pathname !== SIGNUP_PATH) {
+    return NextResponse.next();
   }
 
-  // OWNER EMAIL HARDENING: Force owner to /operator, block other portals
-  if (user && isOwnerEmail(user.email)) {
-    const path = request.nextUrl.pathname;
-    // If owner tries to access buyer or referrer portals, redirect to operator
-    if (path.startsWith('/buyer') || path.startsWith('/referrer')) {
-      return NextResponse.redirect(new URL('/operator', request.url));
-    }
-    // Owner can always access /operator regardless of role in database
-    if (path.startsWith('/operator')) {
-      return response;
-    }
+  const ip = getClientIp(req);
+  const key = `beta:${ip}`;
+  const now = Date.now();
+  const store = getStore();
+
+  const existing = store.get(key);
+
+  if (!existing || now >= existing.resetAt) {
+    store.set(key, { count: 1, resetAt: now + WINDOW_MS });
+    return NextResponse.next();
   }
 
-  // Role-based access control (for non-owner users)
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile) {
-      const path = request.nextUrl.pathname
-      if (path.startsWith('/operator') && profile.role !== 'operator') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
-      if (path.startsWith('/buyer') && profile.role !== 'buyer') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
-      if (path.startsWith('/referrer') && profile.role !== 'referrer') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
-    }
+  if (existing.count >= LIMIT) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((existing.resetAt - now) / 1000));
+    return NextResponse.json(
+      { ok: false, error: "rate_limited" },
+      { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } }
+    );
   }
 
-  return response
+  existing.count += 1;
+  store.set(key, existing);
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
-}
+  matcher: ["/api/beta-signups"],
+};

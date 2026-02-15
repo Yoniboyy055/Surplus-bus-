@@ -1,0 +1,19 @@
+GET /api/beta-signups
+HTTP/1.1 405 Method Not Allowed
+vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+Date: Sun, 15 Feb 2026 21:22:24 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+
+POST /api/beta-signups
+HTTP/1.1 200 OK
+vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+content-type: application/json
+Date: Sun, 15 Feb 2026 21:22:24 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"ok":true,"mode":"local"}

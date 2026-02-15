@@ -1,0 +1,15 @@
+# API route search
+app/api/beta-signups/route.ts:6:const betaSignupSchema = z.object({
+app/api/beta-signups/route.ts:13:  const parsed = betaSignupSchema.safeParse(body);
+app/api/beta-signups/route.ts:25:    .from("beta_signups")
+app/api/beta-signups/route.ts:29:    return NextResponse.json({ ok: false, error: "signup_failed" }, { status: 400 });
+
+# Frontend fetch/action search
+app/referrer/page.tsx:70:    const res = await fetch("/api/referral-links", { method: "POST" });
+app/operator/page.tsx:52:      const res = await fetch('/api/agents/health');
+app/operator/page.tsx:76:    const res = await fetch("/api/deals", {
+app/operator/payouts/PayoutsList.tsx:41:      const res = await fetch('/api/payouts', {
+app/buyer/page.tsx:36:      const res = await fetch("/api/deals", {
+app/buyer/page.tsx:129:      const res = await fetch("/api/deals", {
+app/api/agents/listing/scrape-alberta/route.ts:64:    // In real implementation: fetch(url), cheerio.load(html), extract data
+app/api/agents/listing/scrape-gc/route.ts:64:    // In real implementation: fetch(url), cheerio.load(html), extract data

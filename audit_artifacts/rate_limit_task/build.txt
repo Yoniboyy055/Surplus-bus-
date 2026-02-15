@@ -1,0 +1,51 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> surplus-referral-platform@1.0.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/23) ...
+   Generating static pages (5/23) 
+   Generating static pages (11/23) 
+   Generating static pages (17/23) 
+ ✓ Generating static pages (23/23)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ƒ /                                    180 B          96.2 kB
+├ ƒ /_not-found                          873 B          88.2 kB
+├ ƒ /401                                 180 B          96.2 kB
+├ ƒ /403                                 180 B          96.2 kB
+├ ƒ /api/agents/health                   0 B                0 B
+├ ƒ /api/agents/listing/scrape-alberta   0 B                0 B
+├ ƒ /api/agents/listing/scrape-gc        0 B                0 B
+├ ƒ /api/beta-signups                    0 B                0 B
+├ ƒ /api/deals                           0 B                0 B
+├ ƒ /api/health                          0 B                0 B
+├ ƒ /api/payouts                         0 B                0 B
+├ ƒ /api/referral-links                  0 B                0 B
+├ ƒ /auth                                1.93 kB         177 kB
+├ ƒ /auth/callback                       0 B                0 B
+├ ƒ /buyer                               6.89 kB         173 kB
+├ ƒ /dashboard                           138 B          87.5 kB
+├ ƒ /onboarding/role                     2.15 kB         169 kB
+├ ƒ /operator                            7.31 kB         182 kB
+├ ƒ /operator/payouts                    3.98 kB        91.3 kB
+├ ƒ /operator/properties/review          10.5 kB         177 kB
+└ ƒ /referrer                            4.24 kB         171 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/117-8635805cd7fee0e3.js       31.7 kB
+  ├ chunks/fd9d1056-a4cd4812f5295779.js  53.6 kB
+  └ other shared chunks (total)          1.95 kB
+
+
+ƒ Middleware                             26.7 kB
+
+ƒ  (Dynamic)  server-rendered on demand
+
