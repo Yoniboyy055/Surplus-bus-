@@ -8,7 +8,6 @@ type Profile = {
 };
 
 export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
-  console.log(`ensureProfile: Checking profile for ${user.email} (${user.id})`);
 
   // 1. Try to read existing profile with the user's client (RLS applied)
   const { data: existing, error: selectError } = await userClient
@@ -20,7 +19,6 @@ export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
   // If we found it, verify role upgrade for owner
   if (existing) {
     if (isOwnerEmail(user.email) && existing.role !== 'operator') {
-       console.log(`ensureProfile: Upgrading ${user.email} to operator`);
        // Use admin client for upgrade to bypass any "self_update" restrictions on role
        const adminClient = getAdminClient();
        const { data: updated, error: updateError } = await adminClient
@@ -31,7 +29,6 @@ export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
          .single();
        
        if (updateError) {
-         console.error("ensureProfile: Upgrade failed", updateError);
          // Fallback to existing, but log error
          return { profile: existing as Profile, created: false };
        }
@@ -49,7 +46,6 @@ export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
   const role = isOwnerEmail(user.email) ? "operator" : "referrer"; // Default to referrer for new users as per requirement? 
   // Requirement says: "role default = 'referrer' unless operator email match" -> YES.
   
-  console.log(`ensureProfile: Profile not found, inserting for ${user.id} with role ${role} (using Admin Client)`);
   
   const adminClient = getAdminClient();
   
@@ -68,7 +64,6 @@ export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
     .single();
 
   if (insertError) {
-    console.error("ensureProfile: Admin INSERT/UPSERT failed", insertError);
     // If admin fails, something is very wrong (DB down, constraints).
     throw insertError;
   }

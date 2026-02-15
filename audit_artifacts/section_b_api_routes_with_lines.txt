@@ -1,0 +1,892 @@
+===== app/api/agents/health/route.ts =====
+     1	import { createClient } from "@/lib/supabase/server";
+     2	import { NextResponse } from "next/server";
+     3	
+     4	export async function GET(request: Request) {
+     5	  const supabase = createClient();
+     6	  if (!supabase) return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+     7	
+     8	  const { data: { user } } = await supabase.auth.getUser();
+     9	  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    10	
+    11	  // 1. Fetch recent logs
+    12	  const { data: logs } = await supabase
+    13	    .from('agent_health_log')
+    14	    .select('*')
+    15	    .order('created_at', { ascending: false })
+    16	    .limit(50);
+    17	
+    18	  // 2. Calculate metrics
+    19	  const totalRuns = logs?.length || 0;
+    20	  const failures = logs?.filter(l => l.status === 'failure').length || 0;
+    21	  const successRate = totalRuns > 0 ? ((totalRuns - failures) / totalRuns) * 100 : 100;
+    22	  
+    23	  const itemsQueuedLast24h = logs
+    24	    ?.filter(l => new Date(l.created_at).getTime() > Date.now() - 86400000)
+    25	    .reduce((sum, l) => sum + (l.items_queued || 0), 0) || 0;
+    26	
+    27	  return NextResponse.json({
+    28	    health: {
+    29	      success_rate: Math.round(successRate),
+    30	      status: successRate > 90 ? 'healthy' : successRate > 70 ? 'degraded' : 'critical',
+    31	      last_run: logs?.[0]?.created_at || null,
+    32	      items_queued_24h: itemsQueuedLast24h
+    33	    },
+    34	    recent_logs: logs
+    35	  });
+    36	}
+
+===== app/api/agents/listing/scrape-alberta/route.ts =====
+     1	import { createClient } from "@/lib/supabase/server";
+     2	import { NextResponse } from "next/server";
+     3	import { verifyAgentAuth } from "@/lib/auth/verifyAgentAuth";
+     4	import { completeIngestionRun, queueCandidates, startIngestionRun } from "@/lib/agents/ingestion";
+     5	
+     6	const QUEUE_CAP = 100;
+     7	const AGENT_NAME = "scrape_alberta_auction";
+     8	const SOURCE_URL = "https://surplus.gov.ab.ca";
+     9	
+    10	export async function POST(request: Request) {
+    11	  const startTime = Date.now();
+    12	  const supabase = createClient();
+    13	
+    14	  if (!supabase) {
+    15	    return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+    16	  }
+    17	
+    18	  const authError = await verifyAgentAuth(request);
+    19	  if (authError) {
+    20	    await logHealth(supabase, "failure", 0, 0, Date.now() - startTime, "Unauthorized");
+    21	    return authError;
+    22	  }
+    23	
+    24	  const runId = await startIngestionRun(supabase, AGENT_NAME, SOURCE_URL);
+    25	
+    26	  try {
+    27	    const { count: queuedCount, error: countError } = await supabase
+    28	      .from("property_candidates")
+    29	      .select("*", { count: "exact", head: true })
+    30	      .eq("status", "queued");
+    31	
+    32	    if (countError) {
+    33	      throw new Error(`Queue check failed: ${countError.message}`);
+    34	    }
+    35	
+    36	    if ((queuedCount ?? 0) >= QUEUE_CAP) {
+    37	      await completeIngestionRun(supabase, runId, "success", { items_found: 0, items_queued: 0 });
+    38	      await logHealth(supabase, "success", 0, 0, Date.now() - startTime, null, {
+    39	        reason: "queue_cap_reached",
+    40	        queued_count: queuedCount
+    41	      });
+    42	      return NextResponse.json({ ok: true, agent: AGENT_NAME, itemsFound: 0, itemsQueued: 0, message: "queue cap reached" });
+    43	    }
+    44	
+    45	    const mockCandidates = [
+    46	      {
+    47	        source_platform: "alberta_auction",
+    48	        source_url: "https://surplus.gov.ab.ca/listing/12345",
+    49	        source_id: `ab-${Date.now()}-1`,
+    50	        property_data: {
+    51	          title: "2018 Ford F-150 XLT SuperCrew",
+    52	          description: "Fleet vehicle, regularly maintained.",
+    53	          category: "Vehicles",
+    54	          location: "Edmonton, AB",
+    55	          price: 18500
+    56	        },
+    57	        quality_score: 85,
+    58	        quality_breakdown: { completeness: 20, condition: 15, liquidity: 10, source: 15 },
+    59	        bucket: "approve"
+    60	      }
+    61	    ];
+    62	
+    63	    const queueResult = await queueCandidates(supabase, runId, mockCandidates);
+    64	    await completeIngestionRun(supabase, runId, "success", {
+    65	      items_found: queueResult.itemsFound,
+    66	      items_queued: queueResult.itemsQueued
+    67	    });
+    68	
+    69	    await logHealth(supabase, "success", queueResult.itemsFound, queueResult.itemsQueued, Date.now() - startTime);
+    70	    return NextResponse.json({ success: true, queued: queueResult.queuedIds });
+    71	  } catch (error) {
+    72	    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    73	    await completeIngestionRun(supabase, runId, "failure", { items_found: 0, items_queued: 0, error_message: errorMessage });
+    74	    await logHealth(supabase, "failure", 0, 0, Date.now() - startTime, errorMessage);
+    75	    return NextResponse.json({ error: "Internal server error", message: errorMessage }, { status: 500 });
+    76	  }
+    77	}
+    78	
+    79	async function logHealth(
+    80	  supabase: ReturnType<typeof createClient>,
+    81	  status: "success" | "failure",
+    82	  itemsFound: number,
+    83	  itemsQueued: number,
+    84	  executionTimeMs: number,
+    85	  errorMessage: string | null = null,
+    86	  metadata?: Record<string, unknown>
+    87	) {
+    88	  if (!supabase) return;
+    89	
+    90	  await supabase.from("agent_health_log").insert({
+    91	    agent_type: "listing",
+    92	    agent_name: AGENT_NAME,
+    93	    status,
+    94	    items_found: itemsFound,
+    95	    items_queued: itemsQueued,
+    96	    execution_time_ms: executionTimeMs,
+    97	    error_message: errorMessage,
+    98	    source_url: SOURCE_URL,
+    99	    metadata: metadata || null
+   100	  });
+   101	}
+
+===== app/api/agents/listing/scrape-gc/route.ts =====
+     1	import { createClient } from "@/lib/supabase/server";
+     2	import { NextResponse } from "next/server";
+     3	import { verifyAgentAuth } from "@/lib/auth/verifyAgentAuth";
+     4	import { completeIngestionRun, queueCandidates, startIngestionRun } from "@/lib/agents/ingestion";
+     5	
+     6	const QUEUE_CAP = 100;
+     7	const AGENT_NAME = "scrape_gc_surplus";
+     8	const SOURCE_URL = "https://gcsurplus.ca";
+     9	
+    10	export async function POST(request: Request) {
+    11	  const startTime = Date.now();
+    12	  const supabase = createClient();
+    13	
+    14	  if (!supabase) {
+    15	    return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+    16	  }
+    17	
+    18	  const authError = await verifyAgentAuth(request);
+    19	  if (authError) {
+    20	    await logHealth(supabase, "failure", 0, 0, Date.now() - startTime, "Unauthorized");
+    21	    return authError;
+    22	  }
+    23	
+    24	  const runId = await startIngestionRun(supabase, AGENT_NAME, SOURCE_URL);
+    25	
+    26	  try {
+    27	    const { count: queuedCount, error: countError } = await supabase
+    28	      .from("property_candidates")
+    29	      .select("*", { count: "exact", head: true })
+    30	      .eq("status", "queued");
+    31	
+    32	    if (countError) throw new Error(`Queue check failed: ${countError.message}`);
+    33	
+    34	    if ((queuedCount ?? 0) >= QUEUE_CAP) {
+    35	      await completeIngestionRun(supabase, runId, "success", { items_found: 0, items_queued: 0 });
+    36	      await logHealth(supabase, "success", 0, 0, Date.now() - startTime, null, { reason: "queue_cap_reached", queued_count: queuedCount });
+    37	      return NextResponse.json({ ok: true, agent: AGENT_NAME, itemsFound: 0, itemsQueued: 0, message: "queue cap reached" });
+    38	    }
+    39	
+    40	    const mockCandidates = [
+    41	      {
+    42	        source_platform: "gc_surplus",
+    43	        source_url: "https://gcsurplus.ca/mn-eng.cfm?snc=wfsav&sc=enc-bid&scn=12345",
+    44	        source_id: `gc-${Date.now()}-1`,
+    45	        property_data: {
+    46	          title: "Heavy Duty Lathe - Industrial",
+    47	          description: "Industrial metal lathe",
+    48	          category: "Equipment",
+    49	          location: "Ottawa, ON",
+    50	          price: 4200
+    51	        },
+    52	        quality_score: 92,
+    53	        quality_breakdown: { completeness: 20, condition: 15, liquidity: 10, source: 20 },
+    54	        bucket: "approve"
+    55	      }
+    56	    ];
+    57	
+    58	    const queueResult = await queueCandidates(supabase, runId, mockCandidates);
+    59	    await completeIngestionRun(supabase, runId, "success", {
+    60	      items_found: queueResult.itemsFound,
+    61	      items_queued: queueResult.itemsQueued
+    62	    });
+    63	
+    64	    await logHealth(supabase, "success", queueResult.itemsFound, queueResult.itemsQueued, Date.now() - startTime);
+    65	    return NextResponse.json({ success: true, queued: queueResult.queuedIds });
+    66	  } catch (error) {
+    67	    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    68	    await completeIngestionRun(supabase, runId, "failure", { items_found: 0, items_queued: 0, error_message: errorMessage });
+    69	    await logHealth(supabase, "failure", 0, 0, Date.now() - startTime, errorMessage);
+    70	    return NextResponse.json({ error: "Internal server error", message: errorMessage }, { status: 500 });
+    71	  }
+    72	}
+    73	
+    74	async function logHealth(
+    75	  supabase: ReturnType<typeof createClient>,
+    76	  status: "success" | "failure",
+    77	  itemsFound: number,
+    78	  itemsQueued: number,
+    79	  executionTimeMs: number,
+    80	  errorMessage: string | null = null,
+    81	  metadata?: Record<string, unknown>
+    82	) {
+    83	  if (!supabase) return;
+    84	
+    85	  await supabase.from("agent_health_log").insert({
+    86	    agent_type: "listing",
+    87	    agent_name: AGENT_NAME,
+    88	    status,
+    89	    items_found: itemsFound,
+    90	    items_queued: itemsQueued,
+    91	    execution_time_ms: executionTimeMs,
+    92	    error_message: errorMessage,
+    93	    source_url: SOURCE_URL,
+    94	    metadata: metadata || null
+    95	  });
+    96	}
+
+===== app/api/alerts/route.ts =====
+     1	import { NextResponse } from "next/server";
+     2	import { requireUser } from "@/lib/auth/requireUser";
+     3	
+     4	export async function GET() {
+     5	  const { supabase, user, error } = await requireUser();
+     6	  if (error || !supabase || !user) return error!;
+     7	
+     8	  const { data } = await supabase
+     9	    .from("alert_rules")
+    10	    .select("*")
+    11	    .eq("profile_id", user.id)
+    12	    .order("created_at", { ascending: false });
+    13	
+    14	  return NextResponse.json({ alerts: data || [] });
+    15	}
+    16	
+    17	export async function POST(request: Request) {
+    18	  const { supabase, user, error } = await requireUser();
+    19	  if (error || !supabase || !user) return error!;
+    20	
+    21	  const body = await request.json();
+    22	  const { category, min_price, max_price, region, channel } = body;
+    23	
+    24	  if (!category || !channel) {
+    25	    return NextResponse.json({ error: "category and channel are required" }, { status: 400 });
+    26	  }
+    27	
+    28	  const payload = {
+    29	    profile_id: user.id,
+    30	    category,
+    31	    min_price: min_price ?? null,
+    32	    max_price: max_price ?? null,
+    33	    region: region ?? null,
+    34	    channel,
+    35	    is_active: true,
+    36	  };
+    37	  const { data, error: insertError } = await supabase.from("alert_rules").insert(payload).select("*").single();
+    38	
+    39	  if (insertError) return NextResponse.json({ error: insertError.message }, { status: 400 });
+    40	  return NextResponse.json({ alert: data }, { status: 201 });
+    41	}
+
+===== app/api/analytics/route.ts =====
+     1	import { NextResponse } from "next/server";
+     2	import { requireUser } from "@/lib/auth/requireUser";
+     3	
+     4	export async function GET() {
+     5	  const { supabase, user, error } = await requireUser();
+     6	  if (error || !supabase || !user) return error!;
+     7	
+     8	  const { data: rules } = await supabase.from("alert_rules").select("id,category").eq("profile_id", user.id);
+     9	  const ruleIds = (rules || []).map((r: any) => r.id);
+    10	
+    11	  let sent = 0;
+    12	  let opened = 0;
+    13	
+    14	  if (ruleIds.length > 0) {
+    15	    const { data: events } = await supabase
+    16	      .from("alert_delivery_events")
+    17	      .select("event_type,alert_rule_id")
+    18	      .in("alert_rule_id", ruleIds);
+    19	
+    20	    sent = (events || []).filter((e: any) => e.event_type === "sent").length;
+    21	    opened = (events || []).filter((e: any) => e.event_type === "opened").length;
+    22	  }
+    23	
+    24	  const categoryCounts = new Map<string, number>();
+    25	  for (const row of rules || []) {
+    26	    categoryCounts.set(row.category, (categoryCounts.get(row.category) || 0) + 1);
+    27	  }
+    28	
+    29	  return NextResponse.json({
+    30	    alerts_sent_7d: sent,
+    31	    alerts_opened_7d: opened,
+    32	    open_rate: sent > 0 ? Math.round((opened / sent) * 100) : 0,
+    33	    top_categories: [...categoryCounts.entries()].map(([category, count]) => ({ category, count })),
+    34	  });
+    35	}
+
+===== app/api/beta-signups/route.ts =====
+     1	import { NextResponse } from "next/server";
+     2	import { createClient } from "@/lib/supabase/server";
+     3	
+     4	export async function POST(request: Request) {
+     5	  const supabase = createClient();
+     6	  const { email, use_case } = await request.json();
+     7	
+     8	  if (!email) return NextResponse.json({ error: "email required" }, { status: 400 });
+     9	  if (!supabase) return NextResponse.json({ ok: true, mode: "local" });
+    10	
+    11	  const { error } = await supabase.from("beta_signups").upsert({ email, use_case: use_case ?? null }, { onConflict: "email" });
+    12	  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    13	
+    14	  return NextResponse.json({ ok: true });
+    15	}
+
+===== app/api/deals/route.ts =====
+     1	import { createClient } from "@/lib/supabase/server";
+     2	import { NextResponse } from "next/server";
+     3	import { z } from "zod";
+     4	
+     5	const criteriaSchema = z.object({
+     6	  property_type: z.string(),
+     7	  max_price: z.coerce.number().positive(),
+     8	  location: z.string().max(200).optional(),
+     9	  notes: z.string().max(1000).optional(),
+    10	});
+    11	
+    12	const submissionSchema = z.object({
+    13	  property_type: z.string(),
+    14	  max_price: z.string().or(z.number()), // Accept string or number from form data
+    15	  criteria: z.object({
+    16	    location: z.string().optional(),
+    17	    notes: z.string().optional()
+    18	  }).optional()
+    19	});
+    20	
+    21	export async function POST(request: Request) {
+    22	  const supabase = createClient();
+    23	  if (!supabase) return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+    24	
+    25	  const { data: { user } } = await supabase.auth.getUser();
+    26	  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    27	
+    28	  let body;
+    29	  try {
+    30	    body = await request.json();
+    31	  } catch (e) {
+    32	    return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
+    33	  }
+    34	
+    35	  const parseResult = submissionSchema.safeParse(body);
+    36	  if (!parseResult.success) {
+    37	    return NextResponse.json({ error: "Validation failed", details: parseResult.error.format() }, { status: 400 });
+    38	  }
+    39	
+    40	  const { property_type, max_price, criteria } = parseResult.data;
+    41	
+    42	  // 3️⃣ Buyer Criteria Guard
+    43	  // (Redundant check as Zod handles it, but keeping for logic flow clarity)
+    44	  if (!property_type || !max_price) {
+    45	    return NextResponse.json({ 
+    46	      error: "Missing required fields: property_type and max_price are mandatory." 
+    47	    }, { status: 400 });
+    48	  }
+    49	
+    50	  // Validate criteria structure to prevent JSON injection/bloat
+    51	  const cleanCriteria = {
+    52	    location: criteria?.location?.substring(0, 200),
+    53	    notes: criteria?.notes?.substring(0, 1000),
+    54	    property_type,
+    55	    max_price: Number(max_price)
+    56	  };
+    57	
+    58	  const { data: profile } = await supabase
+    59	    .from("profiles")
+    60	    .select("role")
+    61	    .eq("id", user.id)
+    62	    .single();
+    63	
+    64	  if (profile?.role !== "buyer") {
+    65	    return NextResponse.json({ error: "Only buyers can submit criteria" }, { status: 403 });
+    66	  }
+    67	
+    68	  // Fetch a default referrer for MVP if none provided
+    69	  const { data: referrer } = await supabase.from("referrers").select("profile_id, commission_rate").limit(1).single();
+    70	  
+    71	  const { data: deal, error } = await supabase
+    72	    .from("deals")
+    73	    .insert({
+    74	      buyer_profile_id: user.id,
+    75	      referrer_profile_id: referrer?.profile_id,
+    76	      status: "NEW_SUBMISSION",
+    77	      buyer_track_snapshot: "B",
+    78	      referrer_fee_split_percent: referrer?.commission_rate || 20,
+    79	      operator_fee_split_percent: 100 - (referrer?.commission_rate || 20),
+    80	      criteria: cleanCriteria
+    81	    })
+    82	    .select()
+    83	    .single();
+    84	
+    85	  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    86	
+    87	  return NextResponse.json(deal);
+    88	}
+    89	
+    90	export async function PUT(request: Request) {
+    91	  const supabase = createClient();
+    92	  if (!supabase) return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+    93	
+    94	  const { data: { user } } = await supabase.auth.getUser();
+    95	  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    96	
+    97	  let body;
+    98	  try {
+    99	    body = await request.json();
+   100	  } catch (e) {
+   101	    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+   102	  }
+   103	
+   104	  const { dealId, action, acceptedFee } = body;
+   105	
+   106	  if (action === "COMMIT_TO_BID") {
+   107	    // 5️⃣ Buyer Commit Confirmation Guard
+   108	    if (!acceptedFee) {
+   109	      return NextResponse.json({ error: "You must accept the success fee to commit." }, { status: 400 });
+   110	    }
+   111	
+   112	    const { data: deal } = await supabase
+   113	      .from("deals")
+   114	      .select("status, buyer_profile_id")
+   115	      .eq("id", dealId)
+   116	      .single();
+   117	
+   118	    if (!deal || deal.buyer_profile_id !== user.id) {
+   119	      return NextResponse.json({ error: "Deal not found or unauthorized" }, { status: 404 });
+   120	    }
+   121	
+   122	    if (deal.status !== "EXCLUSIVE_WINDOW_ACTIVE") {
+   123	      return NextResponse.json({ error: "Deal is not in the exclusive window." }, { status: 400 });
+   124	    }
+   125	
+   126	    const { error } = await supabase
+   127	      .from("deals")
+   128	      .update({ status: "BUYER_COMMITTED" })
+   129	      .eq("id", dealId);
+   130	
+   131	    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+   132	
+   133	    // Audit log
+   134	    await supabase.from("audit_logs").insert({
+   135	      deal_id: dealId,
+   136	      actor_profile_id: user.id,
+   137	      actor_role: "buyer",
+   138	      action: "BUYER_COMMITTED",
+   139	      from_status: "EXCLUSIVE_WINDOW_ACTIVE",
+   140	      to_status: "BUYER_COMMITTED",
+   141	      metadata: { acceptedFee: true }
+   142	    });
+   143	
+   144	    return NextResponse.json({ success: true });
+   145	  }
+   146	
+   147	  return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+   148	}
+   149	
+   150	export async function PATCH(request: Request) {
+   151	  const supabase = createClient();
+   152	  if (!supabase) return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+   153	
+   154	  const { data: { user } } = await supabase.auth.getUser();
+   155	  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+   156	
+   157	  const { data: profile } = await supabase
+   158	    .from("profiles")
+   159	    .select("role")
+   160	    .eq("id", user.id)
+   161	    .single();
+   162	
+   163	  if (profile?.role !== "operator") {
+   164	    return NextResponse.json({ error: "Unauthorized: Operator access only" }, { status: 403 });
+   165	  }
+   166	
+   167	  let body;
+   168	  try {
+   169	    body = await request.json();
+   170	  } catch (e) {
+   171	    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+   172	  }
+   173	
+   174	  const { dealId, status, message, internal_note } = body;
+   175	
+   176	  // 4️⃣ Operator Status Guards
+   177	  if (status === "NEEDS_CLARIFICATION" && !message) {
+   178	    return NextResponse.json({ 
+   179	      error: "Missing message: A clarification message to the buyer is required." 
+   180	    }, { status: 400 });
+   181	  }
+   182	
+   183	  const { data: oldDeal } = await supabase.from("deals").select("status").eq("id", dealId).single();
+   184	
+   185	  const { error } = await supabase
+   186	    .from("deals")
+   187	    .update({ status })
+   188	    .eq("id", dealId);
+   189	
+   190	  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+   191	
+   192	  // Audit log
+   193	  await supabase.from("audit_logs").insert({
+   194	    deal_id: dealId,
+   195	    actor_profile_id: user.id,
+   196	    actor_role: "operator",
+   197	    action: "STATUS_CHANGE",
+   198	    from_status: oldDeal?.status,
+   199	    to_status: status,
+   200	    metadata: { message, internal_note }
+   201	  });
+   202	
+   203	  return NextResponse.json({ success: true });
+   204	}
+
+===== app/api/health/route.ts =====
+     1	import { NextResponse } from "next/server";
+     2	
+     3	import { isSupabaseConfigured } from "@/lib/env";
+     4	import { createClient } from "@/lib/supabase/server";
+     5	
+     6	type SupabaseErrorLike = {
+     7	  code?: string | null;
+     8	  message?: string | null;
+     9	};
+    10	
+    11	const isPermissionError = (error: SupabaseErrorLike) => {
+    12	  const message = error.message?.toLowerCase() ?? "";
+    13	  return error.code === "42501" || message.includes("permission") || message.includes("jwt");
+    14	};
+    15	
+    16	export async function GET() {
+    17	  if (!isSupabaseConfigured) {
+    18	    return NextResponse.json({ ok: false, reason: "supabase_not_configured" });
+    19	  }
+    20	
+    21	  const supabase = createClient();
+    22	  if (!supabase) {
+    23	    return NextResponse.json({ ok: false, reason: "supabase_not_configured" });
+    24	  }
+    25	
+    26	  const { error } = await supabase.from("profiles").select("id", { head: true }).limit(1);
+    27	
+    28	  if (error && !isPermissionError(error)) {
+    29	    return NextResponse.json(
+    30	      { ok: false, supabase: "error", detail: error.message ?? "unknown error" },
+    31	      { status: 500 }
+    32	    );
+    33	  }
+    34	
+    35	  return NextResponse.json({ ok: true });
+    36	}
+
+===== app/api/opportunities/ranked/route.ts =====
+     1	import { NextResponse } from "next/server";
+     2	import { requireUser } from "@/lib/auth/requireUser";
+     3	import { personalizedScore, urgencyScore } from "@/lib/intelligence/scoring";
+     4	
+     5	export async function GET(request: Request) {
+     6	  const { supabase, user, error } = await requireUser();
+     7	  if (error || !supabase || !user) return error!;
+     8	
+     9	  const url = new URL(request.url);
+    10	  const limit = Math.min(Number(url.searchParams.get("limit") || 20), 50);
+    11	
+    12	  const { data: pref } = await supabase
+    13	    .from("user_preferences")
+    14	    .select("provinces,categories,min_value,max_value,urgency_days")
+    15	    .eq("profile_id", user.id)
+    16	    .maybeSingle();
+    17	
+    18	  const { data: rows, error: rankedError } = await supabase
+    19	    .from("opportunity_features")
+    20	    .select(
+    21	      "normalized_score,demand_score,value_score,urgency_score,opportunity_id,opportunities(id,title,province,category,estimated_value,closing_date,source,status)"
+    22	    )
+    23	    .order("normalized_score", { ascending: false })
+    24	    .limit(limit * 3);
+    25	
+    26	  if (rankedError) return NextResponse.json({ error: rankedError.message }, { status: 400 });
+    27	
+    28	  const provinces = pref?.provinces || [];
+    29	  const categories = pref?.categories || [];
+    30	  const minValue = pref?.min_value ?? null;
+    31	  const maxValue = pref?.max_value ?? null;
+    32	  const urgencyDays = pref?.urgency_days ?? 7;
+    33	
+    34	  const scored = (rows || [])
+    35	    .map((row: any) => {
+    36	      const opp = row.opportunities;
+    37	      if (!opp) return null;
+    38	
+    39	      const provinceMatch = provinces.length ? Number(provinces.includes(opp.province)) : 0;
+    40	      const categoryMatch = categories.length ? Number(categories.includes(opp.category)) : 0;
+    41	      const valueMatch =
+    42	        minValue !== null && maxValue !== null && typeof opp.estimated_value === "number"
+    43	          ? Number(opp.estimated_value >= minValue && opp.estimated_value <= maxValue)
+    44	          : 0;
+    45	      const urgencyMatch = Number(urgencyScore(opp.closing_date) >= urgencyScore(new Date(Date.now() + urgencyDays * 86400000).toISOString()));
+    46	
+    47	      const userScore = personalizedScore(row.normalized_score, {
+    48	        province_match: provinceMatch,
+    49	        category_match: categoryMatch,
+    50	        value_match: valueMatch,
+    51	        urgency_match: urgencyMatch,
+    52	      });
+    53	
+    54	      return {
+    55	        id: opp.id,
+    56	        title: opp.title,
+    57	        source: opp.source,
+    58	        province: opp.province,
+    59	        category: opp.category,
+    60	        estimated_value: opp.estimated_value,
+    61	        closing_date: opp.closing_date,
+    62	        status: opp.status,
+    63	        score: userScore,
+    64	        score_breakdown: {
+    65	          base_normalized: row.normalized_score,
+    66	          demand: row.demand_score,
+    67	          value: row.value_score,
+    68	          urgency: row.urgency_score,
+    69	        },
+    70	      };
+    71	    })
+    72	    .filter(Boolean)
+    73	    .sort((a: any, b: any) => b.score - a.score)
+    74	    .slice(0, limit);
+    75	
+    76	  return NextResponse.json({ opportunities: scored });
+    77	}
+
+===== app/api/opportunities/recompute-scores/route.ts =====
+     1	import { NextResponse } from "next/server";
+     2	import { requireOperator } from "@/lib/auth/requireUser";
+     3	import { computeScore, demandScore, normalizeScore, urgencyScore, valueScore } from "@/lib/intelligence/scoring";
+     4	
+     5	export async function POST() {
+     6	  const { supabase, error } = await requireOperator();
+     7	  if (error || !supabase) return error!;
+     8	
+     9	  const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    10	
+    11	  const { data: opportunities, error: oppError } = await supabase
+    12	    .from("opportunities")
+    13	    .select("id,category,estimated_value,closing_date,created_at")
+    14	    .gte("created_at", ninetyDaysAgo)
+    15	    .neq("status", "closed");
+    16	
+    17	  if (oppError) return NextResponse.json({ error: oppError.message }, { status: 400 });
+    18	
+    19	  if (!opportunities?.length) {
+    20	    return NextResponse.json({ ok: true, processed: 0 });
+    21	  }
+    22	
+    23	  const categoryCount = new Map<string, number>();
+    24	  const categoryValueTotals = new Map<string, { sum: number; count: number }>();
+    25	
+    26	  for (const row of opportunities) {
+    27	    const category = row.category || "uncategorized";
+    28	    categoryCount.set(category, (categoryCount.get(category) || 0) + 1);
+    29	    if (typeof row.estimated_value === "number") {
+    30	      const current = categoryValueTotals.get(category) || { sum: 0, count: 0 };
+    31	      categoryValueTotals.set(category, { sum: current.sum + row.estimated_value, count: current.count + 1 });
+    32	    }
+    33	  }
+    34	
+    35	  const maxCategoryCount = Math.max(...categoryCount.values(), 1);
+    36	
+    37	  const interim = opportunities.map((row) => {
+    38	    const category = row.category || "uncategorized";
+    39	    const avg = categoryValueTotals.get(category);
+    40	    const avgValue = avg && avg.count > 0 ? avg.sum / avg.count : 1;
+    41	
+    42	    const demand = demandScore(categoryCount.get(category) || 0, maxCategoryCount);
+    43	    const value = valueScore(row.estimated_value, avgValue);
+    44	    const urgency = urgencyScore(row.closing_date);
+    45	    const base = computeScore({ demand_score: demand, value_score: value, urgency_score: urgency });
+    46	
+    47	    return {
+    48	      opportunity_id: row.id,
+    49	      demand_score: Number(demand.toFixed(4)),
+    50	      value_score: Number(value.toFixed(4)),
+    51	      urgency_score: Number(urgency.toFixed(4)),
+    52	      base_score: Number(base.toFixed(4)),
+    53	      normalized_score: 0,
+    54	      computed_at: new Date().toISOString(),
+    55	    };
+    56	  });
+    57	
+    58	  const minBase = Math.min(...interim.map((x) => x.base_score));
+    59	  const maxBase = Math.max(...interim.map((x) => x.base_score));
+    60	
+    61	  const finalRows = interim.map((row) => ({
+    62	    ...row,
+    63	    normalized_score: normalizeScore(row.base_score, minBase, maxBase),
+    64	  }));
+    65	
+    66	  const { error: upsertError } = await supabase
+    67	    .from("opportunity_features")
+    68	    .upsert(finalRows, { onConflict: "opportunity_id", ignoreDuplicates: false });
+    69	
+    70	  if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 400 });
+    71	
+    72	  return NextResponse.json({ ok: true, processed: finalRows.length });
+    73	}
+
+===== app/api/payouts/route.ts =====
+     1	import { createClient } from "@/lib/supabase/server";
+     2	import { NextResponse } from "next/server";
+     3	
+     4	export async function PATCH(request: Request) {
+     5	  const supabase = createClient();
+     6	  if (!supabase) return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+     7	
+     8	  const { data: { user } } = await supabase.auth.getUser();
+     9	  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    10	
+    11	  const { data: profile } = await supabase
+    12	    .from("profiles")
+    13	    .select("role")
+    14	    .eq("id", user.id)
+    15	    .single();
+    16	
+    17	  if (profile?.role !== "operator") {
+    18	    return NextResponse.json({ error: "Unauthorized: Operator access only" }, { status: 403 });
+    19	  }
+    20	
+    21	  const body = await request.json();
+    22	  const { payoutId, status, internal_note } = body;
+    23	
+    24	  // 6️⃣ Payout Processing Guard
+    25	  if (status === "paid" && !internal_note) {
+    26	    return NextResponse.json({ 
+    27	      error: "Missing internal note: A note is required when marking a payout as PAID." 
+    28	    }, { status: 400 });
+    29	  }
+    30	
+    31	  const { data: payout } = await supabase.from("payouts").select("deal_id").eq("id", payoutId).single();
+    32	
+    33	  const { error } = await supabase
+    34	    .from("payouts")
+    35	    .update({ status, paid_at: status === "paid" ? new Date().toISOString() : null })
+    36	    .eq("id", payoutId);
+    37	
+    38	  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    39	
+    40	  // Audit log
+    41	  if (status === "paid") {
+    42	    await supabase.from("audit_logs").insert({
+    43	      deal_id: payout?.deal_id,
+    44	      actor_profile_id: user.id,
+    45	      actor_role: "operator",
+    46	      action: "PAYOUT_PROCESSED",
+    47	      metadata: { internal_note }
+    48	    });
+    49	  }
+    50	
+    51	  return NextResponse.json({ success: true });
+    52	}
+
+===== app/api/profile/route.ts =====
+     1	import { NextResponse } from "next/server";
+     2	import { requireUser } from "@/lib/auth/requireUser";
+     3	
+     4	export async function GET() {
+     5	  const { supabase, user, error } = await requireUser();
+     6	  if (error || !supabase || !user) return error!;
+     7	
+     8	  const { data, error: queryError } = await supabase
+     9	    .from("profiles")
+    10	    .select("id,email,full_name,phone,role")
+    11	    .eq("id", user.id)
+    12	    .single();
+    13	
+    14	  if (queryError) return NextResponse.json({ error: queryError.message }, { status: 404 });
+    15	  return NextResponse.json({ profile: data });
+    16	}
+    17	
+    18	export async function PATCH(request: Request) {
+    19	  const { supabase, user, error } = await requireUser();
+    20	  if (error || !supabase || !user) return error!;
+    21	
+    22	  const body = await request.json();
+    23	  const { full_name, phone } = body;
+    24	
+    25	  const { data, error: updateError } = await supabase
+    26	    .from("profiles")
+    27	    .update({ full_name: full_name ?? null, phone: phone ?? null })
+    28	    .eq("id", user.id)
+    29	    .select("id,email,full_name,phone,role")
+    30	    .single();
+    31	
+    32	  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 400 });
+    33	  return NextResponse.json({ profile: data });
+    34	}
+
+===== app/api/referral-links/route.ts =====
+     1	import { createClient } from "@/lib/supabase/server";
+     2	import { NextResponse } from "next/server";
+     3	import { nanoid } from "nanoid";
+     4	
+     5	export async function POST(request: Request) {
+     6	  const supabase = createClient();
+     7	  if (!supabase) return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+     8	
+     9	  const { data: { user } } = await supabase.auth.getUser();
+    10	  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    11	
+    12	  const { data: profile } = await supabase
+    13	    .from("profiles")
+    14	    .select("role")
+    15	    .eq("id", user.id)
+    16	    .single();
+    17	
+    18	  if (profile?.role !== "referrer") {
+    19	    return NextResponse.json({ error: "Unauthorized: Referrer access only" }, { status: 403 });
+    20	  }
+    21	
+    22	  const code = nanoid(10);
+    23	
+    24	  const { data: link, error } = await supabase
+    25	    .from("referral_links")
+    26	    .insert({
+    27	      referrer_profile_id: user.id,
+    28	      code: code,
+    29	      is_active: true
+    30	    })
+    31	    .select()
+    32	    .single();
+    33	
+    34	  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    35	
+    36	  return NextResponse.json(link);
+    37	}
+
+===== app/api/subscription/route.ts =====
+     1	import { NextResponse } from "next/server";
+     2	import { requireUser } from "@/lib/auth/requireUser";
+     3	
+     4	export async function POST(request: Request) {
+     5	  const { supabase, user, error } = await requireUser();
+     6	  if (error || !supabase || !user) return error!;
+     7	
+     8	  const { tier, provider, provider_customer_id, provider_subscription_id, status } = await request.json();
+     9	  if (!tier) return NextResponse.json({ error: "tier required" }, { status: 400 });
+    10	
+    11	  const { data, error: upsertError } = await supabase
+    12	    .from("subscriptions")
+    13	    .upsert({
+    14	      profile_id: user.id,
+    15	      tier,
+    16	      provider: provider ?? "stripe",
+    17	      provider_customer_id: provider_customer_id ?? null,
+    18	      provider_subscription_id: provider_subscription_id ?? null,
+    19	      status: status ?? "trialing",
+    20	      updated_at: new Date().toISOString(),
+    21	    })
+    22	    .select("*")
+    23	    .single();
+    24	
+    25	  if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 400 });
+    26	  return NextResponse.json({ subscription: data });
+    27	}
+

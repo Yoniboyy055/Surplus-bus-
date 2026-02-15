@@ -1,0 +1,10 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> surplus-referral-platform@1.0.0 start
+> next start -p 3100
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3100
+
+ ✓ Starting...
+ ✓ Ready in 409ms

@@ -1,91 +1,77 @@
 # Surplus Bus
 
-## What Surplus Bus Is
+Surplus Bus is a public-sector opportunity intelligence platform. It monitors surplus listings and procurement-style opportunities, then delivers targeted alerts and trend analytics so users can act faster than competitors.
 
-Surplus Bus is an intelligence platform that monitors, aggregates, and analyzes surplus property and auction data from government sources. It functions as a monitoring system, alerting engine, and analytics platform.
+> **Positioning:** Surplus Bus is an information service, not a broker, marketplace, or transaction intermediary.
 
-## What Surplus Bus Does
+## Value & Purpose
+- Detect opportunities early.
+- Filter noisy public data into actionable alert streams.
+- Provide analytics and trend context for better decision-making.
 
-Surplus Bus provides three core capabilities:
+## Product Foundations Implemented
+- Auth flow and role-aware onboarding (`/auth`, `/dashboard`).
+- Beta landing page with email capture (`/landing`).
+- User-facing product overview (`/product`).
+- Freemium pricing surface (`/pricing`).
+- Legal and policy pages (`/legal/*`).
+- API routes for analytics, alerts, profiles, and beta signups.
 
-1. **Construction / RFP Alerts** - Monitors and alerts on construction projects and request-for-proposal opportunities from government sources.
+## Architecture Diagram
+```text
+[Public Data Sources]
+   |  (scheduled cron + ingestion agents)
+   v
+[Next.js API Agents] ---> [ingestion_runs / ingestion_failures logs]
+   |                          |
+   v                          v
+[Supabase tables: property_candidates, alert_rules, subscriptions, profiles]
+   |
+   +--> [/api/alerts] ---> User alert config dashboard
+   +--> [/api/analytics] -> Trend + engagement views
+   +--> [/api/profile] ---> User preferences/profile management
+   +--> [/api/beta-signups] -> Invitation-based beta funnel
+```
 
-2. **Auction & Surplus Alerts** - Tracks surplus property listings and auction opportunities, providing timely notifications to subscribers.
+## Onboarding Walkthrough
+1. User joins beta waitlist via `/landing`.
+2. User signs in via `/auth`.
+3. Profile and preferences are initialized.
+4. User creates alert rules via `/api/alerts`.
+5. User monitors performance via `/api/analytics` and dashboard UI.
 
-3. **Auction Intelligence / Analytics** - Aggregates historical and current auction data to provide analytical insights, trend analysis, and market intelligence.
+## Success Metrics Targets
+- Beta signups: `>= 100` in first 2 weeks.
+- DAU: `>= 30%` of beta list.
+- Alert engagement rate: `>= 25%`.
+- Paid conversion post-beta: `>= 5%`.
 
-## What Surplus Bus Does NOT Do
+## Daily Status Update Format
+```text
+[YYYY-MM-DD]
 
-Surplus Bus does NOT:
-- facilitate transactions between parties
-- negotiate on behalf of users
-- bid on behalf of users
-- introduce buyers to sellers
-- earn success fees or commissions
-- provide recovery or wholesaling services
-- act as a broker, agent, or marketplace
-- represent users in any capacity
-- guarantee outcomes or results
+🔹 Work completed
+🔹 Tasks in progress
+🔹 Blockers & risks
+🔹 Next 3 tasks
+🔹 Metrics update (if available)
+```
 
-## Mental Model
+## Local Development
+1. `npm install`
+2. Configure `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `CRON_SECRET`).
+3. `npm run dev`
+4. Open `http://localhost:3000`
 
-Surplus Bus helps users see opportunities and data. Users act independently based on the information provided. The platform is a data source and intelligence tool, not a transactional intermediary.
+## SQL Migrations
+Apply SQL in `supabase/sql/` in order, including `015_public_launch_foundation.sql` for launch-readiness tables.
 
-## Audience
+## Opportunity Intelligence Engine (Phase 1)
+- New canonical data model: `opportunities`, `opportunity_history`, `opportunity_features`.
+- Scoring formula combines demand, value, and urgency signals and normalizes to 0–100.
+- Personalized ranking API: `GET /api/opportunities/ranked`.
+- Operator-only recompute endpoint: `POST /api/opportunities/recompute-scores`.
 
-Surplus Bus serves:
-- **Subscribers** - Users who receive alerts and access intelligence data
-- **Analysts** - Users who analyze aggregated data and trends
-- **Operators** - Internal users who manage data ingestion, quality, and system operations
-
-Surplus Bus does NOT serve buyers, sellers, referrers, or any transactional parties.
-
-## Legal & Structural Positioning
-
-Surplus Bus provides information only. The platform:
-- makes no representations about data accuracy or completeness
-- provides no guarantees about outcomes
-- has no transactional involvement
-- does not represent users in any capacity
-- operates as an information service only
-
-## Internal Rule (Agent Lock)
-
-If a feature implies transaction facilitation, buyer/seller matching, fee collection, or any form of intermediation, it is out of scope.
-
-## Technical Overview
-
-### Architecture
-- Next.js 14 App Router + TypeScript
-- Supabase for data storage and authentication
-- Vercel for hosting and cron scheduling
-- Tailwind CSS for styling
-
-### Data Ingestion
-Listing agents automatically collect surplus property and auction data from government sources:
-- `/api/agents/listing/scrape-alberta` - Daily at 11:00 UTC
-- `/api/agents/listing/scrape-gc` - Daily at 12:00 UTC
-
-See `/docs/agents.md` for agent documentation.
-
-### Environment Variables
-Create a `.env.local` file (see `.env.example`) with:
-- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
-- `CRON_SECRET` - Secret for agent endpoint authentication (server-side only)
-
-### Local Development
-1. Install dependencies: `npm install`
-2. Configure `.env.local`
-3. Run the dev server: `npm run dev`
-4. Visit `http://localhost:3000`
-
-### Deployment
-1. Set environment variables in Vercel
-2. Add production redirect URL in Supabase: `https://<your-domain>/auth/callback`
-3. Deploy from repository root
-
-### Supabase Setup
-- Enable Email auth (magic link)
-- Add redirect URL: `http://localhost:3000/auth/callback`
-- Apply SQL migrations from `supabase/sql/` directory
+## Security Hardening Updates
+- API profile, alerts, and subscription endpoints now enforce authenticated-user ownership (no arbitrary profile_id writes).
+- Middleware now gracefully handles missing Supabase env values and avoids crashing local runtime.

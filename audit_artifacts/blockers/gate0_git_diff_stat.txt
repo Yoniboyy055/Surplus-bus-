@@ -1,0 +1,13 @@
+ app/api/beta-signups/route.ts           | 54 +++++++++++++++++++++++++++++----
+ app/api/health/route.ts                 | 34 +++++++++++++++------
+ app/auth/callback/route.ts              |  1 -
+ app/dashboard/page.tsx                  |  2 --
+ app/error.tsx                           |  1 -
+ app/operator/page.tsx                   |  1 -
+ app/operator/payouts/page.tsx           |  1 -
+ app/operator/properties/review/page.tsx |  1 -
+ lib/auth/ensureProfile.ts               |  5 ---
+ lib/auth/ownerEmail.ts                  | 16 ++++------
+ lib/env.ts                              |  5 ++-
+ middleware.ts                           | 53 +++++++++++++++++++++++++++-----
+ 12 files changed, 128 insertions(+), 46 deletions(-)

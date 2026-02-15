@@ -1,0 +1,12 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100    66    0    66    0     0    228      0 --:--:-- --:--:-- --:--:--   229
+HTTP/1.1 500 Internal Server Error
+vary: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+content-type: application/json
+Date: Sun, 15 Feb 2026 17:45:04 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+Transfer-Encoding: chunked
+
+{"ok":false,"supabase":"error","detail":"TypeError: fetch failed"}

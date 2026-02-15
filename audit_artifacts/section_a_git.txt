@@ -1,0 +1,141 @@
+## git remote -v
+\n## git status
+On branch work
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	audit_artifacts/
+
+nothing added to commit but untracked files present (use "git add" to track)
+\n## git branch -a
+* work
+\n## git branch -vv
+* work aab4807 Remediation: secure ownership APIs, env-safe middleware, and Phase‑1 opportunity intelligence
+\n## git log --oneline --decorate --graph --all --max-count=120
+* aab4807 (HEAD -> work) Remediation: secure ownership APIs, env-safe middleware, and Phase‑1 opportunity intelligence
+* fbb9b3f docs: reset documentation to intelligence-only platform model
+* be08a76 fix: resolve build errors and warnings for successful deployment
+* de6f565 feat: implement robust dashboard routing and profile initialization
+* 6148c0f fix: resolve supabase linter warnings (search_path, rls)
+* 6d516ba chore: clean up unwanted files, logs, and links
+* 1dc0f05 fix: security hardening and validation
+* ac9b019 refactor: apply useCallback to referrer portal for lint compliance
+* 0acbb24 refactor: optimize hooks to pass strict linting
+* 32cd6e5 fix: hard test 3 - implement toasts and improve ui/ux across portals
+* ffd304f style: update referrer portal to Quantum Ledger design
+* 578f010 style: update landing page to Quantum Ledger design
+* e2965c2 refactor: align UI with Quantum Ledger design system
+* 0005384 fix: use environment variable for OWNER_EMAIL and centralize utility
+*   986f4a1 Resolve conflicts and implement role-based routing + owner dashboard
+|\  
+| * 870e86b fix: add 'use client' directive and fix JSX comment in operator properties review page
+| * da328e4 feat: add owner email hardening
+* | 2a666bd Implement role-based routing and owner role assignment
+* | 3e55a68 Remove problematic eslint-disable comment to fix build syntax error
+* | bcf03aa Fix syntax error by cleaning up eslint-disable comment
+|/  
+* 1578396 Re-trigger build with verified fix for linting syntax
+* 8ff4ca6 Fix lint error in Operator Property Review page (forced)
+* cc26dca Implement Phase 1: Dual-Agent System (Listing Agents)
+* aef5d64 Remove magic link, keep only Google Sign-In
+* 6e5a66e Add Google Sign-In
+* 7ebf901 Fix linting errors blocking deployment
+* 11bd59d Implement Phase 3 & 4: Modals, Error Pages, Status Pills, and Polish
+* c7344cd Implement critical UI fixes and enhancements
+* 90e4c62 fix: add missing SELECT policy for profiles table (fixes profile_lookup_failed)
+* 95c6854 Fix: Resolve profile_lookup_failed by adding auth trigger and resilient bootstrap
+* a05d1ac Audit: Add Hard Adversarial Audit Report
+* 2a4ad89 Fix: Downgrade Tailwind to v3.4.1 and fix build errors for Vercel
+* dc81efe UI: Add premium animations and implementation guide
+* 6b17ad9 UI: Implement premium components and update auth/onboarding pages
+* 00426c2 Design: Implement premium design system with Quantum Ledger theme
+* bd76bb8 Design: Deliver premium UI/UX specification and design system
+* 6f9a8ec Fix: Handle potential null supabase client in portal pages to resolve build errors
+* 7df31c5 Supabase Hardening: Migration 010 and updated verification checklist
+* 2a06a2f Fix: Add missing dependencies to useEffect hooks in portal pages
+* 9739249 QA Audit Fixes: Dashboard redirects, broken links, and global auth middleware
+* 99dcb32 Final verification and hardening: Manual checklist (A), UX wording (B), and E2E simulation (C) complete
+* 030bc61 Production hardening and feature implementation: Section 1-3 complete
+* 7a60c53 Adversarial UX/Workflow stress test: 2 rounds of vulnerability analysis and minimal fixes
+* 88ce930 Final security hardening: Payout double-dip prevention and audit log immutability
+* c4495ce Final adversarial re-test report: Identifying remaining critical exploits
+* 5f05ed9 Adversarial abuse testing: 3 rounds of vulnerability analysis and minimal fixes
+* d208fd9 Elevate to high-level surplus system: role-specific portals, enhanced UI, and architectural design
+*   61412e3 Merge pull request #2 from Yoniboyy055/cursor/system-documentation-review-59ae
+|\  
+| * 93ce24d fix: wrap auth search params in suspense
+| * 64242a8 feat: add Next.js app scaffold at repo root
+| * ebc3505 fix: tailwind globals apply issue
+| * a6bc51f feat: add Next.js root app scaffold
+| * c1c14f2 feat: initial scaffold with auth and health check
+| * d583f39 Add Next.js MVP scaffold
+|/  
+*   3ddd869 Merge pull request #1 from Yoniboyy055/copilot/initialize-repo-with-documentation
+|\  
+| * d4ef2fa chore: add governance docs and supabase sql
+| * 718ba05 Initial plan
+|/  
+* 74a48a1 Initial commit
+\n## git show --stat HEAD
+commit aab48074531e72f185f1cb26d85fc52ea1989121
+Author: Codex <codex@openai.com>
+Date:   Sun Feb 15 04:22:33 2026 +0000
+
+    Remediation: secure ownership APIs, env-safe middleware, and Phase‑1 opportunity intelligence
+    
+    ### Motivation
+    - Close security and runtime gaps left by the previous launch patch by enforcing authenticated ownership on user-facing APIs and preventing middleware crashes when Supabase env vars are missing.
+    - Deliver a concrete Phase‑1 Opportunity Intelligence foundation (scoring + personalization + ranked API) so the product can surface defensible, ranked signals rather than only raw data.
+    - Harden ingestion agents with lifecycle logging, failure records, and schema validation so scraping runs are observable, replayable, and safe at scale.
+    
+    ### Description
+    - Enforced ownership and role checks via a shared helper `requireUser`/`requireOperator`, and wired it into user APIs (`/api/alerts`, `/api/profile`, `/api/subscription`, `/api/analytics`, `/api/opportunities/*`) so callers cannot write arbitrary `profile_id` values.
+    - Made middleware environment-aware so public pages render when Supabase env vars are missing and protected routes redirect with a clear config error instead of crashing; retained owner-role hardening and role-based route redirects.
+    - Implemented Phase‑1 intelligence primitives in `lib/intelligence/scoring.ts` (demand/value/urgency, `computeScore`, `normalizeScore`, `personalizedScore`), an operator-only recompute job `POST /api/opportunities/recompute-scores`, and a personalized ranked endpoint `GET /api/opportunities/ranked`.
+    - Added ingestion lifecycle and validation helpers (`lib/agents/ingestion.ts`) with `startIngestionRun`/`completeIngestionRun`/`queueCandidates` using `zod`, plus SQL migrations (`supabase/sql/015_public_launch_foundation.sql` and `016_opportunity_intelligence_phase1.sql`) to create `opportunities`, `opportunity_features`, `ingestion_runs`, `ingestion_failures`, and user preference fields/indexes.
+    - Aligned UX and docs to the authority-first funnel: updated landing CTA to `Get Weekly Intelligence`, added the authority growth playbook and launch docs, and clarified health/queue behavior for agents.
+    
+    ### Testing
+    - Ran `npm run lint` and it completed with no ESLint warnings or errors (pass).
+    - Ran `npm run build`; production build completed successfully with expected environment-variable warnings about missing Supabase keys in this container (pass with env warnings).
+    - Ran `npm run dev` and verified the app served `/landing` (HTTP 200) and a headless browser script captured a screenshot of the landing page (page render succeeded; screenshot artifact produced).
+    
+    If you want, I can next add unit tests for the scoring functions, a scheduled job to run `recompute-scores` in production, and a small integration test that seeds sample `opportunities` and verifies the ranked API ordering.
+
+ README.md                                          | 164 ++++++++++-----------
+ app/api/agents/listing/scrape-alberta/route.ts     | 139 +++++------------
+ app/api/agents/listing/scrape-gc/route.ts          | 125 +++++-----------
+ app/api/alerts/route.ts                            |  41 ++++++
+ app/api/analytics/route.ts                         |  35 +++++
+ app/api/beta-signups/route.ts                      |  15 ++
+ app/api/opportunities/ranked/route.ts              |  77 ++++++++++
+ app/api/opportunities/recompute-scores/route.ts    |  73 +++++++++
+ app/api/profile/route.ts                           |  34 +++++
+ app/api/subscription/route.ts                      |  27 ++++
+ app/faq/page.tsx                                   |   9 ++
+ app/landing/page.tsx                               |  39 +++++
+ app/layout.tsx                                     |   4 +-
+ app/legal/anti-spam/page.tsx                       |   9 ++
+ app/legal/privacy/page.tsx                         |   9 ++
+ app/legal/terms/page.tsx                           |   9 ++
+ app/page.tsx                                       |  59 +-------
+ app/pricing/page.tsx                               |  21 +++
+ app/product/page.tsx                               |  21 +++
+ components/AppShell.tsx                            |   5 +-
+ docs/agents.md                                     |   8 +-
+ docs/launch/anti-spam-policy.md                    |   3 +
+ docs/launch/authority-growth-playbook.md           |  22 +++
+ docs/launch/elevator-pitch.md                      |   3 +
+ docs/launch/faq.md                                 |  10 ++
+ docs/launch/launch-press-copy.md                   |   3 +
+ docs/launch/onboarding-emails.md                   |  16 ++
+ docs/launch/onboarding-walkthrough.md              |   7 +
+ docs/launch/privacy-policy.md                      |   5 +
+ docs/launch/terms-of-service.md                    |   5 +
+ docs/launch/value-proposition.md                   |   5 +
+ lib/agents/ingestion.ts                            |  72 +++++++++
+ lib/auth/requireUser.ts                            |  39 +++++
+ lib/intelligence/scoring.ts                        |  62 ++++++++
+ middleware.ts                                      | 106 +++++++------
+ supabase/sql/015_public_launch_foundation.sql      |  66 +++++++++
+ .../sql/016_opportunity_intelligence_phase1.sql    |  47 ++++++
+ 37 files changed, 1002 insertions(+), 392 deletions(-)

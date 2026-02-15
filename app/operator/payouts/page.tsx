@@ -22,7 +22,6 @@ export default async function OperatorPayoutsPage() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error fetching payouts:", error);
     return <div>Error loading payouts</div>;
   }
 

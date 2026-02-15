@@ -55,7 +55,6 @@ export default function OperatorPortal() {
         setAgentHealth(data.health);
       }
     } catch (e) {
-      console.error('Failed to fetch agent health', e);
     }
 
     // Fetch Queue Count

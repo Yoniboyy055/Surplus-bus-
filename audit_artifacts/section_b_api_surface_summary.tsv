@@ -1,0 +1,15 @@
+route	auth_indicator	validation_indicator	rate_limit_indicator	error_handling_indicator
+app/api/agents/health/route.ts	True	True	False	True
+app/api/agents/listing/scrape-alberta/route.ts	True	True	False	True
+app/api/agents/listing/scrape-gc/route.ts	True	True	False	True
+app/api/alerts/route.ts	True	True	False	True
+app/api/analytics/route.ts	True	False	False	False
+app/api/beta-signups/route.ts	False	True	False	True
+app/api/deals/route.ts	True	True	False	True
+app/api/health/route.ts	False	True	False	True
+app/api/opportunities/ranked/route.ts	True	True	False	True
+app/api/opportunities/recompute-scores/route.ts	True	True	False	True
+app/api/payouts/route.ts	True	True	False	True
+app/api/profile/route.ts	True	False	False	True
+app/api/referral-links/route.ts	True	True	False	True
+app/api/subscription/route.ts	True	True	False	True

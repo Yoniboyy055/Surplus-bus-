@@ -1,0 +1,16 @@
+## Observability search
+lib/env.ts:24:  console.error("❌ Invalid environment variables:", parsed.error.flatten().fieldErrors);
+lib/auth/ensureProfile.ts:11:  console.log(`ensureProfile: Checking profile for ${user.email} (${user.id})`);
+lib/auth/ensureProfile.ts:23:       console.log(`ensureProfile: Upgrading ${user.email} to operator`);
+lib/auth/ensureProfile.ts:34:         console.error("ensureProfile: Upgrade failed", updateError);
+lib/auth/ensureProfile.ts:52:  console.log(`ensureProfile: Profile not found, inserting for ${user.id} with role ${role} (using Admin Client)`);
+lib/auth/ensureProfile.ts:71:    console.error("ensureProfile: Admin INSERT/UPSERT failed", insertError);
+app/error.tsx:14:    console.error(error);
+app/referrer/page.tsx:13:const maskStatus = (status: string) => {
+app/referrer/page.tsx:155:                  {maskStatus(deal.status)}
+app/dashboard/page.tsx:32:      console.error("Owner profile sync failed, but proceeding to /operator", e);
+app/dashboard/page.tsx:57:    console.error("Profile lookup failed", error);
+app/auth/callback/route.ts:33:    console.error("Profile bootstrap failed", profileError);
+app/operator/page.tsx:58:      console.error('Failed to fetch agent health', e);
+app/operator/payouts/page.tsx:25:    console.error("Error fetching payouts:", error);
+app/operator/properties/review/page.tsx:36:      console.error('Error fetching candidates:', error);

@@ -1,0 +1,5 @@
+{"timestamp":"2026-02-15T17:44:01.603Z","route":"/api/health","message":"[object Object]","context":{"phase":"db_connectivity_check"}}
+{"timestamp":"2026-02-15T17:44:35.189Z","route":"/api/health","message":"[object Object]","context":{"phase":"db_connectivity_check"}}
+{"timestamp":"2026-02-15T17:44:40.815Z","route":"/api/health","message":"[object Object]","context":{"phase":"db_connectivity_check"}}
+{"timestamp":"2026-02-15T17:45:04.680Z","route":"/api/health","message":"[object Object]","context":{"phase":"db_connectivity_check"}}
+{"timestamp":"2026-02-15T17:49:10.901Z","route":"/api/health","message":"controlled_health_error","context":{"controlled":true}}

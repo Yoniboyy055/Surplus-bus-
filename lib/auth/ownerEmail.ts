@@ -1,17 +1,13 @@
 /**
- * Owner Email Hardening
- * 
- * Ensures the OWNER_EMAIL (defined in env) always has operator role
- * and is routed to /operator dashboard, regardless of profile state.
+ * Owner email is environment-driven only.
+ * No hardcoded fallback is allowed.
  */
 
-// We explicitly hardcode the owner email as requested to ensure safety
-const HARDCODED_OWNER = "nohabe056@gmail.com";
+const ownerEmailEnv = process.env.OWNER_EMAIL?.toLowerCase().trim();
 
-export const OWNER_EMAIL = (process.env.OWNER_EMAIL || HARDCODED_OWNER).toLowerCase().trim();
+export const OWNER_EMAIL = ownerEmailEnv || "";
 
 export function isOwnerEmail(email: string | null | undefined): boolean {
-  if (!email) return false;
-  const normalized = email.toLowerCase().trim();
-  return normalized === OWNER_EMAIL || normalized === HARDCODED_OWNER.toLowerCase();
+  if (!email || !OWNER_EMAIL) return false;
+  return email.toLowerCase().trim() === OWNER_EMAIL;
 }

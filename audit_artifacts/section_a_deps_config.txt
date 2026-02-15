@@ -1,0 +1,150 @@
+## node -v
+v20.19.6
+\n## npm -v
+11.4.2
+\n## package.json
+{
+  "name": "surplus-referral-platform",
+  "version": "1.0.0",
+  "description": "This repo contains the locked blueprint + governance rules + Supabase SQL for a surplus property sourcing/advisory platform.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yoniboyy055/Surplus-bus-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Yoniboyy055/Surplus-bus-/issues"
+  },
+  "homepage": "https://github.com/Yoniboyy055/Surplus-bus-#readme",
+  "private": true,
+  "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.90.1",
+    "lucide-react": "^0.562.0",
+    "nanoid": "^5.1.6",
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.35",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.4.5"
+  }
+}
+\n## turbo.json
+NOT FOUND
+\n## next.config files
+next.config.js
+\n## next.config.js
+/** @type {import('next').NextConfig} */
+const nextConfig = {};
+
+module.exports = nextConfig;
+\n## env/example/sample files
+./.env.example
+./.git/hooks/pre-rebase.sample
+./.git/hooks/update.sample
+./.git/hooks/sendemail-validate.sample
+./.git/hooks/fsmonitor-watchman.sample
+./.git/hooks/pre-merge-commit.sample
+./.git/hooks/pre-applypatch.sample
+./.git/hooks/pre-push.sample
+./.git/hooks/applypatch-msg.sample
+./.git/hooks/pre-receive.sample
+./.git/hooks/post-update.sample
+./.git/hooks/push-to-checkout.sample
+./.git/hooks/prepare-commit-msg.sample
+./.git/hooks/pre-commit.sample
+./.git/hooks/commit-msg.sample
+\n## rg env/supabase/rls/service_role (developer note: using rg instead of grep -R)
+./middleware.ts:10:  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+./middleware.ts:11:  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+./docs/agents.md:105:NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+./docs/agents.md:106:NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+./docs/agents.md:117:NEXT_PUBLIC_SUPABASE_URL=your-local-supabase-url
+./docs/agents.md:118:NEXT_PUBLIC_SUPABASE_ANON_KEY=your-local-anon-key
+./docs/agents.md:203:- Verify RLS policies allow inserts to `agent_health_log`
+./lib/env.ts:4:  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+./lib/env.ts:5:  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
+./lib/env.ts:8:  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+./lib/env.ts:15:  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+./lib/env.ts:16:  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+./lib/env.ts:19:  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+./lib/supabase/client.ts:10:  return createBrowserClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+./README.md:62:2. Configure `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `CRON_SECRET`).
+./lib/supabase/server.ts:13:  return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+./audit_artifacts/section_a_deps_config.txt:80:./middleware.ts:10:  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+./audit_artifacts/section_a_deps_config.txt:81:./middleware.ts:11:  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+./audit_artifacts/section_a_deps_config.txt:82:./docs/agents.md:105:NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+./audit_artifacts/section_a_deps_config.txt:83:./docs/agents.md:106:NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+./audit_artifacts/section_a_deps_config.txt:84:./docs/agents.md:117:NEXT_PUBLIC_SUPABASE_URL=your-local-supabase-url
+./audit_artifacts/section_a_deps_config.txt:85:./docs/agents.md:118:NEXT_PUBLIC_SUPABASE_ANON_KEY=your-local-anon-key
+./audit_artifacts/section_a_deps_config.txt:86:./docs/agents.md:203:- Verify RLS policies allow inserts to `agent_health_log`
+./lib/auth/ensureProfile.ts:13:  // 1. Try to read existing profile with the user's client (RLS applied)
+./lib/auth/ensureProfile.ts:44:  // We use the ADMIN client here to bypass RLS policies that might restrict:
+./lib/auth/ensureProfile.ts:81:  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+./lib/auth/ensureProfile.ts:82:  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+./lib/auth/ensureProfile.ts:85:    throw new Error("ensureProfile: Missing SUPABASE_SERVICE_ROLE_KEY or URL for admin operations");
+./supabase/sql/012_fix_profile_select_policy.sql:7:-- 1. Ensure RLS is enabled
+./supabase/sql/005_abuse_fixes_r1.sql:4:-- Add RLS policy to the 'deals' table
+./supabase/sql/005_abuse_fixes_r1.sql:6:-- Assuming RLS is managed externally, here is the SQL for the policy condition:
+./supabase/sql/005_abuse_fixes_r1.sql:20:-- This requires RLS policies on the 'deals' table for 'update' operations.
+./supabase/sql/005_abuse_fixes_r1.sql:21:-- Assuming RLS is managed externally, here is the SQL for the policy condition:
+./supabase/sql/005_abuse_fixes_r1.sql:23:-- The RLS policy should be:
+./supabase/sql/005_abuse_fixes_r1.sql:27:-- Since I cannot directly modify RLS policies, I will state the required RLS change.
+./supabase/sql/005_abuse_fixes_r1.sql:30:-- This requires RLS policy on the 'profiles' table for 'insert' operation.
+./supabase/sql/005_abuse_fixes_r1.sql:31:-- Assuming RLS is managed externally, here is the SQL for the policy condition:
+./supabase/sql/005_abuse_fixes_r1.sql:38:-- Since I cannot directly modify RLS policies, I will state the required RLS change.
+./supabase/sql/011_profile_bootstrap_fix.sql:4:--          and hardening RLS for the bootstrap process.
+./supabase/sql/011_profile_bootstrap_fix.sql:31:-- 3. Harden RLS for Profiles
+./supabase/sql/014_linter_fixes.sql:25:-- FIX 2: RLS Policy Always True (public.audit_logs)
+./supabase/sql/014_linter_fixes.sql:36:-- System logs should be inserted by a service_role (which bypasses RLS) or a specific system actor.
+./supabase/sql/014_linter_fixes.sql:46:-- FIX 3: RLS Policy Always True (public.demo_test)
+./supabase/sql/008_security_hardening.sql:41:-- 1. Revoke all existing RLS policies on audit_logs
+./supabase/sql/013_dual_agent_system.sql:125:-- RLS Policies
+./supabase/sql/010_supabase_hardening.sql:5:--          - Tightens RLS policies for all tables.
+./supabase/sql/010_supabase_hardening.sql:149:-- 2. RLS TIGHTENING (Zero-Trust Policies)
+./supabase/sql/010_supabase_hardening.sql:158:-- Deals: Referrer sees own deals but only specific columns (handled by view or API, but RLS must be safe)
+./supabase/sql/009_linter_hardening.sql:3:-- PURPOSE: Fix Supabase linter warnings: mutable search paths and permissive RLS.
+./supabase/sql/009_linter_hardening.sql:97:-- FIX 2: RLS policy always true on audit_logs INSERT
+./supabase/sql/006_abuse_fixes_r2.sql:25:-- This requires RLS policy on the 'audit_logs' table for 'delete' and 'update' operations.
+./supabase/sql/006_abuse_fixes_r2.sql:26:-- Since I cannot directly modify RLS policies, I will state the required RLS change:
+./docs__legacy_do_not_use/FINAL_REPORT.md:520:10. RLS: Ensure `audit_logs` are immutable (no UPDATE/DELETE).
+./docs__legacy_do_not_use/FINAL_REPORT.md:525:**Phase 3: Section 3 — “SUPABASE LINTER FIX PACK (009)”**
+./docs__legacy_do_not_use/FINAL_REPORT.md:531:**Fix 2: RLS policy always true**
+./docs__legacy_do_not_use/06_ABUSE_TEST_R2.md:3:| Scenario | How the Abuse Happens (Step-by-Step) | Why the Current Design Allows It | The SMALLEST Possible Fix (SQL/RLS/Trigger/Guard) |
+./docs__legacy_do_not_use/06_ABUSE_TEST_R2.md:7:| **3. Deal Status Rollback** | An operator, after marking a deal as `CLOSED_PAID`, attempts to revert the status to a previous state (e.g., `MATCHING`) to hide a successful deal or manipulate metrics. | The RLS policy in R1 only prevents *non-operators* from setting critical statuses, but does not prevent *operators* from setting invalid status transitions (e.g., from `CLOSED_PAID` back to `NEW_SUBMISSION`). | **SQL Trigger/Function:** Implement a PostgreSQL function that checks `old.status` and `new.status` against a predefined valid state machine transition table (e.g., `CLOSED_PAID` can only transition to `ARCHIVED` or `FAILED_AUDIT`, not to a prior state). |
+./docs__legacy_do_not_use/06_ABUSE_TEST_R2.md:9:| **5. Audit Log Tampering** | An operator, who has final authority, makes a controversial decision (e.g., rejecting a deal that should have been qualified) and then attempts to delete or modify the corresponding entry in the `audit_logs` table to cover their tracks. | The `audit_logs` table is likely writable by the operator role, and there is no RLS policy preventing `DELETE` or `UPDATE` on the logs. | **RLS Policy:** Add an RLS policy on the `audit_logs` table that prevents `UPDATE` and `DELETE` operations for all roles, including `operator`. Logs should be immutable once written. |
+./docs__legacy_do_not_use/SUPABASE_VERIFICATION.md:5:## ✅ Security & RLS Enforcement
+./docs__legacy_do_not_use/SUPABASE_VERIFICATION.md:9:| **Role Spoofing** | Prevent self-promotion to operator | `INSERT INTO public.profiles (id, role) VALUES ('<uuid>', 'operator');` | Fails with RLS policy violation (only 'buyer' allowed for self-insert). |
+./docs__legacy_do_not_use/SUPABASE_VERIFICATION.md:10:| **Audit Logs** | Verify Immutability (Update) | `UPDATE public.audit_logs SET action = 'TAMPERED' WHERE id = '<uuid>';` | Fails with `0 rows affected` or RLS violation. |
+./docs__legacy_do_not_use/SUPABASE_VERIFICATION.md:11:| **Audit Logs** | Verify Immutability (Delete) | `DELETE FROM public.audit_logs WHERE id = '<uuid>';` | Fails with `0 rows affected` or RLS violation. |
+./docs__legacy_do_not_use/09_SECURITY_VERIFICATION_CHECKLIST.md:5:**Note:** These commands should be executed in your Supabase SQL Editor or a Postgres client connected to your database. For the `audit_logs` tests, you must be authenticated as a non-superuser role (e.g., `authenticated` user role) to properly test the Row Level Security (RLS) policies.
+./docs__legacy_do_not_use/09_SECURITY_VERIFICATION_CHECKLIST.md:18:| **3. Test UPDATE Block** | **Prerequisite:** Find an existing `audit_logs.id` (e.g., `a1b2c3d4-a1b2-a1b2-a1b2-a1b2c3d4e5f6`). <br><br> `UPDATE public.audit_logs SET action = 'TAMPERED' WHERE id = 'a1b2c3d4-a1b2-a1b2-a1b2-a1b2c3d4e5f6';` | Should fail with a `permission denied for relation audit_logs` or `0 rows affected` (if RLS is applied correctly to deny all updates). |
+./docs__legacy_do_not_use/09_SECURITY_VERIFICATION_CHECKLIST.md:19:| **4. Test DELETE Block** | **Prerequisite:** Find an existing `audit_logs.id` (e.g., `a1b2c3d4-a1b2-a1b2-a1b2-a1b2c3d4e5f6`). <br><br> `DELETE FROM public.audit_logs WHERE id = 'a1b2c3d4-a1b2-a1b2-a1b2-a1b2c3d4e5f6';` | Should fail with a `permission denied for relation audit_logs` or `0 rows affected` (if RLS is applied correctly to deny all deletes). |
+./docs__legacy_do_not_use/08_FINAL_RETEST_REPORT.md:12:| Critical Exploit | How the Abuse Happens (Step-by-Step) | Why the Current Design Allows It | The SMALLEST Possible Fix (SQL/RLS/Trigger/Guard) |
+./docs__legacy_do_not_use/08_FINAL_RETEST_REPORT.md:15:| **2. Audit Log Tampering** (Corrupts Audit History) | An operator, who has final authority, can delete or modify records in the `audit_logs` table to cover up controversial decisions or unauthorized actions. | The `audit_logs` table is not protected by RLS policies that prevent `UPDATE` and `DELETE` operations for all roles, including `operator`. | **RLS Policy:** Add RLS policies on the `audit_logs` table to prevent `UPDATE` and `DELETE` for all roles. Logs must be immutable. |
+./docs__legacy_do_not_use/02_BLUEPRINT.md:64:- 002_rls.sql: RLS + policies
+./docs__legacy_do_not_use/07_ABUSE_TEST_R3.md:3:| Scenario | How the Abuse Happens (Step-by-Step) | Why the Current Design Allows It | The SMALLEST Possible Fix (SQL/RLS/Trigger/Guard) |
+./docs__legacy_do_not_use/SECURITY_VERIFICATION.md:16:10. **RLS Immutability:** `audit_logs` are immutable (no UPDATE/DELETE allowed for any role).
+./docs__legacy_do_not_use/SECURITY_VERIFICATION.md:24:| **Audit Logs** | Strict INSERT | `INSERT INTO public.audit_logs (deal_id, actor_role, action) VALUES ('...', 'system', 'TEST');` (As authenticated user, without `actor_profile_id = auth.uid()`) | Fails with RLS policy violation. |

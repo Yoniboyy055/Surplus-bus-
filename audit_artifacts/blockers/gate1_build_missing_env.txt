@@ -1,0 +1,30 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> surplus-referral-platform@1.0.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (131kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+Error: Invalid environment variables in production: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
+    at 1964 (/workspace/Surplus-bus-/.next/server/app/api/agents/health/route.js:1:2702)
+    at t (/workspace/Surplus-bus-/.next/server/webpack-runtime.js:1:127)
+    at 9692 (/workspace/Surplus-bus-/.next/server/app/api/agents/health/route.js:1:2884)
+    at t (/workspace/Surplus-bus-/.next/server/webpack-runtime.js:1:127)
+    at 8190 (/workspace/Surplus-bus-/.next/server/app/api/agents/health/route.js:1:760)
+    at t (/workspace/Surplus-bus-/.next/server/webpack-runtime.js:1:127)
+    at r (/workspace/Surplus-bus-/.next/server/app/api/agents/health/route.js:1:3218)
+    at /workspace/Surplus-bus-/.next/server/app/api/agents/health/route.js:1:3249
+    at t.X (/workspace/Surplus-bus-/.next/server/webpack-runtime.js:1:1191)
+    at /workspace/Surplus-bus-/.next/server/app/api/agents/health/route.js:1:3231
+
+> Build error occurred
+Error: Failed to collect page data for /api/agents/health
+    at /workspace/Surplus-bus-/node_modules/next/dist/build/utils.js:1269:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  type: 'Error'
+}

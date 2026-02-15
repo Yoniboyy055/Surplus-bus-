@@ -1,0 +1,10 @@
+app/dashboard/page.tsx:26:  if (isOwnerEmail(data.user.email)) {
+app/dashboard/page.tsx:40:    switch (profile.role) {
+lib/auth/ensureProfile.ts:21:    if (isOwnerEmail(user.email) && existing.role !== 'operator') {
+lib/auth/ensureProfile.ts:46:  const role = isOwnerEmail(user.email) ? "operator" : "referrer"; // Default to referrer for new users as per requirement? 
+lib/auth/ensureProfile.ts:57:        email: user.email ?? null,
+app/buyer/page.tsx:304:                     key={deal.id} 
+app/operator/properties/review/page.tsx:137:            <div key={candidate.id} className="bg-slate-900 border border-slate-800 rounded-lg p-4 hover:border-slate-700 transition">
+app/operator/payouts/PayoutsList.tsx:106:                <tr key={payout.id} className="hover:bg-slate-800/50 transition-colors">
+app/onboarding/role/page.tsx:83:              key={role.id}
+app/referrer/page.tsx:152:              <div key={deal.id} className="flex justify-between items-center text-sm border-b border-quantum-700 pb-2">

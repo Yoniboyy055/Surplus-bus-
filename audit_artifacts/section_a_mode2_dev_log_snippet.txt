@@ -1,0 +1,10 @@
+○ Compiling /middleware ...
+✓ Compiled /middleware in 1287ms (123 modules)
+○ Compiling /api/health ...
+✓ Compiled /api/health in 1529ms (192 modules)
+❌ Invalid environment variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY undefined
+GET /api/health 200 in 1858ms
+○ Compiling / ...
+✓ Compiled / in 6.9s (979 modules)
+❌ Invalid environment variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY undefined
+GET / 200 in 7472ms

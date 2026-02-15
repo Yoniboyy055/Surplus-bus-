@@ -1,0 +1,249 @@
+## Env handling files
+middleware.ts:10:  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+middleware.ts:11:  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+lib/env.ts:1:import { z } from "zod";
+lib/env.ts:3:const envSchema = z.object({
+lib/env.ts:4:  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+lib/env.ts:8:  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+lib/env.ts:9:  CRON_SECRET: z.string().min(1).optional(), // Server-side only, required for cron authentication
+lib/env.ts:12:export type Env = z.infer<typeof envSchema>;
+lib/env.ts:14:const parsed = envSchema.safeParse({
+lib/env.ts:15:  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+lib/env.ts:16:  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+lib/env.ts:17:  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+lib/env.ts:18:  OWNER_EMAIL: process.env.OWNER_EMAIL,
+lib/env.ts:19:  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+lib/env.ts:20:  CRON_SECRET: process.env.CRON_SECRET,
+lib/supabase/client.ts:10:  return createBrowserClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+lib/supabase/server.ts:13:  return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+lib/agents/ingestion.ts:1:import { z } from "zod";
+lib/agents/ingestion.ts:45:    .map((candidate) => candidateSchema.safeParse(candidate))
+lib/auth/ensureProfile.ts:81:  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+lib/auth/ensureProfile.ts:82:  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+lib/auth/ensureProfile.ts:85:    throw new Error("ensureProfile: Missing SUPABASE_SERVICE_ROLE_KEY or URL for admin operations");
+lib/auth/ownerEmail.ts:11:export const OWNER_EMAIL = (process.env.OWNER_EMAIL || HARDCODED_OWNER).toLowerCase().trim();
+lib/auth/verifyAgentAuth.ts:9: * 2. Authorization: Bearer <CRON_SECRET> header (for cron calls)
+lib/auth/verifyAgentAuth.ts:21:  const cronSecret = process.env.CRON_SECRET;
+app/api/deals/route.ts:3:import { z } from "zod";
+app/api/deals/route.ts:35:  const parseResult = submissionSchema.safeParse(body);
+app/referrer/page.tsx:32:  const appUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+\n## Secret leak checks
+git grep -n supabase | head -n 40
+README.md:67:Apply SQL in `supabase/sql/` in order, including `015_public_launch_foundation.sql` for launch-readiness tables.
+app/api/agents/health/route.ts:1:import { createClient } from "@/lib/supabase/server";
+app/api/agents/health/route.ts:5:  const supabase = createClient();
+app/api/agents/health/route.ts:6:  if (!supabase) return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+app/api/agents/health/route.ts:8:  const { data: { user } } = await supabase.auth.getUser();
+app/api/agents/health/route.ts:12:  const { data: logs } = await supabase
+app/api/agents/listing/scrape-alberta/route.ts:1:import { createClient } from "@/lib/supabase/server";
+app/api/agents/listing/scrape-alberta/route.ts:12:  const supabase = createClient();
+app/api/agents/listing/scrape-alberta/route.ts:14:  if (!supabase) {
+app/api/agents/listing/scrape-alberta/route.ts:20:    await logHealth(supabase, "failure", 0, 0, Date.now() - startTime, "Unauthorized");
+app/api/agents/listing/scrape-alberta/route.ts:24:  const runId = await startIngestionRun(supabase, AGENT_NAME, SOURCE_URL);
+app/api/agents/listing/scrape-alberta/route.ts:27:    const { count: queuedCount, error: countError } = await supabase
+app/api/agents/listing/scrape-alberta/route.ts:37:      await completeIngestionRun(supabase, runId, "success", { items_found: 0, items_queued: 0 });
+app/api/agents/listing/scrape-alberta/route.ts:38:      await logHealth(supabase, "success", 0, 0, Date.now() - startTime, null, {
+app/api/agents/listing/scrape-alberta/route.ts:63:    const queueResult = await queueCandidates(supabase, runId, mockCandidates);
+app/api/agents/listing/scrape-alberta/route.ts:64:    await completeIngestionRun(supabase, runId, "success", {
+app/api/agents/listing/scrape-alberta/route.ts:69:    await logHealth(supabase, "success", queueResult.itemsFound, queueResult.itemsQueued, Date.now() - startTime);
+app/api/agents/listing/scrape-alberta/route.ts:73:    await completeIngestionRun(supabase, runId, "failure", { items_found: 0, items_queued: 0, error_message: errorMessage });
+app/api/agents/listing/scrape-alberta/route.ts:74:    await logHealth(supabase, "failure", 0, 0, Date.now() - startTime, errorMessage);
+app/api/agents/listing/scrape-alberta/route.ts:80:  supabase: ReturnType<typeof createClient>,
+app/api/agents/listing/scrape-alberta/route.ts:88:  if (!supabase) return;
+app/api/agents/listing/scrape-alberta/route.ts:90:  await supabase.from("agent_health_log").insert({
+app/api/agents/listing/scrape-gc/route.ts:1:import { createClient } from "@/lib/supabase/server";
+app/api/agents/listing/scrape-gc/route.ts:12:  const supabase = createClient();
+app/api/agents/listing/scrape-gc/route.ts:14:  if (!supabase) {
+app/api/agents/listing/scrape-gc/route.ts:20:    await logHealth(supabase, "failure", 0, 0, Date.now() - startTime, "Unauthorized");
+app/api/agents/listing/scrape-gc/route.ts:24:  const runId = await startIngestionRun(supabase, AGENT_NAME, SOURCE_URL);
+app/api/agents/listing/scrape-gc/route.ts:27:    const { count: queuedCount, error: countError } = await supabase
+app/api/agents/listing/scrape-gc/route.ts:35:      await completeIngestionRun(supabase, runId, "success", { items_found: 0, items_queued: 0 });
+app/api/agents/listing/scrape-gc/route.ts:36:      await logHealth(supabase, "success", 0, 0, Date.now() - startTime, null, { reason: "queue_cap_reached", queued_count: queuedCount });
+app/api/agents/listing/scrape-gc/route.ts:58:    const queueResult = await queueCandidates(supabase, runId, mockCandidates);
+app/api/agents/listing/scrape-gc/route.ts:59:    await completeIngestionRun(supabase, runId, "success", {
+app/api/agents/listing/scrape-gc/route.ts:64:    await logHealth(supabase, "success", queueResult.itemsFound, queueResult.itemsQueued, Date.now() - startTime);
+app/api/agents/listing/scrape-gc/route.ts:68:    await completeIngestionRun(supabase, runId, "failure", { items_found: 0, items_queued: 0, error_message: errorMessage });
+app/api/agents/listing/scrape-gc/route.ts:69:    await logHealth(supabase, "failure", 0, 0, Date.now() - startTime, errorMessage);
+app/api/agents/listing/scrape-gc/route.ts:75:  supabase: ReturnType<typeof createClient>,
+app/api/agents/listing/scrape-gc/route.ts:83:  if (!supabase) return;
+app/api/agents/listing/scrape-gc/route.ts:85:  await supabase.from("agent_health_log").insert({
+app/api/alerts/route.ts:5:  const { supabase, user, error } = await requireUser();
+app/api/alerts/route.ts:6:  if (error || !supabase || !user) return error!;
+\ngit grep -n sk_
+\ngit grep -n service_role
+supabase/sql/014_linter_fixes.sql:36:-- System logs should be inserted by a service_role (which bypasses RLS) or a specific system actor.
+\n## Supabase init files
+lib/supabase/client.ts
+lib/supabase/server.ts
+\n### lib/supabase/client.ts
+import { createBrowserClient } from "@supabase/ssr";
+
+import { env } from "@/lib/env";
+
+export const createClient = () => {
+  if (!env) {
+    return null;
+  }
+
+  return createBrowserClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+};
+\n### lib/supabase/server.ts
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+import { env } from "@/lib/env";
+
+export const createClient = () => {
+  if (!env) {
+    return null;
+  }
+
+  const cookieStore = cookies();
+
+  return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        } catch {
+          // The `setAll` method was called from a Server Component.
+          // This can be ignored if you have middleware refreshing
+          // user sessions.
+        }
+      },
+    },
+  });
+};
+\n### lib/auth/ensureProfile.ts
+import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js"; // Direct import for admin client
+import { isOwnerEmail } from "./ownerEmail";
+
+type Profile = {
+  id: string;
+  role: "operator" | "referrer" | "buyer";
+};
+
+export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
+  console.log(`ensureProfile: Checking profile for ${user.email} (${user.id})`);
+
+  // 1. Try to read existing profile with the user's client (RLS applied)
+  const { data: existing, error: selectError } = await userClient
+    .from("profiles")
+    .select("id, role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  // If we found it, verify role upgrade for owner
+  if (existing) {
+    if (isOwnerEmail(user.email) && existing.role !== 'operator') {
+       console.log(`ensureProfile: Upgrading ${user.email} to operator`);
+       // Use admin client for upgrade to bypass any "self_update" restrictions on role
+       const adminClient = getAdminClient();
+       const { data: updated, error: updateError } = await adminClient
+         .from("profiles")
+         .update({ role: 'operator' })
+         .eq("id", user.id)
+         .select("id, role")
+         .single();
+       
+       if (updateError) {
+         console.error("ensureProfile: Upgrade failed", updateError);
+         // Fallback to existing, but log error
+         return { profile: existing as Profile, created: false };
+       }
+       return { profile: updated as Profile, created: false };
+    }
+    return { profile: existing as Profile, created: false };
+  }
+
+  // 2. Insert if not found
+  // We use the ADMIN client here to bypass RLS policies that might restrict:
+  // - Inserting 'operator' role (often blocked for normal users)
+  // - Inserting 'referrer' if default policies are too strict
+  // - Race conditions (admin client is authoritative)
+  
+  const role = isOwnerEmail(user.email) ? "operator" : "referrer"; // Default to referrer for new users as per requirement? 
+  // Requirement says: "role default = 'referrer' unless operator email match" -> YES.
+  
+  console.log(`ensureProfile: Profile not found, inserting for ${user.id} with role ${role} (using Admin Client)`);
+  
+  const adminClient = getAdminClient();
+  
+  const { data: inserted, error: insertError } = await adminClient
+    .from("profiles")
+    .upsert(
+      {
+        id: user.id,
+        email: user.email ?? null,
+        role: role,
+        created_at: new Date().toISOString()
+      },
+      { onConflict: 'id', ignoreDuplicates: false } // We want to overwrite/ensure it exists
+    )
+    .select("id, role")
+    .single();
+
+  if (insertError) {
+    console.error("ensureProfile: Admin INSERT/UPSERT failed", insertError);
+    // If admin fails, something is very wrong (DB down, constraints).
+    throw insertError;
+  }
+
+  return { profile: inserted as Profile, created: true };
+};
+
+// Helper to get a service role client on the server
+function getAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!url || !key) {
+    throw new Error("ensureProfile: Missing SUPABASE_SERVICE_ROLE_KEY or URL for admin operations");
+  }
+  
+  return createClient(url, key, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+}
+\n## Migrations directories
+supabase/sql/001_schema.sql
+supabase/sql/002_rls.sql
+supabase/sql/003_automation.sql
+supabase/sql/004_enhancements.sql
+supabase/sql/005_abuse_fixes_r1.sql
+supabase/sql/006_abuse_fixes_r2.sql
+supabase/sql/007_abuse_fixes_r3.sql
+supabase/sql/008_security_hardening.sql
+supabase/sql/009_linter_hardening.sql
+supabase/sql/010_supabase_hardening.sql
+supabase/sql/011_profile_bootstrap_fix.sql
+supabase/sql/012_fix_profile_select_policy.sql
+supabase/sql/013_dual_agent_system.sql
+supabase/sql/014_linter_fixes.sql
+supabase/sql/015_public_launch_foundation.sql
+supabase/sql/016_opportunity_intelligence_phase1.sql
+prisma/: NOT FOUND
+\n## API routes list
+app/api/agents/health/route.ts
+app/api/agents/listing/scrape-alberta/route.ts
+app/api/agents/listing/scrape-gc/route.ts
+app/api/alerts/route.ts
+app/api/analytics/route.ts
+app/api/beta-signups/route.ts
+app/api/deals/route.ts
+app/api/health/route.ts
+app/api/opportunities/ranked/route.ts
+app/api/opportunities/recompute-scores/route.ts
+app/api/payouts/route.ts
+app/api/profile/route.ts
+app/api/referral-links/route.ts
+app/api/subscription/route.ts

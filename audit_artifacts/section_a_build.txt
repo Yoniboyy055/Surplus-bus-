@@ -1,0 +1,82 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> surplus-referral-platform@1.0.0 build
+> next build
+
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (131kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+❌ Invalid environment variables: {
+  NEXT_PUBLIC_SUPABASE_URL: [ 'Invalid input: expected string, received undefined' ],
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: [ 'Invalid input: expected string, received undefined' ]
+}
+❌ Invalid environment variables: {
+  NEXT_PUBLIC_SUPABASE_URL: [ 'Invalid input: expected string, received undefined' ],
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: [ 'Invalid input: expected string, received undefined' ]
+}
+   Generating static pages (0/36) ...
+   Generating static pages (9/36) 
+❌ Invalid environment variables: {
+  NEXT_PUBLIC_SUPABASE_URL: [ 'Invalid input: expected string, received undefined' ],
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: [ 'Invalid input: expected string, received undefined' ]
+}
+   Generating static pages (18/36) 
+❌ Invalid environment variables: {
+  NEXT_PUBLIC_SUPABASE_URL: [ 'Invalid input: expected string, received undefined' ],
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: [ 'Invalid input: expected string, received undefined' ]
+}
+   Generating static pages (27/36) 
+ ✓ Generating static pages (36/36)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    180 B          96.2 kB
+├ ○ /_not-found                          873 B          88.2 kB
+├ ○ /401                                 180 B          96.2 kB
+├ ○ /403                                 180 B          96.2 kB
+├ ƒ /api/agents/health                   0 B                0 B
+├ ƒ /api/agents/listing/scrape-alberta   0 B                0 B
+├ ƒ /api/agents/listing/scrape-gc        0 B                0 B
+├ ƒ /api/alerts                          0 B                0 B
+├ ƒ /api/analytics                       0 B                0 B
+├ ƒ /api/beta-signups                    0 B                0 B
+├ ƒ /api/deals                           0 B                0 B
+├ ○ /api/health                          0 B                0 B
+├ ƒ /api/opportunities/ranked            0 B                0 B
+├ ƒ /api/opportunities/recompute-scores  0 B                0 B
+├ ƒ /api/payouts                         0 B                0 B
+├ ƒ /api/profile                         0 B                0 B
+├ ƒ /api/referral-links                  0 B                0 B
+├ ƒ /api/subscription                    0 B                0 B
+├ ƒ /auth                                1.91 kB         177 kB
+├ ƒ /auth/callback                       0 B                0 B
+├ ○ /buyer                               6.86 kB         173 kB
+├ ○ /dashboard                           157 B          87.5 kB
+├ ○ /faq                                 158 B          87.5 kB
+├ ○ /landing                             820 B          88.1 kB
+├ ○ /legal/anti-spam                     158 B          87.5 kB
+├ ○ /legal/privacy                       158 B          87.5 kB
+├ ○ /legal/terms                         158 B          87.5 kB
+├ ○ /onboarding/role                     2.13 kB         169 kB
+├ ○ /operator                            7.29 kB         182 kB
+├ ○ /operator/payouts                    3.98 kB        91.3 kB
+├ ○ /operator/properties/review          10.5 kB         177 kB
+├ ○ /pricing                             158 B          87.5 kB
+├ ○ /product                             158 B          87.5 kB
+└ ○ /referrer                            4.21 kB         171 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/117-8635805cd7fee0e3.js       31.7 kB
+  ├ chunks/fd9d1056-a4cd4812f5295779.js  53.6 kB
+  └ other shared chunks (total)          1.95 kB
+
+
+ƒ Middleware                             73.5 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

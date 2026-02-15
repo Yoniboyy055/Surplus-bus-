@@ -1,0 +1,24 @@
+On branch fix/audit-blockers-pack
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   app/api/beta-signups/route.ts
+	modified:   app/api/health/route.ts
+	modified:   app/auth/callback/route.ts
+	modified:   app/dashboard/page.tsx
+	modified:   app/error.tsx
+	modified:   app/operator/page.tsx
+	modified:   app/operator/payouts/page.tsx
+	modified:   app/operator/properties/review/page.tsx
+	modified:   lib/auth/ensureProfile.ts
+	modified:   lib/auth/ownerEmail.ts
+	modified:   lib/env.ts
+	modified:   middleware.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	audit_artifacts/blockers/
+	lib/observability/
+	lib/security/
+
+no changes added to commit (use "git add" and/or "git commit -a")

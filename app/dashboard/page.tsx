@@ -29,7 +29,6 @@ export default async function DashboardPage() {
     try {
       await ensureProfile(supabase, data.user);
     } catch (e) {
-      console.error("Owner profile sync failed, but proceeding to /operator", e);
     }
     redirect("/operator");
   }
@@ -54,7 +53,6 @@ export default async function DashboardPage() {
         break;
     }
   } catch (error) {
-    console.error("Profile lookup failed", error);
     // If it's a redirect error (NEXT_REDIRECT), let it pass
     if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message.includes('NEXT_REDIRECT'))) {
         throw error;

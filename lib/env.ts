@@ -21,7 +21,10 @@ const parsed = envSchema.safeParse({
 });
 
 if (!parsed.success) {
-  console.error("❌ Invalid environment variables:", parsed.error.flatten().fieldErrors);
+  const fieldErrors = parsed.error.flatten().fieldErrors;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(`Invalid environment variables in production: ${Object.keys(fieldErrors).join(", ")}`);
+  }
 }
 
 export const env: Env | null = parsed.success ? parsed.data : null;

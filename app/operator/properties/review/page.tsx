@@ -33,7 +33,6 @@ export default function OperatorPropertyReviewPage() {
       .order('quality_score', { ascending: false });
 
     if (error) {
-      console.error('Error fetching candidates:', error);
     } else {
       setCandidates(data || []);
     }

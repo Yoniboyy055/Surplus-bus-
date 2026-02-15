@@ -30,7 +30,6 @@ export async function GET(request: Request) {
   try {
     await ensureProfile(supabase, data.user);
   } catch (profileError) {
-    console.error("Profile bootstrap failed", profileError);
     return NextResponse.redirect(new URL("/auth?error=profile_init_failed", url.origin));
   }
 
