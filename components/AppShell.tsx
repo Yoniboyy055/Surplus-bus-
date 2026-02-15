@@ -99,12 +99,15 @@ export function AppShell({ children, user, profile }: AppShellProps) {
             </div>
             <nav className="flex gap-6 text-xs font-medium uppercase tracking-wider text-quantum-400">
               <Link href="/" className="hover:text-quantum-50 transition">Home</Link>
+              <Link href="/landing" className="hover:text-quantum-50 transition">Beta</Link>
+              <Link href="/pricing" className="hover:text-quantum-50 transition">Pricing</Link>
+              <Link href="/faq" className="hover:text-quantum-50 transition">FAQ</Link>
               <Link href="/auth" className="hover:text-quantum-50 transition">Login</Link>
             </nav>
           </header>
           <main className="flex flex-1 flex-col gap-6">{children}</main>
           <footer className="border-t border-quantum-700 pt-6 text-center text-[10px] uppercase tracking-widest text-quantum-500">
-            &copy; 2026 Surplus Referral Platform. All rights reserved.
+            &copy; 2026 Surplus Bus. Information service only. Not a broker.
           </footer>
         </div>
       </div>

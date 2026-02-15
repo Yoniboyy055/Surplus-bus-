@@ -59,9 +59,11 @@ To prevent system overload, agents implement a queue cap:
 
 This ensures operators can process the backlog before new items are added.
 
-## Health Logging
+## Health Logging & Failure Recovery
 
-Each agent run logs metrics to the `agent_health_log` table:
+Each run now creates an `ingestion_runs` lifecycle record plus `agent_health_log` metrics. Candidate payloads are validated with `zod` and failures are written to `ingestion_failures` for replay/debugging.
+
+`agent_health_log` stores:
 
 - **agent_type**: `'listing'`
 - **agent_name**: `'scrape_alberta_auction'` or `'scrape_gc_surplus'`
@@ -209,7 +211,7 @@ After deployment, verify:
 ## Future Enhancements
 
 - Real scraping implementation (currently using mock data)
-- Retry logic for failed runs
+- Alerting hooks for repeated ingestion failures
 - Rate limiting per source
 - Webhook notifications for failures
 - Queue cap configuration via environment variable
