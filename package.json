@@ -10,7 +10,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "audit:scope": "node scripts/audit-scope.js",
+    "audit:routes": "node scripts/audit-routes.js"
   },
   "repository": {
     "type": "git",

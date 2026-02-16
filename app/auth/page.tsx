@@ -29,11 +29,11 @@ export default function AuthPage() {
         <div className="text-center text-quantum-500 text-sm">
           <p>
             By signing in, you agree to our{' '}
-            <Link href="/" className="text-cyan-500 hover:text-cyan-400">
+            <Link href="/legal/terms" className="text-cyan-500 hover:text-cyan-400">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/" className="text-cyan-500 hover:text-cyan-400">
+            <Link href="/legal/privacy" className="text-cyan-500 hover:text-cyan-400">
               Privacy Policy
             </Link>
           </p>

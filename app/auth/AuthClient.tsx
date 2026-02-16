@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { isSupabaseConfigured } from "@/lib/env";
+import { sanitizeRedirectPath } from "@/lib/auth/sanitizeRedirect";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AuthClient() {
@@ -30,10 +31,15 @@ export default function AuthClient() {
       return;
     }
 
+    const searchParams = new URLSearchParams(window.location.search);
+    const rawNext = searchParams.get("callbackUrl") ?? searchParams.get("next") ?? "/dashboard";
+    const next = sanitizeRedirectPath(rawNext);
+    const callbackUrl = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl,
       },
     });
 
@@ -88,7 +94,7 @@ export default function AuthClient() {
 
       {errorParam && (
         <div className="rounded-lg border border-accent-danger/40 bg-accent-danger/10 p-4 text-sm text-accent-danger">
-          ✕ Sign-in failed: {errorParam}
+          ✕ Sign-in failed: {errorParam === "cookie_write_failed" ? "Session could not be saved. Please try again or contact support." : errorParam.replace(/_/g, " ")}
         </div>
       )}
     </section>

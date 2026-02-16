@@ -20,10 +20,11 @@ export const createClient = () => {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
           );
-        } catch {
-          // The `setAll` method was called from a Server Component.
-          // This can be ignored if you have middleware refreshing
-          // user sessions.
+        } catch (err) {
+          // In Route Handlers, cookies().set() throws – use auth callback pattern instead.
+          // In Server Components, this can occur; middleware refreshes sessions.
+          console.error("[Supabase] Cookie write failed (setAll):", err);
+          // Do not swallow: log for visibility. If this appears in auth flows, fix the callback.
         }
       },
     },
