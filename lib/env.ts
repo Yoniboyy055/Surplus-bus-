@@ -14,7 +14,10 @@ export type Env = z.infer<typeof envSchema>;
 const parsed = envSchema.safeParse({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  NEXT_PUBLIC_APP_URL:
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    "http://localhost:3000",
   OWNER_EMAIL: process.env.OWNER_EMAIL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   CRON_SECRET: process.env.CRON_SECRET,
@@ -22,6 +25,20 @@ const parsed = envSchema.safeParse({
 
 if (!parsed.success) {
   console.error("❌ Invalid environment variables:", parsed.error.flatten().fieldErrors);
+}
+
+// Production (Vercel): require SUPABASE_SERVICE_ROLE_KEY at boot
+if (
+  typeof window === "undefined" &&
+  process.env.NODE_ENV === "production" &&
+  process.env.VERCEL === "1"
+) {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key || !String(key).trim()) {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY is required in production. Add it in Vercel → Settings → Environment Variables."
+    );
+  }
 }
 
 export const env: Env | null = parsed.success ? parsed.data : null;

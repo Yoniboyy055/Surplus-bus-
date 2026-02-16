@@ -8,7 +8,7 @@ type Profile = {
 };
 
 export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
-  console.log(`ensureProfile: Checking profile for ${user.email} (${user.id})`);
+  console.log(`[ensureProfile] user.id=${user.id} user.email=${user.email}`);
 
   // 1. Try to read existing profile with the user's client (RLS applied)
   const { data: existing, error: selectError } = await userClient
@@ -16,6 +16,10 @@ export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
     .select("id, role")
     .eq("id", user.id)
     .maybeSingle();
+
+  if (selectError) {
+    console.error("[ensureProfile] SELECT error:", JSON.stringify(selectError));
+  }
 
   // If we found it, verify role upgrade for owner
   if (existing) {
@@ -46,30 +50,32 @@ export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
   // - Inserting 'referrer' if default policies are too strict
   // - Race conditions (admin client is authoritative)
   
-  const role = isOwnerEmail(user.email) ? "operator" : "referrer"; // Default to referrer for new users as per requirement? 
-  // Requirement says: "role default = 'referrer' unless operator email match" -> YES.
-  
-  console.log(`ensureProfile: Profile not found, inserting for ${user.id} with role ${role} (using Admin Client)`);
-  
-  const adminClient = getAdminClient();
-  
+  const role = isOwnerEmail(user.email) ? "operator" : "referrer";
+
+  const insertPayload = {
+    id: user.id,
+    email: user.email ?? null,
+    role,
+    created_at: new Date().toISOString(),
+  };
+  console.log("[ensureProfile] INSERT payload:", JSON.stringify({ ...insertPayload, id: insertPayload.id }));
+
+  let adminClient;
+  try {
+    adminClient = getAdminClient();
+  } catch (adminErr) {
+    console.error("[ensureProfile] getAdminClient failed:", adminErr);
+    throw adminErr;
+  }
+
   const { data: inserted, error: insertError } = await adminClient
     .from("profiles")
-    .upsert(
-      {
-        id: user.id,
-        email: user.email ?? null,
-        role: role,
-        created_at: new Date().toISOString()
-      },
-      { onConflict: 'id', ignoreDuplicates: false } // We want to overwrite/ensure it exists
-    )
+    .upsert(insertPayload, { onConflict: "id", ignoreDuplicates: false })
     .select("id, role")
     .single();
 
   if (insertError) {
-    console.error("ensureProfile: Admin INSERT/UPSERT failed", insertError);
-    // If admin fails, something is very wrong (DB down, constraints).
+    console.error("[ensureProfile] Admin UPSERT failed:", insertError.message, insertError.code, insertError.details);
     throw insertError;
   }
 
@@ -82,7 +88,9 @@ function getAdminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   
   if (!url || !key) {
-    throw new Error("ensureProfile: Missing SUPABASE_SERVICE_ROLE_KEY or URL for admin operations");
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY is required for profile bootstrap. Set it in Vercel → Settings → Environment Variables."
+    );
   }
   
   return createClient(url, key, {

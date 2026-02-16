@@ -44,6 +44,7 @@ export default function AuthClient() {
     });
 
     if (error) {
+      console.error("[Auth] OAuth error:", error.message);
       setStatus("error");
       setMessage(error.message);
     }
@@ -94,7 +95,12 @@ export default function AuthClient() {
 
       {errorParam && (
         <div className="rounded-lg border border-accent-danger/40 bg-accent-danger/10 p-4 text-sm text-accent-danger">
-          ✕ Sign-in failed: {errorParam === "cookie_write_failed" ? "Session could not be saved. Please try again or contact support." : errorParam.replace(/_/g, " ")}
+          ✕ Sign-in failed:{" "}
+          {errorParam === "cookie_write_failed"
+            ? "Session could not be saved. Please try again or contact support."
+            : errorParam === "callback_failed"
+            ? "Could not complete sign-in. Check Supabase redirect URLs and try again."
+            : errorParam.replace(/_/g, " ")}
         </div>
       )}
     </section>
