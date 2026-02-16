@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
+import { DataStatusPill } from "./DataStatusPill";
 import type { User } from "@supabase/supabase-js";
 
 type Profile = {
@@ -181,6 +182,7 @@ export function AppShell({ children, user, profile }: AppShellProps) {
               >
                 <Menu size={24} />
               </button>
+              <DataStatusPill />
             </div>
 
             <div className="flex items-center gap-6">
