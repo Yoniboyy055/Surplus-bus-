@@ -16,9 +16,21 @@ Agents read active sources from the DB and run the matching parser. No hardcoded
 ## parser_key Naming Convention
 
 - **Format:** `{region}_{type}` or `{portal_name}`
-- **Examples:** `gc_buyandsell`, `canadabuys`, `ab_surplus`
+- **Examples:** `gc_buyandsell`, `canadabuys`, `ab_surplus`, `on_surplus`, `city_toronto_surplus`
 - **Lowercase, snake_case**
 - Must match the switch key in the agent runner
+
+---
+
+## Batch-1 Sources (mock now, real scrape next)
+
+| Layer   | parser_key            | Kind    |
+|---------|------------------------|---------|
+| Federal | gc_buyandsell          | surplus |
+| Federal | canadabuys             | rfp     |
+| Province| ab_surplus             | surplus |
+| Province| on_surplus             | surplus |
+| City    | city_toronto_surplus   | surplus |
 
 ---
 

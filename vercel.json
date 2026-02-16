@@ -1,6 +1,9 @@
 {
   "crons": [
     { "path": "/api/agents/run?parser_key=gc_buyandsell", "schedule": "0 11 * * *" },
-    { "path": "/api/agents/run?parser_key=canadabuys", "schedule": "0 12 * * *" }
+    { "path": "/api/agents/run?parser_key=canadabuys", "schedule": "0 12 * * *" },
+    { "path": "/api/agents/run?parser_key=ab_surplus", "schedule": "0 13 * * *" },
+    { "path": "/api/agents/run?parser_key=on_surplus", "schedule": "0 14 * * *" },
+    { "path": "/api/agents/run?parser_key=city_toronto_surplus", "schedule": "0 15 * * *" }
   ]
 }
