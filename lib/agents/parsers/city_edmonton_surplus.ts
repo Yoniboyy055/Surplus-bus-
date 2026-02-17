@@ -28,7 +28,10 @@ export async function parseCityEdmontonSurplus(ctx: ParserContext): Promise<Pars
   const headingRe = /<h[23][^>]*>([^<]+)<\/h[23]>/gi;
   let m: RegExpExecArray | null;
   while ((m = headingRe.exec(html)) !== null) {
-    const title = m[1].replace(/\s+/g, " ").trim();
+    // Guard: TS strict flags RegExp capture groups as possibly undefined.
+    const raw = m[1];
+    if (!raw) continue;
+    const title = raw.replace(/\s+/g, " ").trim();
     if (!title || title.length < 3) continue;
     const extId = stableExternalIdFromTuple([ctx.parserKey, title, url]);
     if (seen.has(extId)) continue;
