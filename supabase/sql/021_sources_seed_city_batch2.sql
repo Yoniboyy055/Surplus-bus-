@@ -21,7 +21,7 @@ VALUES
     'surplus',
     'CA-ON',
     'https://ottawa.ca',
-    'https://ottawa.ca/en/business-and-growth',
+    'https://ottawa.ca/en/business/procurement',
     true,
     55,
     1440

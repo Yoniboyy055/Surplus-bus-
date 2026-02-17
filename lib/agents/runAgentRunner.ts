@@ -159,14 +159,16 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
           .single();
 
         if (!upsertErr && upsertedRow) {
-          upserted++;
           const isNew = !existing;
-          await supabase.from("opportunity_events").insert({
-            opportunity_id: upsertedRow.id,
-            event_type: isNew ? "created" : "updated",
-            detected_at: new Date().toISOString(),
-            source_run_id: runId,
-          });
+          if (isNew) {
+            upserted++;
+            await supabase.from("opportunity_events").insert({
+              opportunity_id: upsertedRow.id,
+              event_type: "created",
+              detected_at: new Date().toISOString(),
+              source_run_id: runId,
+            });
+          }
         }
       }
 

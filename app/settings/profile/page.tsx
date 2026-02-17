@@ -36,6 +36,8 @@ export default function ProfileSettingsPage() {
           min_value: null,
           max_value: null,
           urgency_days: 7,
+          marketing_opt_in: false,
+          news_opt_in: false,
         }
       );
       setLoading(false);
@@ -60,6 +62,8 @@ export default function ProfileSettingsPage() {
         min_value: prefs.min_value ? Number(prefs.min_value) : null,
         max_value: prefs.max_value ? Number(prefs.max_value) : null,
         urgency_days: prefs.urgency_days ? Number(prefs.urgency_days) : 7,
+        marketing_opt_in: prefs.marketing_opt_in ?? false,
+        news_opt_in: prefs.news_opt_in ?? false,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "profile_id" }
@@ -82,6 +86,32 @@ export default function ProfileSettingsPage() {
       <h1 className="text-2xl font-bold text-quantum-50">Profile & preferences</h1>
 
       <form onSubmit={handleSave} className="space-y-6">
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="marketing_opt_in"
+            checked={prefs?.marketing_opt_in ?? false}
+            onChange={(e) => setPrefs((p: any) => ({ ...p, marketing_opt_in: e.target.checked }))}
+            className="rounded border-quantum-600"
+          />
+          <label htmlFor="marketing_opt_in" className="text-sm font-medium text-quantum-200">
+            Promos & discounts
+          </label>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="news_opt_in"
+            checked={prefs?.news_opt_in ?? false}
+            onChange={(e) => setPrefs((p: any) => ({ ...p, news_opt_in: e.target.checked }))}
+            className="rounded border-quantum-600"
+          />
+          <label htmlFor="news_opt_in" className="text-sm font-medium text-quantum-200">
+            News & updates
+          </label>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-quantum-200 mb-2">Digest frequency</label>
           <select
