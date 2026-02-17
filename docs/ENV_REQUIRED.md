@@ -21,6 +21,8 @@ All env vars required for Surplus Bus in production (Vercel).
 | `SUPABASE_SERVICE_ROLE_KEY` | **Yes** | Supabase service role key. Required for profile bootstrap, agent writes. **App will throw at boot if missing in production.** |
 | `CRON_SECRET` | Yes (for cron) | Bearer token for `/api/agents/listing/scrape-*` cron routes |
 | `OWNER_EMAIL` | No | Email that gets operator role automatically |
+| `RESEND_API_KEY` | Yes (for email) | API key from [Resend](https://resend.com) for sending campaign/discount emails |
+| `EMAIL_FROM` | Yes (for email) | Verified sender address (e.g. `noreply@yourdomain.com`) |
 
 ---
 

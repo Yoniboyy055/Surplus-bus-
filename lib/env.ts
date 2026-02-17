@@ -7,6 +7,8 @@ const envSchema = z.object({
   OWNER_EMAIL: z.string().email().optional(), // Optional to prevent crash if not set in dev, but strictly should be set
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   CRON_SECRET: z.string().min(1).optional(), // Server-side only, required for cron authentication
+  RESEND_API_KEY: z.string().min(1).optional(), // Required for email sending (Resend)
+  EMAIL_FROM: z.string().min(1).optional(), // Sender address for outbound emails
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -21,6 +23,8 @@ const parsed = envSchema.safeParse({
   OWNER_EMAIL: process.env.OWNER_EMAIL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   CRON_SECRET: process.env.CRON_SECRET,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  EMAIL_FROM: process.env.EMAIL_FROM,
 });
 
 if (!parsed.success) {
