@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { executeAgentRun } from "@/lib/agents/runAgentRunner";
+import { executeAgentRun, AgentRunError } from "@/lib/agents/runAgentRunner";
 import { timingSafeEqual } from "crypto";
 import { logApiStart, logApiEnd } from "@/lib/observability";
 
@@ -24,6 +24,10 @@ export async function GET(request: NextRequest) {
     logApiEnd("/api/agents/run", requestId, start, 200);
     return NextResponse.json(result);
   } catch (err) {
+    if (err instanceof AgentRunError) {
+      logApiEnd("/api/agents/run", requestId, start, err.statusCode);
+      return NextResponse.json({ error: err.code }, { status: err.statusCode });
+    }
     const msg = err instanceof Error ? err.message : "Unknown error";
     logApiEnd("/api/agents/run", requestId, start, 500);
     return NextResponse.json(

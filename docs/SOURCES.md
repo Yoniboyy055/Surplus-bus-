@@ -13,6 +13,22 @@ Agents read active sources from the DB and run the matching parser. No hardcoded
 
 ---
 
+## Scheduling: Vercel Cron Only (Daily)
+
+All sources run once per day via Vercel cron. `fetch_interval_minutes` is informational only; no interval-based scheduling.
+
+| parser_key | UTC time |
+|------------|----------|
+| gc_buyandsell | 11:00 |
+| canadabuys | 12:00 |
+| ab_surplus | 13:00 |
+| on_surplus | 14:00 |
+| city_toronto_surplus | 15:00 |
+
+Paths: `/api/agents/run?parser_key=<key>`
+
+---
+
 ## parser_key Naming Convention
 
 - **Format:** `{region}_{type}` or `{portal_name}`
@@ -61,5 +77,5 @@ Agents read active sources from the DB and run the matching parser. No hardcoded
 | base_url | text | Main listing URL |
 | feed_url | text | Optional RSS/feed URL |
 | is_active | boolean | If false, agents skip |
-| fetch_interval_minutes | int | Target interval (default 1440) |
+| fetch_interval_minutes | int | Informational only. Scheduling is Vercel cron (daily). |
 | priority | int | Lower = higher priority |

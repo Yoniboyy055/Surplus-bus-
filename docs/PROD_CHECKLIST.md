@@ -27,7 +27,17 @@
 
 ## Verify Agent Cron
 
-1. **Vercel crons:** Check `vercel.json` — paths like `/api/agents/run?parser_key=gc_buyandsell`
+**Scheduling:** Vercel cron only (daily). No interval-based runners.
+
+| parser_key | Path | UTC |
+|------------|------|-----|
+| gc_buyandsell | /api/agents/run?parser_key=gc_buyandsell | 11:00 |
+| canadabuys | /api/agents/run?parser_key=canadabuys | 12:00 |
+| ab_surplus | /api/agents/run?parser_key=ab_surplus | 13:00 |
+| on_surplus | /api/agents/run?parser_key=on_surplus | 14:00 |
+| city_toronto_surplus | /api/agents/run?parser_key=city_toronto_surplus | 15:00 |
+
+1. **Vercel crons:** Check `vercel.json` — daily schedules only
 2. **Manual run:**
    ```powershell
    $env:CRON_SECRET = "your-secret"

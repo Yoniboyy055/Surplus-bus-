@@ -135,6 +135,10 @@ export default function OpsSourcesPage() {
         </Button>
       </header>
 
+      <p className="text-quantum-500 text-sm">
+        Schedule is managed in Vercel (daily). This field is informational.
+      </p>
+
       {(creating || editing) && (
         <SourceForm
           source={editing ?? undefined}
@@ -155,7 +159,7 @@ export default function OpsSourcesPage() {
               <th className="text-left px-4 py-3 text-quantum-300 font-medium">Kind</th>
               <th className="text-left px-4 py-3 text-quantum-300 font-medium">Jurisdiction</th>
               <th className="text-left px-4 py-3 text-quantum-300 font-medium">parser_key</th>
-              <th className="text-left px-4 py-3 text-quantum-300 font-medium">Interval</th>
+              <th className="text-left px-4 py-3 text-quantum-300 font-medium">Schedule</th>
               <th className="text-left px-4 py-3 text-quantum-300 font-medium">Priority</th>
               <th className="text-left px-4 py-3 text-quantum-300 font-medium">Active</th>
               <th className="text-right px-4 py-3 text-quantum-300 font-medium">Actions</th>
@@ -168,7 +172,7 @@ export default function OpsSourcesPage() {
                 <td className="px-4 py-3 text-quantum-400">{s.kind}</td>
                 <td className="px-4 py-3 text-quantum-400">{s.jurisdiction}</td>
                 <td className="px-4 py-3 font-mono text-cyan-400">{s.parser_key}</td>
-                <td className="px-4 py-3 text-quantum-400">{s.fetch_interval_minutes}m</td>
+                <td className="px-4 py-3 text-quantum-500 text-xs">Daily (Vercel)</td>
                 <td className="px-4 py-3 text-quantum-400">{s.priority}</td>
                 <td className="px-4 py-3">
                   <button
@@ -230,7 +234,6 @@ function SourceForm({
   const [baseUrl, setBaseUrl] = useState(source?.base_url ?? "");
   const [feedUrl, setFeedUrl] = useState(source?.feed_url ?? "");
   const [parserKey, setParserKey] = useState(source?.parser_key ?? "");
-  const [interval, setInterval] = useState(source?.fetch_interval_minutes ?? 1440);
   const [priority, setPriority] = useState(source?.priority ?? 100);
 
   const submit = () => {
@@ -245,7 +248,7 @@ function SourceForm({
       base_url: baseUrl.trim(),
       feed_url: feedUrl.trim() || null,
       parser_key: parserKey.trim(),
-      fetch_interval_minutes: interval,
+      fetch_interval_minutes: 1440,
       priority,
       is_active: source?.is_active ?? true,
     });
@@ -318,15 +321,6 @@ function SourceForm({
             onChange={(e) => setFeedUrl(e.target.value)}
             className="w-full px-3 py-2 bg-quantum-800 border border-quantum-700 rounded text-quantum-100 text-sm"
             placeholder="https://..."
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-quantum-500 mb-1">Interval (minutes)</label>
-          <input
-            type="number"
-            value={interval}
-            onChange={(e) => setInterval(parseInt(e.target.value, 10) || 1440)}
-            className="w-full px-3 py-2 bg-quantum-800 border border-quantum-700 rounded text-quantum-100 text-sm"
           />
         </div>
         <div>

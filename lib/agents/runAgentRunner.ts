@@ -1,6 +1,17 @@
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 import { runParser } from "@/lib/agents/parsers";
 
+export class AgentRunError extends Error {
+  constructor(
+    message: string,
+    public readonly statusCode: number,
+    public readonly code: string
+  ) {
+    super(message);
+    this.name = "AgentRunError";
+  }
+}
+
 export type RunResult = {
   ok: boolean;
   parser_key: string;
@@ -21,24 +32,23 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
   const totalStart = Date.now();
   const supabase = createServiceRoleClient();
 
-  const { data: sources, error: sourcesError } = await supabase
+  const { data: allSources, error: sourcesError } = await supabase
     .from("sources")
-    .select("id, name, base_url, feed_url, parser_key")
+    .select("id, name, base_url, feed_url, parser_key, is_active")
     .eq("parser_key", parserKey)
-    .eq("is_active", true)
     .order("priority", { ascending: true });
 
   if (sourcesError) {
     throw new Error(`Failed to load sources: ${sourcesError.message}`);
   }
 
-  if (!sources?.length) {
-    return {
-      ok: true,
-      parser_key: parserKey,
-      runs: [],
-      message: "No active sources for this parser_key",
-    };
+  if (!allSources?.length) {
+    throw new AgentRunError("unknown_parser_key", 404, "unknown_parser_key");
+  }
+
+  const sources = allSources.filter((s) => s.is_active);
+  if (sources.length === 0) {
+    throw new AgentRunError("source_inactive", 409, "source_inactive");
   }
 
   const runs: RunResult["runs"] = [];
@@ -56,13 +66,28 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
       .single();
 
     if (insertErr || !runRow) {
+      const errMsg = insertErr?.message ?? "Failed to create run";
+      const { data: failRow } = await supabase
+        .from("source_runs")
+        .insert({
+          source_id: source.id,
+          agent_name: `agent_${source.parser_key}`,
+          status: "failure",
+          completed_at: new Date().toISOString(),
+          items_found: 0,
+          items_upserted: 0,
+          error_message: errMsg,
+        })
+        .select("id")
+        .single();
+
       runs.push({
         source_id: source.id,
-        run_id: "",
+        run_id: failRow?.id ?? "",
         status: "failure",
         items_found: 0,
         items_upserted: 0,
-        error_message: insertErr?.message ?? "Failed to create run",
+        error_message: errMsg,
         duration_ms: Date.now() - runStart,
       });
       continue;
