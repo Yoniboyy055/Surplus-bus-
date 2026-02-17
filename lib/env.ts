@@ -9,6 +9,7 @@ const envSchema = z.object({
   CRON_SECRET: z.string().min(1).optional(),
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(1).optional(),
+  EMAIL_TO: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -25,6 +26,7 @@ const parsed = envSchema.safeParse({
   CRON_SECRET: process.env.CRON_SECRET || undefined,
   RESEND_API_KEY: process.env.RESEND_API_KEY || undefined,
   EMAIL_FROM: process.env.EMAIL_FROM || undefined,
+  EMAIL_TO: process.env.EMAIL_TO || undefined,
 });
 
 if (!parsed.success) {

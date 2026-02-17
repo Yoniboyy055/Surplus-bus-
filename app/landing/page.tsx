@@ -23,18 +23,16 @@ export default function LandingPage() {
 
       if (!res.ok) {
         setStatus("error");
-        setMessage(data.error ?? "Something went wrong. Please try again.");
+        setMessage(
+          data.error === "Email service not configured"
+            ? "Email service not configured. Please try again later."
+            : data.error ?? "Something went wrong. Please try again."
+        );
         return;
       }
 
       setStatus("success");
-      if (data.email_sent) {
-        setMessage("You\u2019re in! Check your inbox for a confirmation email.");
-      } else if (data.reason === "email_not_configured") {
-        setMessage("You\u2019re on the list! We\u2019ll be in touch soon.");
-      } else {
-        setMessage("You\u2019re on the list! We\u2019ll send your first weekly intelligence brief soon.");
-      }
+      setMessage("You\u2019re in! Check your inbox for a confirmation email.");
     } catch {
       setStatus("error");
       setMessage("Network error. Please check your connection and try again.");

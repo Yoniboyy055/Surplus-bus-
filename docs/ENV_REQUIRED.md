@@ -22,7 +22,8 @@ All env vars required for Surplus Bus in production (Vercel).
 | `CRON_SECRET` | Yes (for cron) | Bearer token for `/api/agents/listing/scrape-*` cron routes |
 | `OWNER_EMAIL` | No | Email that gets operator role automatically |
 | `RESEND_API_KEY` | Yes (for email) | API key from [Resend](https://resend.com) for sending campaign/discount emails |
-| `EMAIL_FROM` | Yes (for email) | Verified sender address (e.g. `noreply@yourdomain.com`) |
+| `EMAIL_FROM` | Yes (for email) | Sender address (e.g. `Surplus Bus <onboarding@resend.dev>`) |
+| `EMAIL_TO` | Yes (for email) | Your inbox where beta lead notifications are delivered |
 
 ---
 
