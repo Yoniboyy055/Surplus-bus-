@@ -4,16 +4,41 @@ import { useState } from "react";
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch("/api/beta-signups", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, use_case: "weekly_intelligence" }),
-    });
-    setSubmitted(true);
+    setStatus("loading");
+    setMessage("");
+
+    try {
+      const res = await fetch("/api/beta-signups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, use_case: "weekly_intelligence" }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStatus("error");
+        setMessage(data.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+
+      setStatus("success");
+      if (data.email_sent) {
+        setMessage("You\u2019re in! Check your inbox for a confirmation email.");
+      } else if (data.reason === "email_not_configured") {
+        setMessage("You\u2019re on the list! We\u2019ll be in touch soon.");
+      } else {
+        setMessage("You\u2019re on the list! We\u2019ll send your first weekly intelligence brief soon.");
+      }
+    } catch {
+      setStatus("error");
+      setMessage("Network error. Please check your connection and try again.");
+    }
   };
 
   return (
@@ -24,16 +49,28 @@ export default function LandingPage() {
       </p>
       <form onSubmit={submit} className="flex gap-3">
         <input
-          className="flex-1 bg-quantum-900 border border-quantum-700 rounded px-4 py-3"
+          className="flex-1 bg-quantum-900 border border-quantum-700 rounded px-4 py-3 text-quantum-50 placeholder:text-quantum-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
           type="email"
           required
           placeholder="Work email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={status === "loading" || status === "success"}
         />
-        <button className="bg-cyan-600 px-5 py-3 rounded font-semibold">Get Weekly Intelligence</button>
+        <button
+          type="submit"
+          disabled={status === "loading" || status === "success"}
+          className="bg-cyan-600 hover:bg-cyan-500 px-5 py-3 rounded font-semibold text-quantum-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {status === "loading" ? "Sending\u2026" : "Get Weekly Intelligence"}
+        </button>
       </form>
-      {submitted && <p className="text-green-400">You&apos;re in. We&apos;ll send your first weekly intelligence brief soon.</p>}
+      {status === "success" && (
+        <p className="text-green-400">{message}</p>
+      )}
+      {status === "error" && (
+        <p className="text-red-400">{message}</p>
+      )}
     </section>
   );
 }

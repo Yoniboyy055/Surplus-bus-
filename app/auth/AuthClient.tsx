@@ -55,7 +55,10 @@ export default function AuthClient() {
     <section className="space-y-4">
       {!supabaseReady && (
         <div className="rounded-lg border border-accent-warning/40 bg-accent-warning/10 p-4 text-sm text-accent-warning">
-          ⚠ Authentication is not configured. Contact support.
+          ⚠ Authentication is temporarily unavailable. The Supabase connection is not configured.
+          If you are the site admin, ensure <code className="font-mono">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+          <code className="font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> are set in Vercel environment variables,
+          then redeploy.
         </div>
       )}
 
