@@ -36,6 +36,9 @@
 | ab_surplus | /api/agents/run?parser_key=ab_surplus | 13:00 |
 | on_surplus | /api/agents/run?parser_key=on_surplus | 14:00 |
 | city_toronto_surplus | /api/agents/run?parser_key=city_toronto_surplus | 15:00 |
+| city_ottawa_surplus | /api/agents/run?parser_key=city_ottawa_surplus | 16:00 |
+| city_calgary_surplus | /api/agents/run?parser_key=city_calgary_surplus | 17:00 |
+| city_edmonton_surplus | /api/agents/run?parser_key=city_edmonton_surplus | 18:00 |
 
 1. **Vercel crons:** Check `vercel.json` — daily schedules only
 2. **Manual run:**

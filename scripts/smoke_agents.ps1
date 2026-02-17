@@ -8,7 +8,7 @@ if (-not $secret) {
   exit 1
 }
 
-$keys = @("gc_buyandsell", "canadabuys", "ab_surplus", "on_surplus", "city_toronto_surplus")
+$keys = @("gc_buyandsell", "canadabuys", "ab_surplus", "on_surplus", "city_toronto_surplus", "city_ottawa_surplus", "city_calgary_surplus", "city_edmonton_surplus")
 $passed = 0
 $failed = 0
 

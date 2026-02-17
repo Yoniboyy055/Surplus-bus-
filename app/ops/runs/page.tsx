@@ -110,7 +110,7 @@ export default function OpsRunsPage() {
       <div className="flex flex-wrap gap-6 items-center">
         <div className="flex items-center gap-2">
           <label className="text-sm text-quantum-400">Trigger:</label>
-          {["gc_buyandsell", "canadabuys", "ab_surplus", "on_surplus", "city_toronto_surplus"].map((key) => (
+          {["gc_buyandsell", "canadabuys", "ab_surplus", "on_surplus", "city_toronto_surplus", "city_ottawa_surplus", "city_calgary_surplus", "city_edmonton_surplus"].map((key) => (
             <Button
               key={key}
               variant="ghost"

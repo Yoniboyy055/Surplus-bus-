@@ -24,6 +24,9 @@ All sources run once per day via Vercel cron. `fetch_interval_minutes` is inform
 | ab_surplus | 13:00 |
 | on_surplus | 14:00 |
 | city_toronto_surplus | 15:00 |
+| city_ottawa_surplus | 16:00 |
+| city_calgary_surplus | 17:00 |
+| city_edmonton_surplus | 18:00 |
 
 Paths: `/api/agents/run?parser_key=<key>`
 
@@ -32,7 +35,7 @@ Paths: `/api/agents/run?parser_key=<key>`
 ## parser_key Naming Convention
 
 - **Format:** `{region}_{type}` or `{portal_name}`
-- **Examples:** `gc_buyandsell`, `canadabuys`, `ab_surplus`, `on_surplus`, `city_toronto_surplus`
+- **Examples:** `gc_buyandsell`, `canadabuys`, `ab_surplus`, `on_surplus`, `city_toronto_surplus`, `city_ottawa_surplus`, `city_calgary_surplus`, `city_edmonton_surplus`
 - **Lowercase, snake_case**
 - Must match the switch key in the agent runner
 
@@ -47,6 +50,9 @@ Paths: `/api/agents/run?parser_key=<key>`
 | Province| ab_surplus             | surplus |
 | Province| on_surplus             | surplus |
 | City    | city_toronto_surplus   | surplus |
+| City    | city_ottawa_surplus    | surplus |
+| City    | city_calgary_surplus   | surplus |
+| City    | city_edmonton_surplus  | surplus |
 
 ---
 

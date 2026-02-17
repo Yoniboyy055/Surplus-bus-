@@ -8,6 +8,9 @@ import type { ParserContext, ParserResult } from "./types";
 import { parseAbSurplus } from "./ab_surplus";
 import { parseOnSurplus } from "./on_surplus";
 import { parseCityTorontoSurplus } from "./city_toronto_surplus";
+import { parseCityOttawaSurplus } from "./city_ottawa_surplus";
+import { parseCityCalgarySurplus } from "./city_calgary_surplus";
+import { parseCityEdmontonSurplus } from "./city_edmonton_surplus";
 
 /**
  * Runs the parser for the given key. Returns opportunities to upsert.
@@ -27,6 +30,12 @@ export async function runParser(
       return parseOnSurplus(ctx);
     case "city_toronto_surplus":
       return parseCityTorontoSurplus(ctx);
+    case "city_ottawa_surplus":
+      return parseCityOttawaSurplus(ctx);
+    case "city_calgary_surplus":
+      return parseCityCalgarySurplus(ctx);
+    case "city_edmonton_surplus":
+      return parseCityEdmontonSurplus(ctx);
     default:
       return { opportunities: [], error: `Unknown parser_key: ${parserKey}` };
   }
