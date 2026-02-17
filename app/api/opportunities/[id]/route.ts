@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
+import { logApiStart, logApiEnd } from "@/lib/observability";
 
 /**
  * GET /api/opportunities/[id]
@@ -10,8 +11,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { supabase, error } = await requireUser();
+  const { supabase, user, error } = await requireUser();
   if (error || !supabase) return error!;
+
+  const { requestId, start } = logApiStart("/api/opportunities/[id]", user?.id ?? null, { id });
 
   const { data: opp, error: oppError } = await supabase
     .from("opportunities")
@@ -20,6 +23,7 @@ export async function GET(
     .single();
 
   if (oppError || !opp) {
+    logApiEnd("/api/opportunities/[id]", requestId, start, 404);
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -29,6 +33,8 @@ export async function GET(
     .eq("opportunity_id", id)
     .order("detected_at", { ascending: false })
     .limit(20);
+
+  logApiEnd("/api/opportunities/[id]", requestId, start, 200);
 
   return NextResponse.json({
     opportunity: opp,

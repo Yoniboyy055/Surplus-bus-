@@ -27,6 +27,12 @@ type DashboardData = {
     items_upserted: number;
   }>;
   dataStatus: "green" | "amber";
+  failures?: Array<{
+    id: string;
+    agent_name: string;
+    error_message: string | null;
+    started_at: string;
+  }>;
 };
 
 export function DashboardClient() {
@@ -73,6 +79,7 @@ export function DashboardClient() {
   const hasAlerts = alertCount > 0;
   const opps = data?.opportunities ?? [];
   const runs = data?.runs ?? [];
+  const failures = data?.failures ?? [];
   const status = data?.dataStatus ?? "amber";
 
   return (
@@ -118,6 +125,22 @@ export function DashboardClient() {
           </Link>
         </div>
       </div>
+
+      {failures.length > 0 && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6">
+          <h2 className="text-sm font-semibold text-red-400 mb-2">Recent failures (24h)</h2>
+          <ul className="space-y-2 text-sm">
+            {failures.slice(0, 5).map((f) => (
+              <li key={f.id} className="text-quantum-300">
+                <span className="font-mono text-cyan-400">{f.agent_name}</span>
+                {f.error_message && (
+                  <span className="text-red-400 block mt-0.5 text-xs">{f.error_message}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {opps.length > 0 && (
         <div className="bg-quantum-900 border border-quantum-700 rounded-lg p-6">

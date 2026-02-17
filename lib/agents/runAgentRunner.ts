@@ -11,11 +11,14 @@ export type RunResult = {
     items_found: number;
     items_upserted: number;
     error_message?: string;
+    duration_ms?: number;
   }>;
+  total_duration_ms?: number;
   message?: string;
 };
 
 export async function executeAgentRun(parserKey: string): Promise<RunResult> {
+  const totalStart = Date.now();
   const supabase = createServiceRoleClient();
 
   const { data: sources, error: sourcesError } = await supabase
@@ -41,6 +44,7 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
   const runs: RunResult["runs"] = [];
 
   for (const source of sources) {
+    const runStart = Date.now();
     const { data: runRow, error: insertErr } = await supabase
       .from("source_runs")
       .insert({
@@ -59,6 +63,7 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
         items_found: 0,
         items_upserted: 0,
         error_message: insertErr?.message ?? "Failed to create run",
+        duration_ms: Date.now() - runStart,
       });
       continue;
     }
@@ -91,6 +96,7 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
           items_found: 0,
           items_upserted: 0,
           error_message: result.error,
+          duration_ms: Date.now() - runStart,
         });
         continue;
       }
@@ -156,6 +162,7 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
         status: "success",
         items_found: opportunities.length,
         items_upserted: upserted,
+        duration_ms: Date.now() - runStart,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -177,6 +184,7 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
         items_found: 0,
         items_upserted: 0,
         error_message: msg,
+        duration_ms: Date.now() - runStart,
       });
     }
   }
@@ -185,5 +193,6 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
     ok: true,
     parser_key: parserKey,
     runs,
+    total_duration_ms: Date.now() - totalStart,
   };
 }

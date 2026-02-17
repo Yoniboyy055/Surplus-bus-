@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
+import { logApiStart, logApiEnd } from "@/lib/observability";
 
 /**
  * GET /api/feed
  * Last 50 opportunity_events with joined opportunity summary
  */
 export async function GET() {
-  const { supabase, error } = await requireUser();
+  const { supabase, user, error } = await requireUser();
   if (error || !supabase) return error!;
+
+  const { requestId, start } = logApiStart("/api/feed", user?.id ?? null);
 
   const { data, error: fetchError } = await supabase
     .from("opportunity_events")
@@ -17,6 +20,8 @@ export async function GET() {
     `)
     .order("detected_at", { ascending: false })
     .limit(50);
+
+  logApiEnd("/api/feed", requestId, start, fetchError ? 400 : 200);
 
   if (fetchError) {
     return NextResponse.json({ error: fetchError.message }, { status: 400 });

@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
+import { logApiStart, logApiEnd } from "@/lib/observability";
 
 /**
  * GET /api/status
  * Returns data status for the status pill (green/amber)
  */
 export async function GET() {
-  const { error } = await requireUser();
+  const { user, error } = await requireUser();
   if (error) return error!;
+
+  const { requestId, start } = logApiStart("/api/status", user?.id ?? null);
 
   let dataStatus: "green" | "amber" = "amber";
   try {
@@ -27,6 +30,8 @@ export async function GET() {
   } catch {
     // Service role not configured
   }
+
+  logApiEnd("/api/status", requestId, start, 200);
 
   return NextResponse.json({ dataStatus });
 }

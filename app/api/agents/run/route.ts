@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeAgentRun } from "@/lib/agents/runAgentRunner";
 import { timingSafeEqual } from "crypto";
+import { logApiStart, logApiEnd } from "@/lib/observability";
 
 /**
  * Source-driven agent runner.
@@ -16,11 +17,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing parser_key" }, { status: 400 });
   }
 
+  const { requestId, start } = logApiStart("/api/agents/run", null, { parser_key: parserKey });
+
   try {
     const result = await executeAgentRun(parserKey);
+    logApiEnd("/api/agents/run", requestId, start, 200);
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
+    logApiEnd("/api/agents/run", requestId, start, 500);
     return NextResponse.json(
       { error: "Internal server error", details: msg },
       { status: 500 }
