@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default function AuthPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-quantum-950 via-quantum-900 to-quantum-950 flex items-center justify-center p-lg">
+    <div className="flex items-center justify-center py-16">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-3xl">

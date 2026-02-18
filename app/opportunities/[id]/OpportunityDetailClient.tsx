@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { SaveOpportunityButton } from "./SaveOpportunityButton";
+import { isExternalHttpUrl } from "@/lib/url";
 
 type Opportunity = {
   id: string;
@@ -130,9 +131,9 @@ export function OpportunityDetailClient() {
             <dd className="text-quantum-50">{opp.status}</dd>
           </div>
         </dl>
-        {opp.source_url && (
+        {isExternalHttpUrl(opp.source_url) && (
           <a
-            href={opp.source_url}
+            href={opp.source_url!}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-4 inline-block text-cyan-400 hover:text-cyan-300 text-sm"
