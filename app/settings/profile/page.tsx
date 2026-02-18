@@ -36,8 +36,8 @@ export default function ProfileSettingsPage() {
           min_value: null,
           max_value: null,
           urgency_days: 7,
-          marketing_opt_in: false,
-          news_opt_in: false,
+          marketing_opt_in: true,
+          news_opt_in: true,
         }
       );
       setLoading(false);
@@ -62,8 +62,8 @@ export default function ProfileSettingsPage() {
         min_value: prefs.min_value ? Number(prefs.min_value) : null,
         max_value: prefs.max_value ? Number(prefs.max_value) : null,
         urgency_days: prefs.urgency_days ? Number(prefs.urgency_days) : 7,
-        marketing_opt_in: prefs.marketing_opt_in ?? false,
-        news_opt_in: prefs.news_opt_in ?? false,
+        marketing_opt_in: prefs.marketing_opt_in ?? true,
+        news_opt_in: prefs.news_opt_in ?? true,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "profile_id" }
