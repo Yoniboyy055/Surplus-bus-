@@ -118,7 +118,7 @@
 
 ```bash
 # Ping (no auth)
-curl https://surplus-bus.vercel.app/api/_ping
+curl https://surplus-bus.vercel.app/api/ping
 # Expected: 200, { ok: true, ts: "...", commit: "..." }
 
 # Health (no auth)
