@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     }
   }
 
-  // 2) Send lead notification to EMAIL_TO via Resend
+  // 2) Send emails via Resend
   const resendKey = process.env.RESEND_API_KEY;
   const emailFrom = process.env.EMAIL_FROM;
   const emailTo = process.env.EMAIL_TO;
@@ -40,9 +40,12 @@ export async function POST(request: Request) {
     );
   }
 
-  try {
-    // Lead notification → your inbox
-    if (emailTo) {
+  let adminSent = false;
+  let userSent = false;
+
+  // Lead notification → your inbox (priority — always send first)
+  if (emailTo) {
+    try {
       await sendEmail({
         to: emailTo,
         subject: `New beta signup: ${email}`,
@@ -53,9 +56,15 @@ export async function POST(request: Request) {
           <p><strong>Time:</strong> ${new Date().toISOString()}</p>
         `,
       });
+      adminSent = true;
+    } catch (err) {
+      console.error("[Beta] Admin notification failed:", err instanceof Error ? err.message : err);
     }
+  }
 
-    // Confirmation → the user
+  // Confirmation → the user (best-effort; will fail on Resend test domain
+  // for non-owner emails until a custom domain is verified)
+  try {
     await sendEmail({
       to: email,
       subject: "Welcome to Surplus Bus Beta",
@@ -65,11 +74,10 @@ export async function POST(request: Request) {
         <p>\u2014 The Surplus Bus Team</p>
       `,
     });
-
-    return NextResponse.json({ ok: true });
+    userSent = true;
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[Beta] Email send failed:", msg);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error("[Beta] User confirmation failed (domain not verified?):", err instanceof Error ? err.message : err);
   }
+
+  return NextResponse.json({ ok: true, admin_notified: adminSent, user_confirmed: userSent });
 }
