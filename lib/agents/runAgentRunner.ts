@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 import { runParser } from "@/lib/agents/parsers";
+import { normalizeExternalUrl } from "@/lib/url";
 
 export class AgentRunError extends Error {
   constructor(
@@ -140,7 +141,7 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
         const payload = {
           source: opp.source,
           external_id: opp.external_id,
-          source_url: opp.source_url,
+          source_url: normalizeExternalUrl(opp.source_url) ?? opp.source_url,
           province: opp.province,
           category: opp.category,
           title: opp.title,

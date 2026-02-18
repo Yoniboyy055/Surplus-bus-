@@ -12,3 +12,27 @@ export function isExternalHttpUrl(url: string | null | undefined): boolean {
     return false;
   }
 }
+
+/**
+ * Attempts to turn a raw source_url into a usable external link.
+ * - Trims whitespace
+ * - Prefixes https:// when the string looks like a domain but lacks protocol
+ * - Returns null if the result is not a valid HTTP URL
+ */
+export function normalizeExternalUrl(raw: string | null | undefined): string | null {
+  if (!raw || typeof raw !== "string") return null;
+  let url = raw.trim();
+  if (!url) return null;
+
+  if (url.startsWith("//")) {
+    url = "https:" + url;
+  } else if (!url.includes("://")) {
+    if (/^[a-z0-9]([a-z0-9-]*\.)+[a-z]{2,}/i.test(url)) {
+      url = "https://" + url;
+    } else if (url.startsWith("/")) {
+      return null;
+    }
+  }
+
+  return isExternalHttpUrl(url) ? url : null;
+}

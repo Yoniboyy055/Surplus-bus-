@@ -42,19 +42,23 @@ export async function runParser(
 }
 
 async function runGcBuyandsell(ctx: ParserContext): Promise<ParserResult> {
-  // TODO: Replace with real fetch when scraper is implemented
-  const now = Date.now();
+  // TODO: Replace with real scraper for item-level deep links
+  const url = ctx.feedUrl ?? `${ctx.baseUrl}`;
+  const title = "GCSurplus — Federal Surplus Assets";
+  const { stableExternalIdFromTuple } = await import("./idUtils");
+  const extId = stableExternalIdFromTuple([ctx.parserKey, title, url]);
+
   return {
     opportunities: [
       {
         source: ctx.parserKey,
-        external_id: `gc-${now}-1`,
-        source_url: `${ctx.baseUrl}/mn-eng.cfm?snc=wfsav&sc=enc-bid&scn=12345`,
+        external_id: extId,
+        source_url: url,
         province: "ON",
-        category: "Equipment",
-        title: "Heavy Duty Lathe - Industrial",
-        description: "Industrial metal lathe",
-        estimated_value: 4200,
+        category: "Surplus",
+        title,
+        description: "Federal government surplus assets available through GCSurplus crown auctions.",
+        estimated_value: null,
         closing_date: null,
         issuing_entity: "Government of Canada",
         status: "open",
@@ -64,18 +68,22 @@ async function runGcBuyandsell(ctx: ParserContext): Promise<ParserResult> {
 }
 
 async function runCanadaBuys(ctx: ParserContext): Promise<ParserResult> {
-  // TODO: Replace with real fetch when scraper is implemented
-  const now = Date.now();
+  // TODO: Replace with real scraper for tender-level deep links
+  const url = ctx.feedUrl ?? `${ctx.baseUrl}`;
+  const title = "CanadaBuys — Federal Tenders & Procurement";
+  const { stableExternalIdFromTuple } = await import("./idUtils");
+  const extId = stableExternalIdFromTuple([ctx.parserKey, title, url]);
+
   return {
     opportunities: [
       {
         source: ctx.parserKey,
-        external_id: `cb-${now}-1`,
-        source_url: `${ctx.baseUrl}/en/tenders`,
+        external_id: extId,
+        source_url: url,
         province: "ON",
         category: "Procurement",
-        title: "Sample Federal Tender",
-        description: "Placeholder for CanadaBuys integration",
+        title,
+        description: "Federal procurement opportunities and tender notices from CanadaBuys.",
         estimated_value: null,
         closing_date: null,
         issuing_entity: "Government of Canada",
