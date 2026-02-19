@@ -6,15 +6,15 @@ export const dynamic = "force-dynamic";
 
 export default function AuthPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-quantum-950 via-quantum-900 to-quantum-950 flex items-center justify-center p-lg">
+    <div className="flex items-center justify-center py-16">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-3xl">
           <h1 className="text-4xl font-bold text-quantum-50 mb-md">
-            Access Your <span className="text-cyan-500">Quantum Ledger</span>
+            Sign in to <span className="text-cyan-500">Surplus Bus</span>
           </h1>
           <p className="text-quantum-400">
-            Enter your email to receive a secure, single-use login link.
+            Sign in with Google to access your dashboard, alerts, and saved opportunities.
           </p>
         </div>
 

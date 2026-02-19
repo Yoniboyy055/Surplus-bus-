@@ -1,21 +1,27 @@
 import type { ParserContext, ParserResult } from "./types";
+import { stableExternalIdFromTuple } from "./idUtils";
 
 /**
- * Ontario surplus parser. Mock now, real scrape next.
+ * Ontario surplus parser.
+ * Placeholder: returns a single entry linking to the real Ontario surplus page.
+ * TODO: Replace with real scraper when item-level inventory is available.
  */
 export async function parseOnSurplus(ctx: ParserContext): Promise<ParserResult> {
-  const now = Date.now();
+  const url = ctx.feedUrl ?? `${ctx.baseUrl}`;
+  const title = "Government of Ontario — Surplus Property";
+  const extId = stableExternalIdFromTuple([ctx.parserKey, title, url]);
+
   return {
     opportunities: [
       {
         source: ctx.parserKey,
-        external_id: `on-${now}-1`,
-        source_url: ctx.feedUrl ?? `${ctx.baseUrl}/page/surplus-government-property`,
+        external_id: extId,
+        source_url: url,
         province: "ON",
-        category: "Equipment",
-        title: "Office Furniture Lot - Desks and Chairs",
-        description: "Surplus government office furniture.",
-        estimated_value: 2500,
+        category: "Surplus",
+        title,
+        description: "Provincial surplus government property including office furniture and equipment.",
+        estimated_value: null,
         closing_date: null,
         issuing_entity: "Government of Ontario",
         status: "open",

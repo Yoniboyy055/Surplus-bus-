@@ -56,9 +56,8 @@ export function AppShell({ children, user, profile }: AppShellProps) {
   const handleLogout = async () => {
     if (supabase) {
       await supabase.auth.signOut();
-      router.push("/auth");
-      router.refresh();
     }
+    window.location.href = "/";
   };
 
   const isOperator = profile?.role === "operator";
@@ -67,7 +66,7 @@ export function AppShell({ children, user, profile }: AppShellProps) {
     navItems.splice(navItems.length - 1, 0, { name: "Ops", href: "/ops", icon: <Wrench size={18} /> });
   }
 
-  const isPublic = !user || !profile;
+  const isPublic = !user;
 
   if (isPublic) {
     return (
@@ -98,8 +97,14 @@ export function AppShell({ children, user, profile }: AppShellProps) {
             </nav>
           </header>
           <main className="flex flex-1 flex-col gap-6">{children}</main>
-          <footer className="border-t border-quantum-700 pt-6 text-center text-[10px] uppercase tracking-widest text-quantum-500">
-            &copy; 2026 Surplus Bus. Information service only. Not a broker.
+          <footer className="border-t border-quantum-700 pt-6 flex flex-col items-center gap-2 text-[10px] uppercase tracking-widest text-quantum-500">
+            <div className="flex gap-4">
+              <Link href="/legal/terms" className="hover:text-quantum-300 transition">Terms</Link>
+              <Link href="/legal/privacy" className="hover:text-quantum-300 transition">Privacy</Link>
+              <Link href="/legal/anti-spam" className="hover:text-quantum-300 transition">Anti-Spam</Link>
+              <Link href="/faq" className="hover:text-quantum-300 transition">FAQ</Link>
+            </div>
+            <span>&copy; 2026 Surplus Bus. Information service only. Not a broker.</span>
           </footer>
         </div>
       </div>
@@ -188,12 +193,16 @@ export function AppShell({ children, user, profile }: AppShellProps) {
             <div className="flex items-center gap-6">
               <div className="hidden md:flex flex-col items-end">
                 <span className="text-sm font-medium text-quantum-200">{user.email}</span>
-                <span className="text-xs text-quantum-500 capitalize">{profile.role}</span>
+                {profile?.role && (
+                  <span className="text-xs text-quantum-500 capitalize">{profile.role}</span>
+                )}
               </div>
 
-              <Badge variant="info" size="sm" className="capitalize">
-                {profile.role}
-              </Badge>
+              {profile?.role && (
+                <Badge variant="info" size="sm" className="capitalize">
+                  {profile.role}
+                </Badge>
+              )}
 
               <Button
                 variant="ghost"

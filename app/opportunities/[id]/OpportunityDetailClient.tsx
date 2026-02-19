@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { SaveOpportunityButton } from "./SaveOpportunityButton";
+import { normalizeExternalUrl } from "@/lib/url";
 
 type Opportunity = {
   id: string;
@@ -130,16 +131,26 @@ export function OpportunityDetailClient() {
             <dd className="text-quantum-50">{opp.status}</dd>
           </div>
         </dl>
-        {opp.source_url && (
-          <a
-            href={opp.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-block text-cyan-400 hover:text-cyan-300 text-sm"
-          >
-            View source →
-          </a>
-        )}
+        {(() => {
+          const href = normalizeExternalUrl(opp.source_url);
+          return href ? (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block text-cyan-400 hover:text-cyan-300 text-sm"
+            >
+              View source →
+            </a>
+          ) : opp.source_url ? (
+            <span
+              className="mt-4 inline-block text-quantum-600 text-sm cursor-not-allowed"
+              title="Source link unavailable"
+            >
+              View source (unavailable)
+            </span>
+          ) : null;
+        })()}
       </div>
 
       {opp.description && (

@@ -1,21 +1,27 @@
 import type { ParserContext, ParserResult } from "./types";
+import { stableExternalIdFromTuple } from "./idUtils";
 
 /**
- * Alberta surplus parser. Mock now, real scrape next.
+ * Alberta surplus parser.
+ * Placeholder: returns a single entry linking to the real Alberta surplus page.
+ * TODO: Replace with real scraper when item-level inventory is available.
  */
 export async function parseAbSurplus(ctx: ParserContext): Promise<ParserResult> {
-  const now = Date.now();
+  const url = ctx.feedUrl ?? `${ctx.baseUrl}`;
+  const title = "Government of Alberta — Surplus Assets";
+  const extId = stableExternalIdFromTuple([ctx.parserKey, title, url]);
+
   return {
     opportunities: [
       {
         source: ctx.parserKey,
-        external_id: `ab-${now}-1`,
-        source_url: `${ctx.baseUrl}/listing/12345`,
+        external_id: extId,
+        source_url: url,
         province: "AB",
-        category: "Vehicles",
-        title: "2018 Ford F-150 XLT SuperCrew",
-        description: "Fleet vehicle, regularly maintained.",
-        estimated_value: 18500,
+        category: "Surplus",
+        title,
+        description: "Provincial surplus assets including vehicles, equipment, and furniture.",
+        estimated_value: null,
         closing_date: null,
         issuing_entity: "Government of Alberta",
         status: "open",

@@ -1,15 +1,83 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendEmail } from "@/lib/email/resend";
 
 export async function POST(request: Request) {
+  let body: { email?: string; use_case?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { email, use_case } = body;
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: "Valid email required" }, { status: 400 });
+  }
+
+  // 1) Persist to Supabase (best-effort — signup is saved even if email fails)
   const supabase = createClient();
-  const { email, use_case } = await request.json();
+  if (supabase) {
+    const { error } = await supabase
+      .from("beta_signups")
+      .upsert({ email, use_case: use_case ?? null }, { onConflict: "email" });
+    if (error) {
+      console.error("[Beta] Supabase upsert failed:", error.message);
+    }
+  }
 
-  if (!email) return NextResponse.json({ error: "email required" }, { status: 400 });
-  if (!supabase) return NextResponse.json({ ok: true, mode: "local" });
+  // 2) Send emails via Resend
+  const resendKey = process.env.RESEND_API_KEY;
+  const emailFrom = process.env.EMAIL_FROM;
+  const emailTo = process.env.EMAIL_TO;
 
-  const { error } = await supabase.from("beta_signups").upsert({ email, use_case: use_case ?? null }, { onConflict: "email" });
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (!resendKey || !emailFrom) {
+    console.error("[Beta] RESEND_API_KEY or EMAIL_FROM is missing. Cannot send email.");
+    return NextResponse.json(
+      { error: "Email service not configured" },
+      { status: 500 },
+    );
+  }
 
-  return NextResponse.json({ ok: true });
+  let adminSent = false;
+  let userSent = false;
+
+  // Lead notification → your inbox (priority — always send first)
+  if (emailTo) {
+    try {
+      await sendEmail({
+        to: emailTo,
+        subject: `New beta signup: ${email}`,
+        html: `
+          <h2>New Surplus Bus Beta Signup</h2>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Use case:</strong> ${use_case ?? "not specified"}</p>
+          <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+        `,
+      });
+      adminSent = true;
+    } catch (err) {
+      console.error("[Beta] Admin notification failed:", err instanceof Error ? err.message : err);
+    }
+  }
+
+  // Confirmation → the user (best-effort; will fail on Resend test domain
+  // for non-owner emails until a custom domain is verified)
+  try {
+    await sendEmail({
+      to: email,
+      subject: "Welcome to Surplus Bus Beta",
+      html: `
+        <h2>You\u2019re on the list!</h2>
+        <p>Thanks for signing up for the Surplus Bus beta. We\u2019ll send your first weekly intelligence brief soon.</p>
+        <p>\u2014 The Surplus Bus Team</p>
+      `,
+    });
+    userSent = true;
+  } catch (err) {
+    console.error("[Beta] User confirmation failed (domain not verified?):", err instanceof Error ? err.message : err);
+  }
+
+  return NextResponse.json({ ok: true, admin_notified: adminSent, user_confirmed: userSent });
 }

@@ -1,16 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-import { env } from "@/lib/env";
+import { env, isSupabaseConfigured } from "@/lib/env";
 
 export const createClient = () => {
-  if (!env) {
+  const url = env?.NEXT_PUBLIC_SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = env?.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!isSupabaseConfigured || !url || !key) {
     return null;
   }
 
   const cookieStore = cookies();
 
-  return createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+  return createServerClient(url, key, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -21,10 +24,7 @@ export const createClient = () => {
             cookieStore.set(name, value, options)
           );
         } catch (err) {
-          // In Route Handlers, cookies().set() throws – use auth callback pattern instead.
-          // In Server Components, this can occur; middleware refreshes sessions.
           console.error("[Supabase] Cookie write failed (setAll):", err);
-          // Do not swallow: log for visibility. If this appears in auth flows, fix the callback.
         }
       },
     },
