@@ -26,7 +26,9 @@ export async function parseCityHamiltonSurplus(ctx: ParserContext): Promise<Pars
   const headingRe = /<h[23][^>]*>([^<]+)<\/h[23]>/gi;
   let m: RegExpExecArray | null;
   while ((m = headingRe.exec(html)) !== null) {
-    const title = m[1].replace(/\s+/g, " ").trim();
+    const raw = m[1];
+    if (!raw) continue;
+    const title = raw.replace(/\s+/g, " ").trim();
     if (!title || title.length < 3) continue;
     const extId = stableExternalIdFromTuple([ctx.parserKey, title, url]);
     if (seen.has(extId)) continue;
@@ -49,9 +51,7 @@ export async function parseCityHamiltonSurplus(ctx: ParserContext): Promise<Pars
   // Extract GovDeals link
   const govDealsRe = /href=["'](https?:\/\/[^"']*govdeals[^"']*hamilton[^"']*)["']/i;
   const govMatch = html.match(govDealsRe);
-  const govDealsUrl = govMatch
-    ? govMatch[1]
-    : "https://www.govdeals.com/hamiltonon";
+  const govDealsUrl = govMatch?.[1] ?? "https://www.govdeals.com/hamiltonon";
 
   const govExtId = stableExternalIdFromUrl(govDealsUrl);
   if (!seen.has(govExtId)) {
