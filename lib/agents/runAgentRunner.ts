@@ -231,6 +231,8 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
             raw_payload: rawPayload,
             payload_hash: payloadHash,
             last_seen_at: new Date().toISOString(),
+            is_deleted: false,
+            deleted_at: null,
           };
 
           if (hasExternalId) {

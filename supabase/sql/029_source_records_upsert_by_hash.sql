@@ -44,6 +44,8 @@ BEGIN
     source_url_normalized = EXCLUDED.source_url_normalized,
     raw_payload = EXCLUDED.raw_payload,
     payload_hash = EXCLUDED.payload_hash,
-    last_seen_at = EXCLUDED.last_seen_at;
+    last_seen_at = EXCLUDED.last_seen_at,
+    is_deleted = false,
+    deleted_at = NULL;
 END;
 $$;
