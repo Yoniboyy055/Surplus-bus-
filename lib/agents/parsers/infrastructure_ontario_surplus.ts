@@ -29,8 +29,11 @@ export async function parseInfrastructureOntarioSurplus(
   const portalBase = "https://apps.infrastructureontario.ca";
   let m: RegExpExecArray | null;
   while ((m = linkRe.exec(html)) !== null) {
-    let href = m[1].trim();
-    const text = m[2].replace(/\s+/g, " ").trim();
+    const rawHref = m[1];
+    const rawText = m[2];
+    if (!rawHref || !rawText) continue;
+    let href = rawHref.trim();
+    const text = rawText.replace(/\s+/g, " ").trim();
     if (!href || href.startsWith("#") || href.startsWith("mailto:")) continue;
     if (href.startsWith("/")) href = ctx.baseUrl + href;
     else if (!href.startsWith("http")) href = new URL(href, url).href;
