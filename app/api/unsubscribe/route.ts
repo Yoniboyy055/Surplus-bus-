@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
 export async function GET(req: NextRequest) {
+  const limited = checkRateLimit(req, "unsubscribe", 30, 60_000);
+  if (limited) return limited;
+
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
   const kind = (url.searchParams.get("kind") || "marketing").toLowerCase();
@@ -39,6 +43,6 @@ function html(status: number, message: string) {
     `<!doctype html><html><body style="font-family:system-ui;padding:32px">
       <h2>${message}</h2>
     </body></html>`,
-    { status, headers: { "content-type": "text/html; charset=utf-8" } }
+    { status, headers: { "content-type": "text/html; charset=utf-8" } },
   );
 }

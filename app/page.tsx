@@ -14,16 +14,16 @@ export default function HomePage() {
 
       <div className="flex gap-3 flex-wrap justify-center">
         <Link
-          href="/landing"
+          href="/pricing"
           className="inline-flex items-center justify-center font-semibold rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-quantum-950 focus:ring-cyan-500 bg-cyan-500 text-quantum-950 hover:bg-cyan-400 active:scale-95 px-8 py-4 text-lg"
         >
-          Join Beta
+          Pay Now & Start
         </Link>
         <Link
-          href="/product"
+          href="/landing"
           className="inline-flex items-center justify-center font-semibold rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-quantum-950 focus:ring-cyan-500 bg-quantum-800 text-quantum-50 border border-quantum-700 hover:bg-quantum-700 active:scale-95 px-8 py-4 text-lg"
         >
-          View Product Flow
+          Pitch Landing Page
         </Link>
       </div>
 
