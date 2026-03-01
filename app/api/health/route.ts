@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { isSupabaseConfigured } from "@/lib/env";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 import { createClient } from "@/lib/supabase/server";
 
 type SupabaseErrorLike = {
@@ -13,7 +14,10 @@ const isPermissionError = (error: SupabaseErrorLike) => {
   return error.code === "42501" || message.includes("permission") || message.includes("jwt");
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const limited = checkRateLimit(request, "health", 120, 60_000);
+  if (limited) return limited;
+
   if (!isSupabaseConfigured) {
     return NextResponse.json({ ok: false, reason: "supabase_not_configured" });
   }
@@ -28,7 +32,7 @@ export async function GET() {
   if (error && !isPermissionError(error)) {
     return NextResponse.json(
       { ok: false, supabase: "error", detail: error.message ?? "unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
