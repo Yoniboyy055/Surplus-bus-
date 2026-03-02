@@ -1,8 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email/resend";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const limited = checkRateLimit(request, "beta-signups", 8, 60_000);
+  if (limited) return limited;
+
   let body: { email?: string; use_case?: string };
   try {
     body = await request.json();
@@ -16,7 +20,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Valid email required" }, { status: 400 });
   }
 
-  // 1) Persist to Supabase (best-effort — signup is saved even if email fails)
   const supabase = createClient();
   if (supabase) {
     const { error } = await supabase
@@ -27,23 +30,18 @@ export async function POST(request: Request) {
     }
   }
 
-  // 2) Send emails via Resend
   const resendKey = process.env.RESEND_API_KEY;
   const emailFrom = process.env.EMAIL_FROM;
   const emailTo = process.env.EMAIL_TO;
 
   if (!resendKey || !emailFrom) {
     console.error("[Beta] RESEND_API_KEY or EMAIL_FROM is missing. Cannot send email.");
-    return NextResponse.json(
-      { error: "Email service not configured" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Email service not configured" }, { status: 500 });
   }
 
   let adminSent = false;
   let userSent = false;
 
-  // Lead notification → your inbox (priority — always send first)
   if (emailTo) {
     try {
       await sendEmail({
@@ -62,16 +60,14 @@ export async function POST(request: Request) {
     }
   }
 
-  // Confirmation → the user (best-effort; will fail on Resend test domain
-  // for non-owner emails until a custom domain is verified)
   try {
     await sendEmail({
       to: email,
       subject: "Welcome to Surplus Bus Beta",
       html: `
-        <h2>You\u2019re on the list!</h2>
-        <p>Thanks for signing up for the Surplus Bus beta. We\u2019ll send your first weekly intelligence brief soon.</p>
-        <p>\u2014 The Surplus Bus Team</p>
+        <h2>You’re on the list!</h2>
+        <p>Thanks for signing up for the Surplus Bus beta. We’ll send your first weekly intelligence brief soon.</p>
+        <p>— The Surplus Bus Team</p>
       `,
     });
     userSent = true;
