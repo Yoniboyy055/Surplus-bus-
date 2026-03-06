@@ -221,70 +221,23 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
             updated_at: new Date().toISOString(),
           } as Record<string, unknown>;
 
-          const stageRow = {
-            source_id: source.id,
-            source_run_id: runId,
-            external_id: hasExternalId ? opp.external_id : null,
-            source_url: opp.source_url,
-            source_url_normalized: normalizedUrl,
-            source_url_hash: urlHash,
-            raw_payload: rawPayload,
-            payload_hash: payloadHash,
-            last_seen_at: new Date().toISOString(),
-          };
-
-          if (hasExternalId) {
-            const { error: stageErr } = await supabase
-              .from("source_records")
-              .upsert(stageRow, { onConflict: "source_id,external_id" });
-            if (stageErr) {
-              await supabase.from("source_run_failures").insert({
-                source_run_id: runId,
-                error_class: "schema_error",
-                error_message: stageErr.message,
-              });
-              await supabase
-                .from("source_runs")
-                .update({
-                  status: "failure",
-                  completed_at: new Date().toISOString(),
-                  items_found: opportunities.length,
-                  items_upserted: 0,
-                  duration_ms: Date.now() - runStart,
-                  error_message: stageErr.message,
-                })
-                .eq("id", runId);
-              throw new Error(`source_records upsert failed: ${stageErr.message}`);
-            }
-          } else {
-            const { error: stageErr } = await supabase.rpc("upsert_source_record_by_urlhash", {
-              p_source_id: source.id,
-              p_source_run_id: runId,
-              p_source_url: opp.source_url,
-              p_source_url_normalized: normalizedUrl,
-              p_source_url_hash: urlHash,
-              p_raw_payload: rawPayload,
-              p_payload_hash: payloadHash,
+          const { error: stageErr } = await supabase.rpc("upsert_source_record_by_urlhash", {
+            p_source_id: source.id,
+            p_source_run_id: runId,
+            p_source_url: opp.source_url,
+            p_source_url_normalized: normalizedUrl,
+            p_source_url_hash: urlHash,
+            p_raw_payload: rawPayload,
+            p_payload_hash: payloadHash,
+            p_external_id: hasExternalId ? opp.external_id : null,
+          });
+          if (stageErr) {
+            await supabase.from("source_run_failures").insert({
+              source_run_id: runId,
+              error_class: "schema_error",
+              error_message: stageErr.message,
             });
-            if (stageErr) {
-              await supabase.from("source_run_failures").insert({
-                source_run_id: runId,
-                error_class: "schema_error",
-                error_message: stageErr.message,
-              });
-              await supabase
-                .from("source_runs")
-                .update({
-                  status: "failure",
-                  completed_at: new Date().toISOString(),
-                  items_found: opportunities.length,
-                  items_upserted: 0,
-                  duration_ms: Date.now() - runStart,
-                  error_message: stageErr.message,
-                })
-                .eq("id", runId);
-              throw new Error(`source_records upsert (urlhash) failed: ${stageErr.message}`);
-            }
+            throw new Error(`source_records upsert failed: ${stageErr.message}`);
           }
 
           const oppPayload = {
