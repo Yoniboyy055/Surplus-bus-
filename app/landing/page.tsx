@@ -45,7 +45,10 @@ export default function LandingPage() {
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-quantum-50">Find public opportunities in minutes, not hours.</h1>
             <p className="text-quantum-300">Surplus Bus turns fragmented surplus and tender sources into ranked opportunities, live alerts, and pilot-ready insights.</p>
             <div className="flex flex-wrap gap-3">
-              <Link href="/demo" className="px-5 py-3 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-quantum-950 font-semibold transition">
+              <Link href="/pricing" className="px-5 py-3 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-quantum-950 font-semibold transition">
+                Pay now & start
+              </Link>
+              <Link href="/demo" className="px-5 py-3 rounded-lg border border-cyan-400/50 hover:border-cyan-300 text-cyan-100 transition">
                 Launch live demo
               </Link>
               <a href="#contact" className="px-5 py-3 rounded-lg border border-quantum-600 hover:border-cyan-400 text-quantum-100 transition">

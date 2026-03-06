@@ -24,6 +24,7 @@ export function DemoDashboardClient() {
   const [trackedOpportunities, setTrackedOpportunities] = useState(120);
   const [minutesSavedPerOpportunity, setMinutesSavedPerOpportunity] = useState(35);
   const [animatedPipeline, setAnimatedPipeline] = useState(0);
+  const [showDeferredSections, setShowDeferredSections] = useState(false);
 
   const hotOpportunities = demoOpportunities.filter((op) => op.status === "hot");
   const estimatedPipeline = demoOpportunities.reduce((sum, op) => sum + op.estimatedValue, 0);
@@ -54,6 +55,29 @@ export function DemoDashboardClient() {
     const id = requestAnimationFrame(step);
     return () => cancelAnimationFrame(id);
   }, [estimatedPipeline]);
+
+
+
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let idleId: number | null = null;
+
+    const reveal = () => setShowDeferredSections(true);
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleId = (window as Window & { requestIdleCallback: (cb: IdleRequestCallback) => number }).requestIdleCallback(() => reveal());
+    } else {
+      timeoutId = setTimeout(reveal, 250);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (typeof window !== "undefined" && idleId && "cancelIdleCallback" in window) {
+        (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(idleId);
+      }
+    };
+  }, []);
+
 
   const hoursSavedMonthly = Math.round((trackedOpportunities * minutesSavedPerOpportunity) / 60);
   const roiPipelineEstimate = Math.round((trackedOpportunities / demoOpportunities.length) * estimatedPipeline);
@@ -172,6 +196,8 @@ export function DemoDashboardClient() {
         </div>
       </section>
 
+      {showDeferredSections ? (
+      <>
       <section className="bg-quantum-900 border border-quantum-700 rounded-xl p-6">
         <h2 className="text-sm font-semibold text-quantum-100 mb-4">Configured alert rules</h2>
         <div className="grid gap-4 md:grid-cols-3">
@@ -248,6 +274,18 @@ export function DemoDashboardClient() {
           </Link>
         </div>
       </section>
+      </>
+      ) : (
+        <section className="bg-quantum-900 border border-quantum-700 rounded-xl p-6">
+          <h2 className="text-sm font-semibold text-quantum-100 mb-3">Loading full demo details…</h2>
+          <p className="text-sm text-quantum-400 mb-4">Optimized for mobile: heavy sections are deferred until the browser is idle.</p>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="h-20 rounded-lg bg-quantum-800/70 animate-pulse" />
+            <div className="h-20 rounded-lg bg-quantum-800/70 animate-pulse" />
+            <div className="h-20 rounded-lg bg-quantum-800/70 animate-pulse" />
+          </div>
+        </section>
+      )}
 
       {feedbackOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
