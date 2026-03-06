@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { EmptyState } from "@/components/EmptyState";
-import { LayoutDashboard, Rss, Target } from "lucide-react";
+import { Target, Rss } from "lucide-react";
 
 type DashboardData = {
   opportunities: Array<{
@@ -34,6 +33,37 @@ type DashboardData = {
     started_at: string;
   }>;
 };
+
+const currency = new Intl.NumberFormat("en-CA", {
+  style: "currency",
+  currency: "CAD",
+  maximumFractionDigits: 0,
+});
+
+function StatCard({
+  label,
+  value,
+  warning = false,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  warning?: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-lg p-4 border transition ${
+        highlight
+          ? "bg-cyan-950/30 border-cyan-500/40 hover:border-cyan-400"
+          : "bg-quantum-900 border-quantum-700 hover:border-quantum-500"
+      }`}
+    >
+      <p className="text-xs text-quantum-500 uppercase tracking-wide">{label}</p>
+      <p className={`mt-1 text-2xl font-semibold ${warning ? "text-amber-300" : "text-quantum-50"}`}>{value}</p>
+    </div>
+  );
+}
 
 export function DashboardClient() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -82,6 +112,18 @@ export function DashboardClient() {
   const failures = data?.failures ?? [];
   const status = data?.dataStatus ?? "amber";
 
+  const openCount = opps.filter((o) => {
+    const s = (o as unknown as { status?: string }).status;
+    return !s || s.toLowerCase() === "open" || s.toLowerCase() === "active";
+  }).length;
+
+  const estimatedPipeline = opps.reduce((sum, o) => sum + (o.estimated_value ?? 0), 0);
+
+  const lastSuccessRun = runs.find((r) => r.status === "success" && r.completed_at);
+  const lastUpdated = lastSuccessRun?.completed_at
+    ? new Date(lastSuccessRun.completed_at).toLocaleDateString("en-CA", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "—";
+
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-4">
@@ -96,8 +138,16 @@ export function DashboardClient() {
       </div>
       <p className="text-quantum-400 -mt-6">Your intelligence hub for surplus and RFP opportunities.</p>
 
+      {/* 4-stat summary cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <StatCard label="Total opportunities" value={String(opps.length)} />
+        <StatCard label="Open" value={String(openCount)} highlight />
+        <StatCard label="Est. pipeline" value={estimatedPipeline > 0 ? currency.format(estimatedPipeline) : "—"} />
+        <StatCard label="Last updated" value={lastUpdated} warning={status === "amber"} />
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="bg-quantum-900 border border-quantum-700 rounded-lg p-6">
+        <div className="bg-quantum-900 border border-quantum-700 rounded-xl p-6">
           <h2 className="text-sm font-semibold text-quantum-200 mb-2">Alerts</h2>
           {hasAlerts ? (
             <p className="text-quantum-400 text-sm">
@@ -111,7 +161,7 @@ export function DashboardClient() {
           </Link>
         </div>
 
-        <div className="bg-quantum-900 border border-quantum-700 rounded-lg p-6">
+        <div className="bg-quantum-900 border border-quantum-700 rounded-xl p-6">
           <h2 className="text-sm font-semibold text-quantum-200 mb-2">Ingestion</h2>
           {runs.length > 0 ? (
             <p className="text-quantum-400 text-sm">
@@ -127,7 +177,7 @@ export function DashboardClient() {
       </div>
 
       {failures.length > 0 && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6">
           <h2 className="text-sm font-semibold text-red-400 mb-2">Recent failures (24h)</h2>
           <ul className="space-y-2 text-sm">
             {failures.slice(0, 5).map((f) => (
@@ -143,14 +193,14 @@ export function DashboardClient() {
       )}
 
       {opps.length > 0 && (
-        <div className="bg-quantum-900 border border-quantum-700 rounded-lg p-6">
+        <div className="bg-quantum-900 border border-quantum-700 rounded-xl p-6">
           <h2 className="text-sm font-semibold text-quantum-200 mb-4">Recent opportunities</h2>
           <ul className="space-y-3">
             {opps.slice(0, 5).map((o) => (
               <li key={o.id}>
                 <Link
                   href={`/opportunities/${o.id}`}
-                  className="text-cyan-400 hover:text-cyan-300 font-medium"
+                  className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
                 >
                   {o.title}
                 </Link>
@@ -195,3 +245,4 @@ export function DashboardClient() {
     </div>
   );
 }
+

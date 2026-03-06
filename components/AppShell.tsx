@@ -8,14 +8,9 @@ import {
   LogOut,
   Menu,
   X,
-  LayoutDashboard,
   Rss,
   Target,
   Bell,
-  Bookmark,
-  Inbox,
-  Newspaper,
-  BarChart3,
   Settings,
   Wrench,
 } from "lucide-react";
@@ -36,15 +31,10 @@ interface AppShellProps {
 }
 
 const MAIN_NAV = [
-  { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={18} /> },
   { name: "Feed", href: "/feed", icon: <Rss size={18} /> },
   { name: "Opportunities", href: "/opportunities", icon: <Target size={18} /> },
   { name: "Alerts", href: "/alerts", icon: <Bell size={18} /> },
-  { name: "Saved", href: "/saved", icon: <Bookmark size={18} /> },
-  { name: "Inbox", href: "/inbox", icon: <Inbox size={18} /> },
-  { name: "News", href: "/news", icon: <Newspaper size={18} /> },
-  { name: "Analytics", href: "/analytics", icon: <BarChart3 size={18} /> },
-  { name: "Settings", href: "/settings", icon: <Settings size={18} /> },
+  { name: "Account", href: "/settings", icon: <Settings size={18} /> },
 ];
 
 export function AppShell({ children, user, profile }: AppShellProps) {
@@ -130,7 +120,7 @@ export function AppShell({ children, user, profile }: AppShellProps) {
         <div className="flex flex-col h-full">
           <div className="p-6 border-b border-quantum-700 flex items-center justify-between">
             <Link href="/dashboard" className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-quantum-200">
-              <span className="hidden md:inline">Surplus Bus</span>
+              <span>Surplus Bus <span className="text-cyan-500">Pro</span></span>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -164,14 +154,19 @@ export function AppShell({ children, user, profile }: AppShellProps) {
             })}
           </nav>
 
-          <div className="p-4 border-t border-quantum-700">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-wider text-quantum-500">Environment</span>
-                <Badge variant="default" size="sm" className="text-[10px] py-0 px-2 h-5 bg-quantum-800 text-quantum-300 border border-quantum-700">
-                  PRODUCTION
-                </Badge>
-              </div>
+          <div className="p-4 border-t border-quantum-700 space-y-2">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors text-quantum-400 hover:text-red-400 hover:bg-quantum-800"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] uppercase tracking-wider text-quantum-600">Environment</span>
+              <Badge variant="default" size="sm" className="text-[10px] py-0 px-2 h-5 bg-quantum-800 text-quantum-300 border border-quantum-700">
+                PRODUCTION
+              </Badge>
             </div>
           </div>
         </div>
