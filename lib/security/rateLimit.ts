@@ -6,7 +6,6 @@ const buckets = new Map<string, Bucket>();
 let lastSweepAt = 0;
 const SWEEP_INTERVAL_MS = 60_000;
 
-
 function getIp(request: Request | NextRequest): string {
   if ("ip" in request && typeof request.ip === "string" && request.ip.length > 0) {
     return request.ip;
@@ -22,14 +21,13 @@ function sweepExpiredBuckets(now: number) {
   if (now - lastSweepAt < SWEEP_INTERVAL_MS) return;
 
   for (const [bucketKey, bucket] of buckets.entries()) {
-    if (bucket.lastSeenAt <= now - SWEEP_INTERVAL_MS) {
+    if (bucket.lastSeenAt < now - SWEEP_INTERVAL_MS) {
       buckets.delete(bucketKey);
     }
   }
 
   lastSweepAt = now;
 }
-
 
 export function checkRateLimit(
   request: Request | NextRequest,
@@ -50,7 +48,6 @@ export function checkRateLimit(
     const oldestHit = bucket.hits[0] ?? now;
     const retryAfterMs = Math.max(0, windowMs - (now - oldestHit));
     buckets.set(bucketKey, bucket);
-
 
     return NextResponse.json(
       { error: "rate_limited", retry_in_ms: retryAfterMs },
