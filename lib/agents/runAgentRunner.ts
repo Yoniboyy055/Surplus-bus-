@@ -237,6 +237,17 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
               error_class: "schema_error",
               error_message: stageErr.message,
             });
+            await supabase
+              .from("source_runs")
+              .update({
+                status: "failure",
+                completed_at: new Date().toISOString(),
+                items_found: opportunities.length,
+                items_upserted: 0,
+                duration_ms: Date.now() - runStart,
+                error_message: stageErr.message,
+              })
+              .eq("id", runId);
             throw new Error(`source_records upsert failed: ${stageErr.message}`);
           }
 
