@@ -9,6 +9,7 @@
     { "path": "/api/agents/run?parser_key=city_toronto_surplus", "schedule": "0 15 * * *" },
     { "path": "/api/agents/run?parser_key=city_ottawa_surplus", "schedule": "0 16 * * *" },
     { "path": "/api/agents/run?parser_key=city_calgary_surplus", "schedule": "0 17 * * *" },
-    { "path": "/api/agents/run?parser_key=city_edmonton_surplus", "schedule": "0 18 * * *" }
+    { "path": "/api/agents/run?parser_key=city_edmonton_surplus", "schedule": "0 18 * * *" },
+    { "path": "/api/cron/run-parsers", "schedule": "0 0 * * *" }
   ]
 }
