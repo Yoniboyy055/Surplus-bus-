@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeAgentRun, AgentRunError } from "@/lib/agents/runAgentRunner";
-import { timingSafeEqual } from "crypto";
 import { logApiStart, logApiEnd } from "@/lib/observability";
 
 /**
@@ -9,8 +8,11 @@ import { logApiStart, logApiEnd } from "@/lib/observability";
  * Auth: Authorization: Bearer CRON_SECRET
  */
 export async function GET(request: NextRequest) {
-  const authError = verifyCronSecret(request);
-  if (authError) return authError;
+  const authHeader = request.headers.get('authorization');
+  console.log('[agents/run] CRON_SECRET defined:', !!process.env.CRON_SECRET);
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new Response('Unauthorized', { status: 401 });
+  }
 
   const parserKey = request.nextUrl.searchParams.get("parser_key");
   if (!parserKey) {
@@ -35,32 +37,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function verifyCronSecret(request: NextRequest): NextResponse | null {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    return NextResponse.json(
-      { error: "CRON_SECRET not configured" },
-      { status: 500 }
-    );
-  }
-
-  const authHeader = request.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const provided = authHeader.slice(7);
-  try {
-    const a = Buffer.from(provided, "utf8");
-    const b = Buffer.from(cronSecret, "utf8");
-    if (a.length !== b.length || !timingSafeEqual(a, b)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return null;
 }
