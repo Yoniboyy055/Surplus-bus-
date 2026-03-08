@@ -221,16 +221,40 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
             updated_at: new Date().toISOString(),
           } as Record<string, unknown>;
 
-          const { error: stageErr } = await supabase.rpc("upsert_source_record_by_urlhash", {
-            p_source_id: source.id,
-            p_source_run_id: runId,
-            p_source_url: opp.source_url,
-            p_source_url_normalized: normalizedUrl,
-            p_source_url_hash: urlHash,
-            p_raw_payload: rawPayload,
-            p_payload_hash: payloadHash,
-            p_external_id: hasExternalId ? opp.external_id : null,
-          });
+          const stageResult = hasExternalId
+            ? await supabase
+                .from("source_records")
+                // Records with external_id: upsert on source_id,external_id so duplicate
+                // runs never throw "duplicate key violates uq_source_records_external".
+                .upsert(
+                  {
+                    source_id: source.id,
+                    source_run_id: runId,
+                    external_id: opp.external_id,
+                    source_url: opp.source_url,
+                    source_url_normalized: normalizedUrl,
+                    source_url_hash: urlHash,
+                    raw_payload: rawPayload,
+                    payload_hash: payloadHash,
+                    last_seen_at: new Date().toISOString(),
+                  },
+                  { onConflict: "source_id,external_id" }
+                )
+            : // Records without external_id: use the URL-hash RPC which handles the partial
+              // unique index (uq_source_records_urlhash WHERE external_id IS NULL) and also
+              // updates last_seen_at on conflict.
+              await supabase.rpc("upsert_source_record_by_urlhash", {
+                p_source_id: source.id,
+                p_source_run_id: runId,
+                p_source_url: opp.source_url,
+                p_source_url_normalized: normalizedUrl,
+                p_source_url_hash: urlHash,
+                p_raw_payload: rawPayload,
+                p_payload_hash: payloadHash,
+              });
+
+          const stageErr = stageResult.error;
+
           if (stageErr) {
             await supabase.from("source_run_failures").insert({
               source_run_id: runId,
