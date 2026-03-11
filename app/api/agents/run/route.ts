@@ -3,6 +3,16 @@ import { executeAgentRun, AgentRunError } from "@/lib/agents/runAgentRunner";
 import { logApiStart, logApiEnd } from "@/lib/observability";
 
 /**
+ * TO RE-ENABLE A SOURCE FOR PRODUCTION:
+ * 1. Fix the parser (correct selectors, real external_id extraction)
+ * 2. Run: runSourceQualification(sourceId) — must pass all 5 gates twice
+ * 3. DB will auto-set production_ready=true after qualification
+ * 4. Source will then be picked up on next cron run
+ *
+ * DO NOT manually set production_ready=true without running qualification.
+ */
+
+/**
  * Source-driven agent runner.
  * GET /api/agents/run?parser_key=gc_buyandsell
  * Auth: Authorization: Bearer CRON_SECRET

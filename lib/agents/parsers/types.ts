@@ -45,6 +45,12 @@ export type LotSnapshot = {
 export type ParserResult = {
   opportunities: ParsedOpportunity[];
   error?: string;
+  /**
+   * Set by discovery-role parsers to the real auction vendor URL discovered
+   * from the city/government page. When present, the runner writes it to
+   * sources.real_host_url and skips source_records / canonical writes.
+   */
+  reconUrl?: string;
 };
 
 export type ParserContext = {
