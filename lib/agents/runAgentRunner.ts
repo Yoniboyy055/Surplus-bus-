@@ -45,11 +45,25 @@ function maskUrl(url: string): string {
   }
 }
 
-export async function executeAgentRun(parserKey: string): Promise<RunResult> {
+/**
+ * Run the ingestion pipeline for a given parser key.
+ * @param parserKey - The parser_key to run (must match a row in sources table).
+ * @param sandboxMode - When true (or when SANDBOX_MODE=true env var is set),
+ *   source_records are written for inspection but canonical_lots,
+ *   canonical_auctions, and lot_snapshots are NOT written. Log prefix
+ *   changes to [SANDBOX].
+ */
+export async function executeAgentRun(
+  parserKey: string,
+  sandboxMode?: boolean
+): Promise<RunResult> {
+  const isSandbox = sandboxMode === true || process.env.SANDBOX_MODE === "true";
+  const logPrefix = isSandbox ? "[SANDBOX]" : "[runAgentRunner]";
+
   const totalStart = Date.now();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const hasServiceRoleKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
-  console.log("[runAgentRunner] supabaseUrl:", maskUrl(supabaseUrl ?? ""), "| serviceRoleKey present:", hasServiceRoleKey);
+  console.log(`${logPrefix} supabaseUrl:`, maskUrl(supabaseUrl ?? ""), "| serviceRoleKey present:", hasServiceRoleKey);
 
   const supabase = createServiceRoleClient();
 
@@ -64,7 +78,7 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
 
     const { data: allSources, error: sourcesError } = await supabase
       .from("sources")
-      .select("id, name, base_url, feed_url, parser_key, is_active")
+      .select("id, name, base_url, feed_url, parser_key, is_active, production_ready, source_role")
       .eq("parser_key", parserKey)
       .order("priority", { ascending: true });
 
@@ -76,7 +90,18 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
       throw new AgentRunError("unknown_parser_key", 404, "unknown_parser_key");
     }
 
-    const sources = allSources.filter((s) => s.is_active);
+    // PART 1: Both is_active AND production_ready must be true before a source
+    // is allowed to run. Log a clear skip message for any that don't qualify.
+    const sources = allSources.filter((s) => {
+      if (!s.is_active || !s.production_ready) {
+        console.log(
+          `[SKIPPED] source ${s.parser_key} is not active/production_ready`
+        );
+        return false;
+      }
+      return true;
+    });
+
     if (sources.length === 0) {
       throw new AgentRunError("source_inactive", 409, "source_inactive");
     }
@@ -163,6 +188,38 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
           continue;
         }
 
+        // PART 3: Discovery-role source — write real_host_url and stop.
+        // City parsers with source_role='discovery' do NOT produce listings;
+        // they discover the real auction vendor URL from the city page.
+        if (result.reconUrl || source.source_role === "discovery") {
+          if (result.reconUrl) {
+            await supabase
+              .from("sources")
+              .update({ real_host_url: result.reconUrl })
+              .eq("id", source.id);
+          }
+          await supabase
+            .from("source_runs")
+            .update({
+              status: "success",
+              completed_at: new Date().toISOString(),
+              items_found: 0,
+              items_upserted: 0,
+              duration_ms: Date.now() - runStart,
+              error_message: null,
+            })
+            .eq("id", runId);
+          runs.push({
+            source_id: source.id,
+            run_id: runId,
+            status: "success",
+            items_found: 0,
+            items_upserted: 0,
+            duration_ms: Date.now() - runStart,
+          });
+          continue;
+        }
+
         const opportunities = result.opportunities;
 
         const prepped = opportunities.map((opp) => {
@@ -241,9 +298,9 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
                   },
                   { onConflict: "source_id,external_id" }
                 )
-            : // Records without external_id: use the URL-hash RPC which handles the partial
-              // unique index (uq_source_records_urlhash WHERE external_id IS NULL) and also
-              // updates last_seen_at on conflict.
+            : // PART 2: Records without external_id — write to source_records via the
+              // URL-hash RPC (handles the partial unique index), then flag as missing_external_id
+              // to prevent canonical promotion.
               await supabase.rpc("upsert_source_record_by_urlhash", {
                 p_source_id: source.id,
                 p_source_run_id: runId,
@@ -274,6 +331,31 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
               })
               .eq("id", runId);
             throw new Error(`source_records upsert failed: ${stageErr.message}`);
+          }
+
+          // PART 2: If external_id is missing, mark the source_record with
+          // dedup_flag='missing_external_id' and skip canonical promotion entirely.
+          if (!hasExternalId) {
+            console.log(
+              `[DEDUP FAIL] source ${source.parser_key} produced record with no external_id — skipping canonical promotion`
+            );
+            await supabase
+              .from("source_records")
+              .update({ dedup_flag: "missing_external_id" })
+              .eq("source_id", source.id)
+              .eq("source_url_hash", urlHash)
+              .is("external_id", null);
+            continue;
+          }
+
+          // PART 5: In sandbox mode, source_records have been written above for
+          // inspection, but we do NOT write to canonical_lots, lot_snapshots, etc.
+          if (isSandbox) {
+            console.log(
+              `[SANDBOX] ${source.parser_key} — skipping canonical write for ${opp.external_id}`
+            );
+            createdCount++;
+            continue;
           }
 
           const oppPayload = {

@@ -1,9 +1,12 @@
-import type { ParserContext, ParserResult, ParsedOpportunity } from "./types";
-import { stableExternalIdFromTuple } from "./idUtils";
+import type { ParserContext, ParserResult } from "./types";
+import { extractVendorLink } from "./discoveryUtils";
 
 /**
- * City of Ottawa surplus parser.
- * Directory page: extract sections, hash (title, url) for stable external_id.
+ * City of Ottawa surplus — discovery-role parser.
+ * This page does not host real auction listings. It redirects to a third-party
+ * vendor platform (e.g. GovDeals or PublicSurplus). We extract the outbound
+ * link to that vendor, log it, and return zero opportunities so the runner can
+ * write it to sources.real_host_url via the reconUrl field.
  */
 export async function parseCityOttawaSurplus(ctx: ParserContext): Promise<ParserResult> {
   const url = ctx.feedUrl ?? `${ctx.baseUrl}/en/business/procurement`;
@@ -19,53 +22,12 @@ export async function parseCityOttawaSurplus(ctx: ParserContext): Promise<Parser
     return { opportunities: [], error: `Fetch failed: ${msg}` };
   }
 
-  const opportunities: ParsedOpportunity[] = [];
-  const seen = new Set<string>();
-
-  // Extract h2/h3 headings as sections (directory page with no item URLs)
-  const headingRe = /<h[23][^>]*>([^<]+)<\/h[23]>/gi;
-  let m: RegExpExecArray | null;
-  while ((m = headingRe.exec(html)) !== null) {
-    // Guard: TS strict flags RegExp capture groups as possibly undefined.
-    const raw = m[1];
-    if (!raw) continue;
-    const title = raw.replace(/\s+/g, " ").trim();
-    if (!title || title.length < 3) continue;
-    const extId = stableExternalIdFromTuple([ctx.parserKey, title, url]);
-    if (seen.has(extId)) continue;
-    seen.add(extId);
-    opportunities.push({
-      source: ctx.parserKey,
-      external_id: extId,
-      source_url: url,
-      province: "ON",
-      category: "Surplus",
-      title: title,
-      description: `City of Ottawa surplus: ${title}`,
-      estimated_value: null,
-      closing_date: null,
-      issuing_entity: "City of Ottawa",
-      status: "open",
-    });
+  const reconUrl = extractVendorLink(html);
+  if (reconUrl) {
+    console.log(`[RECON] ${ctx.parserKey} → discovered real host at ${reconUrl}`);
+    return { opportunities: [], reconUrl };
   }
 
-  if (opportunities.length === 0) {
-    const fallbackTitle = "City of Ottawa Surplus";
-    const extId = stableExternalIdFromTuple([ctx.parserKey, fallbackTitle, url]);
-    opportunities.push({
-      source: ctx.parserKey,
-      external_id: extId,
-      source_url: url,
-      province: "ON",
-      category: "Surplus",
-      title: fallbackTitle,
-      description: "Municipal surplus assets.",
-      estimated_value: null,
-      closing_date: null,
-      issuing_entity: "City of Ottawa",
-      status: "open",
-    });
-  }
-
-  return { opportunities };
+  console.log(`[RECON] ${ctx.parserKey} → no outbound vendor link found on ${url}`);
+  return { opportunities: [] };
 }
