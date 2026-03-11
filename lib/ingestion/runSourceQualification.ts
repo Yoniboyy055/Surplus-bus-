@@ -2,6 +2,23 @@ import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 import { executeAgentRun } from "@/lib/agents/runAgentRunner";
 
 /**
+ * Navigation/chrome text patterns that appear on government page scaffolding
+ * but are not real listing titles. Records whose title matches one of these
+ * patterns are excluded from the `real_listings_found` gate check.
+ */
+const NAV_CHROME_PATTERNS: ReadonlyArray<string> = [
+  "Search",
+  "Footer",
+  "Main navigation",
+  "Contact Us",
+  "Terms and Conditions",
+  "In this section",
+  "Procurement",
+  "Topics in this section",
+  "You may also be interested in",
+];
+
+/**
  * Source qualification gate result for a single check condition.
  */
 export type QualificationGates = {
@@ -24,27 +41,34 @@ export type QualificationResult = QualificationGates & {
 };
 
 /**
- * Run the 5-gate source qualification check for a given source.
+ * Source Qualification Gate — 5 checks must pass before a source is promoted
+ * to `production_ready = true`. Runs parsers in sandbox mode (no canonical
+ * writes). Inserts the result into `source_qualification_log`.
  *
  * Gate rules:
  *  1. real_listings_found   — at least 1 source_record with non-null title AND
- *                             non-null source_url was written during the sandbox run.
+ *                             non-null source_url, where title does NOT match
+ *                             known nav/chrome patterns (e.g. "Search", "Footer").
  *  2. stable_external_id    — every source_record produced by the run has a
  *                             non-null, non-empty external_id (dedup_flag IS NULL).
  *  3. core_fields_present   — every record has title, source_url, and status set.
- *  4. dedup_verified        — a second sandbox run produces 0 new rows (idempotent).
+ *  4. dedup_verified        — run the parser twice; the second run must produce
+ *                             0 new source_record rows (upsert is idempotent).
  *  5. terminal_state_plan   — a row exists in source_terminal_capabilities for
  *                             this source_id.
- *  consecutive_runs_ok      — incremented only when all 5 gates above pass; must
+ *  consecutive_runs_ok      — incremented by 1 each time all 5 gates pass; must
  *                             reach 2 before production is enabled.
  *
  * When all gates pass (consecutive_runs_ok >= 2):
  *  - sources.production_ready is set to true
  *  - sources.is_active is set to true
  *  - sources.quality_state is set to 'green'
- *  - [QUALIFIED] is logged
+ *  - [QUALIFIED] {parser_key} — all gates passed, production enabled
  *
- * All runs are executed in sandbox mode, so no canonical writes are made.
+ * On failure:
+ *  - [FAILED GATE] {parser_key} — failed: {comma-separated list of failed checks}
+ *
+ * All runs are executed in sandbox mode, so no canonical writes are ever made.
  *
  * @param sourceId - The UUID of the source row in the sources table.
  * @returns QualificationResult with all gate outcomes and the log_id.
@@ -87,16 +111,15 @@ export async function runSourceQualification(
     .update({ is_active: true, production_ready: true })
     .eq("id", sourceId);
 
-  let firstRunOk = false;
   let firstRunId: string | null = null;
   try {
+    // Always force sandbox mode — qualification runs must never touch canonical tables.
     const firstResult = await executeAgentRun(parserKey, /* sandboxMode */ true);
-    firstRunOk = firstResult.ok;
     firstRunId = firstResult.runs[0]?.run_id ?? null;
   } catch {
-    firstRunOk = false;
+    // First run failure — gate checks will fail naturally
   } finally {
-    // Revert — production flags should only be set by this function at the end.
+    // Revert — production flags should only be set by this function after all gates pass.
     await supabase
       .from("sources")
       .update({ is_active: false, production_ready: false })
@@ -114,17 +137,21 @@ export async function runSourceQualification(
 
   const allRecords = records ?? [];
 
-  // Gate 1: real_listings_found
+  // Gate 1: real_listings_found — at least 1 record with non-null title and
+  // source_url where the title is not a nav/chrome artifact.
   const realListingsFound = allRecords.some((r) => {
     const p = r.raw_payload as Record<string, unknown> | null;
-    return p?.title != null && p?.source_url != null;
+    if (!p?.title || !p?.source_url) return false;
+    const title = String(p.title).trim();
+    return !NAV_CHROME_PATTERNS.includes(title);
   });
 
   // Gate 2: stable_external_id — all records have a non-null, non-empty
   // external_id. Vacuously true when no records were produced; Gate 1 will
   // catch the absence of records independently.
-  const stableExternalId =
-    allRecords.every((r) => r.external_id != null && r.external_id !== "" && r.dedup_flag == null);
+  const stableExternalId = allRecords.every(
+    (r) => r.external_id != null && r.external_id !== "" && r.dedup_flag == null
+  );
 
   // Gate 3: core_fields_present — all records have title, source_url, status.
   // Vacuously true when no records were produced; Gate 1 catches that case.
@@ -135,7 +162,7 @@ export async function runSourceQualification(
 
   // ── Second sandbox run (Gate 4: dedup_verified) ───────────────────────────
   // Capture the total source_records count before the second run, then compare
-  // after. If no new rows were inserted (idempotent), dedup is verified.
+  // after. If no new rows were inserted, the upsert is idempotent.
   const { count: countBefore } = await supabase
     .from("source_records")
     .select("id", { count: "exact", head: true })
@@ -147,6 +174,7 @@ export async function runSourceQualification(
     .eq("id", sourceId);
 
   try {
+    // Always force sandbox mode internally.
     await executeAgentRun(parserKey, /* sandboxMode */ true);
   } catch {
     // Second run failure — dedup cannot be verified
@@ -163,7 +191,8 @@ export async function runSourceQualification(
     .eq("source_id", sourceId);
 
   // Gate 4: dedup_verified — second run produces 0 new rows (idempotent)
-  const dedupVerified = countBefore != null && countAfter != null && countAfter === countBefore;
+  const dedupVerified =
+    countBefore != null && countAfter != null && countAfter === countBefore;
 
   // ── Evaluate overall gate state ───────────────────────────────────────────
   const corePassed =
@@ -217,7 +246,19 @@ export async function runSourceQualification(
       .eq("id", sourceId);
 
     console.log(
-      `[QUALIFIED] ${parserKey} passed all gates — production enabled`
+      `[QUALIFIED] ${parserKey} — all gates passed, production enabled`
+    );
+  } else {
+    // Build list of failed checks for the log
+    const failed: string[] = [];
+    if (!realListingsFound) failed.push("real_listings_found");
+    if (!stableExternalId) failed.push("stable_external_id");
+    if (!coreFieldsPresent) failed.push("core_fields_present");
+    if (!dedupVerified) failed.push("dedup_verified");
+    if (!terminalStatePlan) failed.push("terminal_state_plan");
+    if (!consecutiveRunsOk) failed.push(`consecutive_runs_ok (${consecutiveRunsCount}/2)`);
+    console.log(
+      `[FAILED GATE] ${parserKey} — failed: ${failed.join(", ")}`
     );
   }
 

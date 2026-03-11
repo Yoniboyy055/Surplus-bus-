@@ -76,33 +76,38 @@ export async function executeAgentRun(
       throw new AgentRunError("parser_already_running", 409, "parser_locked");
     }
 
-    const { data: allSources, error: sourcesError } = await supabase
+    const { data: sources, error: sourcesError } = await supabase
       .from("sources")
       .select("id, name, base_url, feed_url, parser_key, is_active, production_ready, source_role")
       .eq("parser_key", parserKey)
+      .eq("is_active", true)
+      .eq("production_ready", true)
       .order("priority", { ascending: true });
 
     if (sourcesError) {
       throw new Error(`Failed to load sources: ${sourcesError.message}`);
     }
 
-    if (!allSources?.length) {
-      throw new AgentRunError("unknown_parser_key", 404, "unknown_parser_key");
+    // PART 1: Check for rows before the is_active/production_ready filter was applied
+    // to give a clear skip log for sources that exist but are not yet ready.
+    const { data: allSources } = await supabase
+      .from("sources")
+      .select("parser_key, is_active, production_ready")
+      .eq("parser_key", parserKey);
+
+    for (const s of allSources ?? []) {
+      if (!s.is_active || !s.production_ready) {
+        console.log(`[SKIPPED] ${s.parser_key} — not active/production_ready`);
+      }
     }
 
-    // PART 1: Both is_active AND production_ready must be true before a source
-    // is allowed to run. Log a clear skip message for any that don't qualify.
-    const sources = allSources.filter((s) => {
-      if (!s.is_active || !s.production_ready) {
-        console.log(
-          `[SKIPPED] source ${s.parser_key} is not active/production_ready`
-        );
-        return false;
+    if (!sources?.length) {
+      // Could be unknown key or all sources skipped
+      const knownKeys = (allSources ?? []).map((s) => s.parser_key);
+      if (knownKeys.length === 0) {
+        throw new AgentRunError("unknown_parser_key", 404, "unknown_parser_key");
       }
-      return true;
-    });
-
-    if (sources.length === 0) {
+      console.log("[SURPLUS BUS] No production-ready sources. Exiting.");
       throw new AgentRunError("source_inactive", 409, "source_inactive");
     }
 
@@ -349,10 +354,16 @@ export async function executeAgentRun(
           }
 
           // PART 5: In sandbox mode, source_records have been written above for
-          // inspection, but we do NOT write to canonical_lots, lot_snapshots, etc.
+          // inspection, but we do NOT write to canonical tables or opportunities.
           if (isSandbox) {
             console.log(
-              `[SANDBOX] ${source.parser_key} — skipping canonical write for ${opp.external_id}`
+              `[SANDBOX] ${source.parser_key} — would write canonical_lot for ${opp.external_id}`
+            );
+            console.log(
+              `[SANDBOX] ${source.parser_key} — would write canonical_auction for ${opp.external_id}`
+            );
+            console.log(
+              `[SANDBOX] ${source.parser_key} — would write snapshot for ${opp.external_id}`
             );
             createdCount++;
             continue;
