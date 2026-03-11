@@ -3,6 +3,7 @@ import { runParser } from "@/lib/agents/parsers";
 import { sha256, normalizeUrl, canonicalJsonStringify } from "@/lib/agents/utils/hash";
 import { buildStablePayloadForHash } from "@/lib/agents/utils/buildStablePayloadForHash";
 import { classifyError } from "@/lib/agents/utils/classifyError";
+import { writeFinalOutcome } from "@/lib/agents/utils/writeFinalOutcome";
 import { computeOpportunityIntelligence } from "@/lib/intelligence/computeOpportunityIntelligence";
 import type { ParsedOpportunity } from "@/lib/agents/parsers/types";
 
@@ -330,6 +331,58 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
               });
             }
           }
+
+          // ── canonical_lots + lot_snapshots ──────────────────────────────
+          // Upsert the lot into canonical_lots (one row per source×external_id),
+          // then record a point-in-time snapshot. If this snapshot is terminal,
+          // write the final outcome (immutability-guarded).
+          const { data: canonicalRow } = await supabase
+            .from("canonical_lots")
+            .upsert(
+              {
+                source: opp.source,
+                external_id: opp.external_id,
+                source_id: source.id,
+                source_url: opp.source_url,
+                title: opp.title,
+                status: opp.status,
+                current_price: opp.current_price ?? null,
+                bid_count: opp.bid_count ?? null,
+                closes_at: opp.closing_date ?? null,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: "source,external_id" }
+            )
+            .select("id")
+            .maybeSingle();
+
+          if (canonicalRow) {
+            const observedAt = new Date().toISOString();
+            const isTerminal = opp.is_terminal === true;
+
+            await supabase.from("lot_snapshots").insert({
+              lot_id: canonicalRow.id,
+              source_run_id: runId,
+              current_price: opp.current_price ?? null,
+              bid_count: opp.bid_count ?? null,
+              status: opp.status,
+              is_terminal: isTerminal,
+              observed_at: observedAt,
+            });
+
+            if (isTerminal) {
+              await writeFinalOutcome(canonicalRow.id, {
+                lot_id: canonicalRow.id,
+                current_price: opp.current_price ?? null,
+                bid_count: opp.bid_count ?? null,
+                status: opp.status,
+                is_terminal: true,
+                observed_at: observedAt,
+                parser_key: source.parser_key,
+              });
+            }
+          }
+          // ────────────────────────────────────────────────────────────────
         }
 
         const { count, error: countErr } = await supabase
@@ -396,6 +449,45 @@ export async function executeAgentRun(parserKey: string): Promise<RunResult> {
             })
             .eq("id", rec.id);
         }
+
+        // ── Stale-open detection ────────────────────────────────────────
+        // Find lots for this source that are still marked active/closing_soon,
+        // have already passed their closes_at time, and never received a
+        // terminal snapshot (final_price IS NULL). These are "stale-open" lots.
+        const { data: staleOpenLots } = await supabase
+          .from("canonical_lots")
+          .select("id, closes_at, source_url")
+          .eq("source_id", source.id)
+          .in("status", ["active", "closing_soon"])
+          .lt("closes_at", new Date().toISOString())
+          .is("final_price", null);
+
+        if (staleOpenLots?.length) {
+          // Check whether this source requires a revisit to capture final results.
+          const { data: capability } = await supabase
+            .from("source_terminal_capabilities")
+            .select("requires_revisit")
+            .eq("source_id", source.id)
+            .maybeSingle();
+
+          for (const lot of staleOpenLots) {
+            console.log(
+              `[REVISIT NEEDED] lot ${lot.id} closed ${lot.closes_at} — no terminal captured`
+            );
+            if (capability?.requires_revisit && lot.source_url) {
+              // Enqueue a revisit fetch for this lot's source_url.
+              // A future revisit runner should query canonical_lots for
+              // [REVISIT NEEDED] lots (status IN ('active','closing_soon'),
+              // closes_at < NOW(), final_price IS NULL) and schedule individual
+              // lot re-fetches. This log line provides an observable signal
+              // until that runner is implemented.
+              console.log(
+                `[REVISIT ENQUEUE] lot ${lot.id} source_url=${lot.source_url}`
+              );
+            }
+          }
+        }
+        // ────────────────────────────────────────────────────────────────
 
         const itemsUpserted = createdCount + updatedCount;
         const durationMs = Date.now() - runStart;
