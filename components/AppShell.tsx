@@ -125,6 +125,8 @@ export function AppShell({ children, user, profile }: AppShellProps) {
             <button
               onClick={() => setSidebarOpen(false)}
               className="md:hidden text-quantum-400 hover:text-quantum-50"
+              title="Close sidebar"
+              aria-label="Close sidebar"
             >
               <X size={24} />
             </button>
@@ -158,8 +160,11 @@ export function AppShell({ children, user, profile }: AppShellProps) {
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors text-quantum-400 hover:text-red-400 hover:bg-quantum-800"
+              title="Sign Out"
+              aria-label="Sign Out"
             >
               <LogOut size={18} />
+              <span className="sr-only">Sign Out</span>
               Logout
             </button>
             <div className="flex items-center justify-between px-1">
@@ -179,6 +184,7 @@ export function AppShell({ children, user, profile }: AppShellProps) {
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="md:hidden text-quantum-400 hover:text-quantum-50"
+                title="Open sidebar navigation"
               >
                 <Menu size={24} />
               </button>

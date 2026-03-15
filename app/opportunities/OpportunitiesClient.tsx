@@ -124,6 +124,7 @@ export function OpportunitiesClient() {
         <div>
           <label className="text-xs text-quantum-500 block mb-1 uppercase tracking-wide">Province</label>
           <select
+            title="Province filter"
             value={province}
             onChange={(e) => { setProvince(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-quantum-800 border border-quantum-700 rounded text-quantum-100 text-sm hover:border-quantum-500 transition"
@@ -137,6 +138,7 @@ export function OpportunitiesClient() {
         <div>
           <label className="text-xs text-quantum-500 block mb-1 uppercase tracking-wide">Category</label>
           <select
+            title="Category filter"
             value={category}
             onChange={(e) => { setCategory(e.target.value); setPage(1); }}
             className="px-3 py-2 bg-quantum-800 border border-quantum-700 rounded text-quantum-100 text-sm hover:border-quantum-500 transition"
