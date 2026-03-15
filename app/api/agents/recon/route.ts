@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runParser } from '../../../../lib/ingestion';
-import { supabase } from '../../../../lib/supabase';
+import { runParser } from '@/lib/agents/parsers';
+import { createServiceRoleClient } from '@/lib/supabase/serviceRole';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,14 +14,18 @@ export async function GET(req: NextRequest) {
     'city_ottawa_surplus',
   ];
 
+  const supabase = createServiceRoleClient();
   const results: Record<string, { reconUrl: string | null }> = {};
 
   for (const source of sources) {
     let reconUrl: string | null = null;
     try {
-      reconUrl = await runParser(source);
+      // runParser expects (parserKey, ctx), but ctx is required
+      // We'll provide a minimal context with baseUrl for each source
+      const ctx = { parserKey: source, baseUrl: '', feedUrl: undefined };
+      const parserResult = await runParser(source, ctx);
+      reconUrl = parserResult.reconUrl ?? null;
       if (reconUrl) {
-        // Update sources.real_host_url in Supabase
         await supabase
           .from('sources')
           .update({ real_host_url: reconUrl })
