@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/serviceRole';
-import { NextRequest, NextResponse } from 'next/server';
-import { URL } from 'url';
+// No need for Node URL import in Next.js API route
 
 export const dynamic = 'force-dynamic';
 
