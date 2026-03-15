@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     try {
       // runParser expects (parserKey, ctx), but ctx is required
       // We'll provide a minimal context with baseUrl for each source
-      const ctx = { parserKey: source, baseUrl: '', feedUrl: undefined };
+      const ctx = { parserKey: source, baseUrl: '', feedUrl: null };
       const parserResult = await runParser(source, ctx);
       reconUrl = parserResult.reconUrl ?? null;
       if (reconUrl) {
