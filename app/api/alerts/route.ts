@@ -13,17 +13,17 @@ export async function DELETE(request: Request) {
   }
 
   // Double-check profile_id in WHERE
-  const { error: delError, count } = await supabase
+  const { error: delError, data } = await supabase
     .from("alert_rules")
     .delete()
     .eq("id", id)
     .eq("profile_id", user.id)
-    .select("id", { count: "exact" });
+    .select();
 
   if (delError) {
     return NextResponse.json({ error: delError.message }, { status: 400 });
   }
-  if (!count) {
+  if (!data || data.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   return NextResponse.json({ ok: true });

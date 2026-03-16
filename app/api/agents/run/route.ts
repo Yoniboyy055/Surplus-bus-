@@ -16,6 +16,10 @@ import { logApiStart, logApiEnd } from "@/lib/observability";
  * Source-driven agent runner.
  * GET /api/agents/run?parser_key=gc_buyandsell
  * Auth: Authorization: Bearer CRON_SECRET
+ *
+ * NOTE: Trigger manually via: POST /api/agents/run?parser_key=gc_buyandsell
+ * with header: Authorization: Bearer {CRON_SECRET}
+ * This must be run to populate opportunities and clear the DATA STALE state.
  */
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');

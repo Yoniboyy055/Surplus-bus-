@@ -13,6 +13,10 @@ import {
   Bell,
   Settings,
   Wrench,
+  Home,
+  Inbox,
+  Bookmark,
+  Newspaper,
 } from "lucide-react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -31,10 +35,13 @@ interface AppShellProps {
 }
 
 const MAIN_NAV = [
+  { name: "Dashboard", href: "/dashboard", icon: <Home size={18} /> },
   { name: "Feed", href: "/feed", icon: <Rss size={18} /> },
   { name: "Opportunities", href: "/opportunities", icon: <Target size={18} /> },
   { name: "Alerts", href: "/alerts", icon: <Bell size={18} /> },
-  { name: "Account", href: "/settings", icon: <Settings size={18} /> },
+  { name: "Inbox", href: "/inbox", icon: <Inbox size={18} /> },
+  { name: "Saved", href: "/saved", icon: <Bookmark size={18} /> },
+  { name: "News", href: "/news", icon: <Newspaper size={18} /> },
 ];
 
 export function AppShell({ children, user, profile }: AppShellProps) {

@@ -64,7 +64,8 @@ export default function AlertsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const supabase = createClient();
+  const supabaseRef = useRef(createClient());
+  const routerRef = useRef(router);
 
   const fetchAlerts = async () => {
     const res = await fetch("/api/alerts");
@@ -74,20 +75,17 @@ export default function AlertsPage() {
   };
 
   useEffect(() => {
+    const supabase = supabaseRef.current;
+    const nav = routerRef.current;
     const init = async () => {
       if (!supabase) return;
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/auth?callbackUrl=/alerts");
-        return;
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { nav.push("/auth?callbackUrl=/alerts"); return; }
       await fetchAlerts();
       setLoading(false);
     };
     init();
-  }, []);
+  }, []); // intentionally empty — refs are stable
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
