@@ -84,9 +84,14 @@ export default function LandingPage() {
           </p>
           {/* Email form */}
           {status === "success" ? (
-            <div className="flex flex-col items-center justify-center py-6">
+            <div className="flex flex-col items-center justify-center py-6 gap-3">
               <CheckCircle className="text-green-400 mb-2" size={32} />
-              <span className="text-green-400 font-medium">You are on the list.</span>
+              <span className="text-green-400 font-medium mb-2">You are on the list.</span>
+              <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                <Link href="/auth" className="px-4 py-2 rounded bg-cyan-600 text-white font-semibold hover:bg-cyan-500 transition text-center">Sign in</Link>
+                <Link href="/product" className="px-4 py-2 rounded bg-quantum-800 text-cyan-300 font-semibold hover:bg-cyan-700 transition text-center">Learn more</Link>
+                <a href="mailto:hello@surplus-bus.com" className="px-4 py-2 rounded bg-quantum-900 text-cyan-400 font-semibold border border-cyan-700 hover:bg-cyan-950 transition text-center">Contact us</a>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 items-center justify-center max-w-md mx-auto mt-4 w-full">

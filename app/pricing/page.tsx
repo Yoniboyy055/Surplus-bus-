@@ -1,6 +1,6 @@
-"use client";
 
-import Link from "next/link";
+"use client";
+import PricingCheckoutButton from "./PricingCheckoutButton";
 
 type Plan = {
   id: "starter" | "pro";
@@ -90,16 +90,9 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <Link
-              href="/auth"
-              className={`mt-6 w-full text-center font-semibold rounded-lg px-4 py-3 transition-colors block ${
-                plan.highlight
-                  ? "bg-cyan-600 hover:bg-cyan-500 text-white"
-                  : "bg-quantum-800 hover:bg-quantum-700 text-quantum-100 border border-quantum-700"
-              }`}
-            >
-              {plan.ctaLabel}
-            </Link>
+            <div className="mt-6">
+              <PricingCheckoutButton plan={plan.id} />
+            </div>
           </div>
         ))}
       </div>

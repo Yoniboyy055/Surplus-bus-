@@ -34,9 +34,10 @@ export async function POST(request: NextRequest) {
   const emailFrom = process.env.EMAIL_FROM;
   const emailTo = process.env.EMAIL_TO;
 
+
   if (!resendKey || !emailFrom) {
-    console.error("[Beta] RESEND_API_KEY or EMAIL_FROM is missing. Cannot send email.");
-    return NextResponse.json({ error: "Email service not configured" }, { status: 500 });
+    console.warn("[Beta] RESEND_API_KEY or EMAIL_FROM is missing. Cannot send email. Returning ok:true for beta signup.");
+    return NextResponse.json({ ok: true });
   }
 
   let adminSent = false;

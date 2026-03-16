@@ -30,25 +30,33 @@ export default async function NewsPage() {
           description="Content will appear here when published."
         />
       ) : (
-        <ul className="space-y-4">
-          {posts.map((post: any) => (
-            <li
-              key={post.id}
-              className="bg-quantum-900 border border-quantum-700 rounded-lg p-4 hover:border-quantum-600 transition"
-            >
-              <Link href={`/news/${post.slug}`} className="block">
-                <h2 className="text-cyan-400 hover:text-cyan-300 font-medium">{post.title}</h2>
-                {post.summary && (
-                  <p className="text-quantum-500 text-sm mt-1 line-clamp-2">{post.summary}</p>
-                )}
-                <p className="text-xs text-quantum-600 mt-2">
-                  {post.published_at
-                    ? new Date(post.published_at).toLocaleDateString()
-                    : "—"}
-                </p>
-              </Link>
-            </li>
-          ))}
+        <ul className="grid md:grid-cols-2 gap-4">
+          {posts.map((post: any) => {
+            const isNew = post.published_at && (Date.now() - new Date(post.published_at).getTime() < 7 * 24 * 60 * 60 * 1000);
+            return (
+              <li
+                key={post.id}
+                className="bg-quantum-900 border border-quantum-700 rounded-lg p-5 hover:border-cyan-600 transition flex flex-col gap-2"
+              >
+                <Link href={`/news/${post.slug}`} className="block">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-cyan-400 hover:text-cyan-300 font-medium text-lg flex-1">{post.title}</h2>
+                    {isNew && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 uppercase font-semibold">New</span>
+                    )}
+                  </div>
+                  {post.summary && (
+                    <p className="text-quantum-500 text-sm mt-1 line-clamp-2">{post.summary}</p>
+                  )}
+                  <p className="text-xs text-quantum-600 mt-2">
+                    {post.published_at
+                      ? new Date(post.published_at).toLocaleDateString()
+                      : "—"}
+                  </p>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

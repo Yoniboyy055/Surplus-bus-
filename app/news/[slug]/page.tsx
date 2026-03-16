@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
 export default async function NewsPostPage({
   params,
@@ -24,6 +25,9 @@ export default async function NewsPostPage({
 
   return (
     <div className="space-y-6 max-w-3xl">
+      <div className="mb-2">
+        <Link href="/news" className="text-cyan-400 hover:underline text-sm">← Back to news</Link>
+      </div>
       <div>
         <p className="text-quantum-500 text-sm">
           {post.published_at

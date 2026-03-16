@@ -148,6 +148,7 @@ export default function SettingsPage() {
             onChange={(e) =>
               handleChange("digest_frequency", e.target.value as DigestFrequency)
             }
+            title="Default digest frequency"
           >
             {DIGEST_OPTIONS.map((opt) => (
               <option key={opt} value={opt}>
@@ -225,17 +226,7 @@ export default function SettingsPage() {
         {saving ? "Saving..." : "Save preferences"}
       </button>
 
-      <div className="mt-6">
-        <Link
-          href="/settings/profile"
-          className="block bg-quantum-900 border border-quantum-700 rounded-lg p-4 hover:border-quantum-600 transition"
-        >
-          <h2 className="font-medium text-quantum-50">Profile & preferences</h2>
-          <p className="text-sm text-quantum-500 mt-1">
-            Timezone, digest frequency, provinces, categories
-          </p>
-        </Link>
-      </div>
+      {/* Profile & preferences link removed, form is now unified here. */}
     </div>
   );
 }
