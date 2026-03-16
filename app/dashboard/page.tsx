@@ -63,8 +63,9 @@ export default async function DashboardPage() {
   // Data status pill
   let dataStatus = "DATA STALE";
   let pillColor = "bg-amber-600";
-  if (runs.length > 0 && runs[0].completed_at) {
-    const diffMs = new Date().getTime() - new Date(runs[0].completed_at).getTime();
+  const latestRun = runs[0];
+  if (latestRun && latestRun.completed_at) {
+    const diffMs = new Date().getTime() - new Date(latestRun.completed_at).getTime();
     const hoursAgo = Math.floor(diffMs / 3600000);
     if (hoursAgo <= 2) {
       dataStatus = "DATA FRESH";
