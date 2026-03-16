@@ -30,6 +30,7 @@ function formatDate(dateStr: string | null): string {
 
 export default async function DashboardPage() {
   const supabase = createClient();
+  if (!supabase) redirect("/auth?error=supabase_not_configured");
   const { data: { user } = { user: null } } = await supabase.auth.getUser();
   if (!user) redirect("/auth");
 
