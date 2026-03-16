@@ -98,7 +98,7 @@ export default function PricingPage() {
       </div>
 
       <p className="text-center text-xs text-quantum-600">
-        Information service only. Not a broker. Prices in CAD. Subject to change.
+        Prices in CAD. Billed monthly. Cancel anytime.
       </p>
     </section>
   );

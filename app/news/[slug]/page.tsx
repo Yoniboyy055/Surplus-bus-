@@ -31,7 +31,7 @@ export default async function NewsPostPage({
       <div>
         <p className="text-quantum-500 text-sm">
           {post.published_at
-            ? new Date(post.published_at).toLocaleDateString()
+            ? new Date(post.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
             : "—"}
         </p>
         <h1 className="text-2xl font-bold text-quantum-50 mt-1">{post.title}</h1>

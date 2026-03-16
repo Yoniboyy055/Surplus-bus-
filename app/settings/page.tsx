@@ -1,9 +1,7 @@
 
 "use client";
 import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-
 
 const PROVINCES = [
   "Ontario",
@@ -31,6 +29,7 @@ type Preferences = {
   categories: string[];
   email_alerts: boolean;
   inbox_alerts: boolean;
+  marketing_opt_in: boolean;
 };
 
 export default function SettingsPage() {
@@ -44,29 +43,36 @@ export default function SettingsPage() {
     categories: [],
     email_alerts: true,
     inbox_alerts: true,
+    marketing_opt_in: false,
   });
 
   useEffect(() => {
     const supabase = supabaseRef.current;
-    void supabase;
+    if (!supabase) return;
 
-    const fetchProfile = async () => {
-      const res = await fetch("/api/profile");
-      const { preferences: prefs } = await res.json();
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
 
-      setPreferences({
-        digest_frequency:
-          (prefs?.digest_frequency as DigestFrequency) || "daily",
-        provinces: Array.isArray(prefs?.provinces) ? prefs.provinces : [],
-        categories: Array.isArray(prefs?.categories) ? prefs.categories : [],
-        email_alerts: prefs?.email_alerts ?? true,
-        inbox_alerts: prefs?.inbox_alerts ?? true,
-      });
+      const { data: row } = await supabase
+        .from("user_preferences")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
+      if (row) {
+        setPreferences({
+          digest_frequency: (row.digest_frequency as DigestFrequency) || "daily",
+          provinces: Array.isArray(row.provinces) ? row.provinces : [],
+          categories: Array.isArray(row.categories) ? row.categories : [],
+          email_alerts: row.email_alerts ?? true,
+          inbox_alerts: row.inbox_alerts ?? true,
+          marketing_opt_in: row.marketing_opt_in ?? false,
+        });
+      }
       setLoading(false);
     };
-
-    void fetchProfile();
+    void load();
   }, []);
 
   const handleChange = <K extends keyof Preferences>(
@@ -91,39 +97,28 @@ export default function SettingsPage() {
     });
   };
 
-  const handleToggle = (field: "email_alerts" | "inbox_alerts") => {
+  const handleToggle = (field: "email_alerts" | "inbox_alerts" | "marketing_opt_in") => {
     setPreferences((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
   const handleSave = async () => {
     setSaving(true);
-
-    await fetch("/api/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        preferences: {
+    const supabase = supabaseRef.current;
+    if (supabase) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("user_preferences").upsert({
+          user_id: user.id,
           digest_frequency: preferences.digest_frequency,
           provinces: preferences.provinces,
           categories: preferences.categories,
           email_alerts: preferences.email_alerts,
           inbox_alerts: preferences.inbox_alerts,
-        },
-      }),
-    });
-
-    setSaving(false);
-
-    // Show toast if your app injects one globally
-    if (
-      typeof window !== "undefined" &&
-      "toast" in window &&
-      typeof (window as Window & { toast?: (msg: string, opts?: { type?: string }) => void }).toast === "function"
-    ) {
-      (window as Window & {
-        toast?: (msg: string, opts?: { type?: string }) => void;
-      }).toast?.("Preferences saved.", { type: "success" });
+          marketing_opt_in: preferences.marketing_opt_in,
+        }, { onConflict: "user_id" });
+      }
     }
+    setSaving(false);
   };
 
   if (loading) {
@@ -214,6 +209,15 @@ export default function SettingsPage() {
               onChange={() => handleToggle("inbox_alerts")}
             />
             <span>In-app inbox</span>
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={preferences.marketing_opt_in}
+              onChange={() => handleToggle("marketing_opt_in")}
+            />
+            <span>Marketing emails</span>
           </label>
         </div>
       </div>

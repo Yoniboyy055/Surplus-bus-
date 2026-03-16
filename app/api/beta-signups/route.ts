@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
 
 
   if (!resendKey || !emailFrom) {
-    console.warn("[Beta] RESEND_API_KEY or EMAIL_FROM is missing. Cannot send email. Returning ok:true for beta signup.");
-    return NextResponse.json({ ok: true });
+    console.warn("[Beta] Email not configured — signup saved to DB only.");
+    return NextResponse.json({ ok: true, email_sent: false });
   }
 
   let adminSent = false;
