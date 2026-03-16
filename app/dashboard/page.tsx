@@ -3,7 +3,30 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/AppShell";
 import Link from "next/link";
-import { format, differenceInHours } from "date-fns";
+
+function formatRelativeTime(dateStr: string | null): string {
+  if (!dateStr) return "—";
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffMins < 1) return "just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return `${diffDays}d ago`;
+}
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("en-CA", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -34,13 +57,14 @@ export default async function DashboardPage() {
 
   // Greeting
   const firstName = user.email?.split("@")[0]?.split(".")[0]?.replace(/[^a-zA-Z]/g, "");
-  const today = format(new Date(), "EEEE, MMMM d");
+  const today = new Date().toLocaleDateString("en-CA", { weekday: "long", month: "long", day: "numeric" });
 
   // Data status pill
   let dataStatus = "DATA STALE";
   let pillColor = "bg-amber-600";
   if (runs.length > 0 && runs[0].completed_at) {
-    const hoursAgo = differenceInHours(new Date(), new Date(runs[0].completed_at));
+    const diffMs = new Date().getTime() - new Date(runs[0].completed_at).getTime();
+    const hoursAgo = Math.floor(diffMs / 3600000);
     if (hoursAgo <= 2) {
       dataStatus = "DATA FRESH";
       pillColor = "bg-cyan-600";
@@ -119,7 +143,7 @@ export default async function DashboardPage() {
                       <span className={`w-2 h-2 rounded-full ${dotColor}`}></span>
                       <span className="font-medium">{run.agent_name}</span>
                       <span className="text-xs text-quantum-400">{run.items_found} items</span>
-                      <span className="text-xs text-quantum-400">{format(new Date(run.completed_at), "MMM d, h:mm a")}</span>
+                      <span className="text-xs text-quantum-400">{formatDate(run.completed_at)} ({formatRelativeTime(run.completed_at)})</span>
                     </li>
                   );
                 })}
