@@ -253,11 +253,10 @@ function CompsInner() {
 
       {!digestOff && (
         <p className="text-sm text-[var(--sb-muted)]">
-          Soft nudge:{" "}
           <Link href="/search" className="text-[var(--sb-accent)]">
             Add a 2nd saved search
           </Link>{" "}
-          ·{" "}
+          · optional ·{" "}
           <button type="button" className="underline" onClick={() => setDigestOff(true)}>
             Dismiss
           </button>
