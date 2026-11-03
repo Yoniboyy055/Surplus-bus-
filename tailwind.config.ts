@@ -8,81 +8,100 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Premium Dark Palette
-        "quantum": {
-          "950": "#0A0E27",  // Deep navy background
-          "900": "#0F1535",  // Slightly lighter background
-          "800": "#1A1F3A",  // Surface color
-          "700": "#252B47",  // Border/divider
-          "600": "#3A4158",  // Muted text
-          "500": "#6B7280",  // Secondary text
-          "400": "#9CA3AF",  // Tertiary text
-          "300": "#D1D5DB",  // Light text
-          "200": "#E5E7EB",  // Very light text
-          "100": "#F3F4F6",  // Almost white
-          "50":  "#FFFFFF",  // Pure white
+        // Remapped from dark quantum → Clay & Honey so existing utility classes restyle.
+        quantum: {
+          "950": "#F8F0E4",
+          "900": "#EBDDC8",
+          "800": "#FFFCF7",
+          "700": "#E8DCCE",
+          "600": "#847260",
+          "500": "#6A5646",
+          "400": "#6A5646",
+          "300": "#2C2118",
+          "200": "#2C2118",
+          "100": "#2C2118",
+          "50": "#2C2118",
         },
-        // Accent Colors
-        "cyan": {
-          "500": "#00D9FF",  // Primary accent (bright cyan)
-          "400": "#22E3FF",  // Hover state
-          "300": "#67E8F9",  // Light variant
+        cyan: {
+          "500": "#845924",
+          "400": "#AF7327",
+          "300": "#D28D36",
         },
-        "accent": {
-          "primary": "#00D9FF",   // Primary CTA
-          "secondary": "#0EA5E9", // Secondary CTA
-          "success": "#10B981",   // Success state
-          "danger": "#EF4444",    // Error/danger state
-          "warning": "#F59E0B",   // Warning state
-          "info": "#3B82F6",      // Info state
+        clay: {
+          bg: "#F8F0E4",
+          deep: "#EBDDC8",
+          surface: "#FFFCF7",
+          raised: "#FFFFFF",
+          ink: "#2C2118",
+          soft: "#6A5646",
+          muted: "#847260",
+          action: "#845924",
+          "action-hover": "#60411A",
+          accent: "#99503D",
+          ok: "#6C7E57",
+          warn: "#BC8F19",
+          danger: "#A93A2C",
+          tag: "#F3EDE6",
+          line: "rgba(44, 33, 24, 0.10)",
         },
-
+        accent: {
+          primary: "#845924",
+          secondary: "#99503D",
+          success: "#6C7E57",
+          danger: "#A93A2C",
+          warning: "#BC8F19",
+          info: "#5B7AA8",
+        },
       },
       spacing: {
-        "xs": "4px",
-        "sm": "8px",
-        "md": "12px",
-        "lg": "16px",
-        "xl": "24px",
+        xs: "4px",
+        sm: "8px",
+        md: "12px",
+        lg: "16px",
+        xl: "24px",
         "2xl": "32px",
         "3xl": "48px",
         "4xl": "64px",
       },
       borderRadius: {
-        "xs": "4px",
-        "sm": "8px",
-        "md": "12px",
-        "lg": "16px",
-        "xl": "20px",
-        "full": "9999px",
+        xs: "10px",
+        sm: "16px",
+        md: "26px",
+        lg: "26px",
+        xl: "32px",
+        full: "9999px",
       },
       boxShadow: {
-        "inner-subtle": "inset 0 1px 3px rgba(0, 0, 0, 0.1)",
-        "glow-cyan": "0 0 0 2px #00D9FF, 0 0 8px rgba(0, 217, 255, 0.3)",
-        "glow-cyan-lg": "0 0 0 3px #00D9FF, 0 0 16px rgba(0, 217, 255, 0.4)",
-        "card": "0 4px 12px rgba(0, 0, 0, 0.2)",
-        "card-hover": "0 8px 24px rgba(0, 217, 255, 0.1)",
+        "inner-subtle": "inset 0 1px 0 rgba(255, 255, 255, 0.65)",
+        "glow-cyan": "0 0 0 1px rgba(132, 89, 36, 0.25), 0 10px 28px rgba(132, 89, 36, 0.12)",
+        "glow-cyan-lg": "0 0 0 2px rgba(132, 89, 36, 0.3), 0 16px 40px rgba(132, 89, 36, 0.16)",
+        card: "0 10px 26px rgba(44, 33, 24, 0.09)",
+        "card-hover": "0 24px 50px rgba(44, 33, 24, 0.12), 0 6px 16px rgba(44, 33, 24, 0.07)",
+        soft: "0 10px 26px rgba(44, 33, 24, 0.09)",
+        raised: "0 24px 50px rgba(44, 33, 24, 0.12), 0 6px 16px rgba(44, 33, 24, 0.07)",
       },
       fontFamily: {
-        "sans": ["Inter", "system-ui", "sans-serif"],
-        "mono": ["Fira Code", "monospace"],
+        sans: ["Schibsted Grotesk", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Bricolage Grotesque", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       fontSize: {
-        "xs": ["12px", { lineHeight: "16px" }],
-        "sm": ["14px", { lineHeight: "20px" }],
-        "base": ["16px", { lineHeight: "24px" }],
-        "lg": ["18px", { lineHeight: "28px" }],
-        "xl": ["20px", { lineHeight: "28px" }],
-        "2xl": ["24px", { lineHeight: "32px" }],
-        "3xl": ["30px", { lineHeight: "36px" }],
-        "4xl": ["36px", { lineHeight: "44px" }],
-        "5xl": ["48px", { lineHeight: "56px" }],
+        xs: ["12px", { lineHeight: "16px" }],
+        sm: ["14px", { lineHeight: "20px" }],
+        base: ["16px", { lineHeight: "24px" }],
+        lg: ["18px", { lineHeight: "28px" }],
+        xl: ["22px", { lineHeight: "28px" }],
+        "2xl": ["28px", { lineHeight: "34px" }],
+        "3xl": ["36px", { lineHeight: "42px" }],
+        "4xl": ["48px", { lineHeight: "54px" }],
+        "5xl": ["48px", { lineHeight: "54px" }],
       },
       animation: {
-        "fade-in": "fadeIn 0.3s ease-in-out",
-        "slide-up": "slideUp 0.3s ease-out",
-        "slide-down": "slideDown 0.3s ease-out",
+        "fade-in": "fadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1)",
+        "slide-up": "slideUp 0.32s cubic-bezier(0.22, 1, 0.36, 1)",
+        "slide-down": "slideDown 0.32s cubic-bezier(0.22, 1, 0.36, 1)",
         "pulse-subtle": "pulseSubtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "band-settle": "bandSettle 0.8s cubic-bezier(0.22, 1, 0.36, 1) both",
       },
       keyframes: {
         fadeIn: {
@@ -101,11 +120,18 @@ const config: Config = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.8" },
         },
+        bandSettle: {
+          "0%": { transform: "scaleX(0.6)", opacity: "0.4" },
+          "100%": { transform: "scaleX(1)", opacity: "1" },
+        },
       },
       transitionDuration: {
-        "fast": "150ms",
-        "base": "200ms",
-        "slow": "300ms",
+        fast: "150ms",
+        base: "200ms",
+        slow: "320ms",
+      },
+      transitionTimingFunction: {
+        soft: "cubic-bezier(0.22, 1, 0.36, 1)",
       },
     },
   },
