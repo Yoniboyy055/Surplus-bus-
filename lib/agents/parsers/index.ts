@@ -1,8 +1,8 @@
 /**
  * Parser registry.
- * Stub/mock rows deleted. Prohibited scrapes (GovDeals, MA Auctions, IO portal,
- * Ottawa, Hamilton lot scrape) are official-site-only (zero opportunities).
- * Open-data hooks exist but do not ingest until feed direction is approved.
+ * Official-site-only sources emit zero opportunities (no inventing).
+ * Open-data parsers: CanadaBuys CSV (live tenders), GCSurplus sold CSV / NS OGL
+ * (history — terminal; prefer cron → price_history_lots / tender_notices).
  */
 
 export type { ParsedOpportunity, ParserResult, ParserContext } from "./types";

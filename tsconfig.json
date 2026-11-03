@@ -33,7 +33,10 @@
   "exclude": [
     "node_modules",
     "vendor",
-    ".next"
+    ".next",
+    "scripts",
+    "parsers",
+    "stress-test.js"
   ],
   "include": [
     "next-env.d.ts",

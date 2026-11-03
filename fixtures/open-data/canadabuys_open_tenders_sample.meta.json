@@ -1,0 +1,11 @@
+{
+  "retrieved_at": "2026-11-03",
+  "timezone": "America/Toronto",
+  "note": "Small real samples for unit tests. Personal contact fields redacted in GCSurplus fixture.",
+  "source_url": "https://canadabuys.canada.ca/opendata/pub/openTenderNotice-ouvertAvisAppelOffres.csv",
+  "dataset": "https://open.canada.ca/data/en/dataset/6abd20d4-7a1c-4b38-baa2-9525d0bb2fd2",
+  "licence": "Open Government Licence \u2013 Canada",
+  "licence_url": "https://open.canada.ca/en/open-government-licence-canada",
+  "rows": 10,
+  "policy": "CSV only; HTML scrape forbidden (robots Disallow:/)"
+}

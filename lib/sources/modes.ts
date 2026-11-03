@@ -1,7 +1,7 @@
 /**
  * Source honesty modes for Surplus Bus.
- * "official_site_only" replaces the old "sample/mock" label — we do not invent rows.
- * No new lot ingestion until Yonatan decides feed direction (YkData audit).
+ * "official_site_only" = link-out cards; never invent rows.
+ * Open-data feeds: live/partial only when licensed CSV ingest is wired.
  */
 export type SourceMode = "live" | "partial" | "official_site_only" | "hook_pending";
 
@@ -18,20 +18,20 @@ export const SOURCE_REGISTRY: SourceDescriptor[] = [
   {
     parserKey: "gc_buyandsell",
     name: "GC Surplus",
-    mode: "hook_pending",
+    mode: "partial",
     province: "CA",
     officialUrl: "https://gcsurplus.ca",
     honesty:
-      "Live open-listing ingest not built. Hook reserved for Open Government ‘What has Sold’ CSV (OGL–Canada). No mock rows.",
+      "Live open auctions: official site only. Price history from OGL–Canada “What has Sold” CSV (attribution required). No mock rows.",
   },
   {
     parserKey: "canadabuys",
     name: "CanadaBuys",
-    mode: "hook_pending",
+    mode: "live",
     province: "CA",
     officialUrl: "https://canadabuys.canada.ca",
     honesty:
-      "HTML scrape disallowed (robots Disallow:/). Hook reserved for official openTenderNotice CSV under OGL–Canada. No mock rows.",
+      "Open tender notices from official open-data CSV under OGL–Canada. HTML scrape disallowed (robots Disallow:/). Attribution required.",
   },
   {
     parserKey: "ab_surplus",
@@ -39,7 +39,7 @@ export const SOURCE_REGISTRY: SourceDescriptor[] = [
     mode: "official_site_only",
     province: "AB",
     officialUrl: "https://surplus.gov.ab.ca",
-    honesty: "Placeholder parser removed. Browse the official Alberta surplus site until a licensed ingest path is approved.",
+    honesty: "No licensed live-lot feed. Browse the official Alberta surplus site.",
   },
   {
     parserKey: "on_surplus",
@@ -49,7 +49,7 @@ export const SOURCE_REGISTRY: SourceDescriptor[] = [
     officialUrl:
       "https://www.infrastructureontario.ca/en/what-we-do/real-estate-services/ontario-government-surplus-properties/",
     honesty:
-      "Seeded ontario.ca surplus page returns 404. No stable provincial listing page found. Link-out to Infrastructure Ontario program overview. Portal scrape prohibited by OILC disclaimer.",
+      "No stable provincial listing open feed. Link-out to Infrastructure Ontario overview. Portal scrape prohibited by OILC disclaimer.",
   },
   {
     parserKey: "city_toronto_surplus",
@@ -57,7 +57,7 @@ export const SOURCE_REGISTRY: SourceDescriptor[] = [
     mode: "official_site_only",
     province: "ON",
     officialUrl: "https://www.toronto.ca/business-economy/doing-business-with-the-city/surplus-items-auctions/",
-    honesty: "Old seed URL 404. City points to North Toronto Auction — link-out only until ToS cleared.",
+    honesty: "City points to third-party auctions — link-out only until ToS cleared.",
   },
   {
     parserKey: "city_ottawa_surplus",
@@ -73,7 +73,7 @@ export const SOURCE_REGISTRY: SourceDescriptor[] = [
     mode: "official_site_only",
     province: "AB",
     officialUrl: "https://www.calgary.ca/buy-sell/buy-from-city/surplus-auctions.html",
-    honesty: "Points to MA Auctions — no scrape (ToS unclear). Official site only.",
+    honesty: "Points to MA Auctions — no scrape. Official site only.",
   },
   {
     parserKey: "city_edmonton_surplus",
@@ -97,15 +97,16 @@ export const SOURCE_REGISTRY: SourceDescriptor[] = [
     mode: "official_site_only",
     province: "ON",
     officialUrl: "https://www.hamilton.ca/build-invest-grow/buying-selling-city/bids-and-tenders/surplus-items-auction",
-    honesty: "Real lots live on a third-party auction host whose User Agreement bans spiders/data-mining. Official site only.",
+    honesty: "Third-party auction hosts ban spiders/data-mining. Official site only.",
   },
   {
     parserKey: "ns_surplus_open_data",
     name: "Nova Scotia Crown surplus (open data)",
-    mode: "hook_pending",
+    mode: "partial",
     province: "NS",
     officialUrl: "https://data.novascotia.ca/d/f89b-7ujj",
-    honesty: "Hook for NS Open Government Licence CSV/API (historical awards). Not ingested yet.",
+    honesty:
+      "Historical awards under Open Government Licence – Nova Scotia (attribution required). Not a live auction board.",
   },
 ];
 

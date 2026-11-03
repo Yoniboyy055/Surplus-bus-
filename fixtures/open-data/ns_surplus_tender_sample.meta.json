@@ -1,0 +1,10 @@
+{
+  "retrieved_at": "2026-11-03",
+  "timezone": "America/Toronto",
+  "note": "Small real samples for unit tests. Personal contact fields redacted in GCSurplus fixture.",
+  "source_url": "https://data.novascotia.ca/api/views/f89b-7ujj/rows.csv?accessType=DOWNLOAD",
+  "dataset": "https://data.novascotia.ca/Internal-Government-Services/Surplus-Crown-Property-Purchase-and-Removal-Public/f89b-7ujj",
+  "licence": "Open Government Licence \u2013 Nova Scotia",
+  "licence_url": "https://novascotia.ca/opendata/licence.asp",
+  "rows": 15
+}

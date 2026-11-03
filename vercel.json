@@ -3,6 +3,14 @@
     {
       "path": "/api/agents/news",
       "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/cron/opendata-ingest",
+      "schedule": "30 11 * * *"
+    },
+    {
+      "path": "/api/agents/run?parser_key=canadabuys",
+      "schedule": "0 12 * * *"
     }
   ]
 }
