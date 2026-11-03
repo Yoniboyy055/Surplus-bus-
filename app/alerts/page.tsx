@@ -44,8 +44,7 @@ const REGION_OPTIONS = [
 
 const CHANNEL_OPTIONS = [
   { value: "in_app", label: "In-app inbox" },
-  { value: "email", label: "Email digest" },
-  { value: "sms", label: "SMS" },
+  { value: "digest_in_app", label: "Daily digest (in-app)" },
 ];
 
 const EMPTY_FORM: FormState = {
@@ -149,6 +148,10 @@ export default function AlertsPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-quantum-50">Alert Rules</h1>
+      <div className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-200">
+        Delivery: in-app inbox + daily digest (in-app). No email alerts in this phase.
+        We&apos;ll show new matches in your inbox.
+      </div>
           <p className="text-quantum-400 mt-1 text-sm">
             Manage your opportunity alert criteria.
           </p>

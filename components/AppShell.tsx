@@ -17,6 +17,7 @@ import {
   Inbox,
   Bookmark,
   Newspaper,
+  Database,
 } from "lucide-react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -41,6 +42,7 @@ const MAIN_NAV = [
   { name: "Alerts", href: "/alerts", icon: <Bell size={18} /> },
   { name: "Inbox", href: "/inbox", icon: <Inbox size={18} /> },
   { name: "Saved", href: "/saved", icon: <Bookmark size={18} /> },
+  { name: "Sources", href: "/sources", icon: <Database size={18} /> },
   { name: "News", href: "/news", icon: <Newspaper size={18} /> },
 ];
 

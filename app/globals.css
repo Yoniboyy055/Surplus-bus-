@@ -1,13 +1,18 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap');
 @import './animations.css';
+@import './sb-tokens.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Root Styles */
-* {
-  @apply transition-colors duration-200;
+/* Prefer property-specific transitions on interactive elements (YkDesign) */
+a, button, input, select, textarea, [role="button"] {
+  transition: color var(--sb-dur-base) var(--sb-ease-out),
+    background-color var(--sb-dur-base) var(--sb-ease-out),
+    border-color var(--sb-dur-base) var(--sb-ease-out),
+    transform var(--sb-dur-press) var(--sb-ease-out);
 }
 
 html {
