@@ -1,104 +1,93 @@
-
 "use client";
-import PricingCheckoutButton from "./PricingCheckoutButton";
+
+import Link from "next/link";
 
 type Plan = {
-  id: "starter" | "pro";
+  id: "free" | "founder";
   name: string;
   price: string;
-  priceNote: string;
-  tagline: string;
+  priceNote?: string;
   features: string[];
   ctaLabel: string;
+  href: string;
   highlight: boolean;
 };
 
 const plans: Plan[] = [
   {
-    id: "starter",
-    name: "Starter",
-    price: "Free",
-    priceNote: "7-day trial",
-    tagline: "Perfect for evaluating Surplus Bus before you commit.",
-    features: [
-      "50 tracked opportunities / month",
-      "In-app inbox alerts",
-      "30-day analytics history",
-      "Government surplus sources (AB, BC, ON)",
-      "Email support",
-    ],
-    ctaLabel: "Start free trial",
+    id: "free",
+    name: "Free",
+    price: "C$0",
+    features: ["5 searches / day", "Preview guidance band", "1 saved search"],
+    ctaLabel: "Start free",
+    href: "/search",
     highlight: false,
   },
   {
-    id: "pro",
-    name: "Pro",
-    price: "$299",
-    priceNote: "/mo CAD",
-    tagline: "For teams that need comprehensive coverage and ranked in-app alerts.",
+    id: "founder",
+    name: "Founder",
+    price: "C$9",
+    priceNote: "→ C$19/mo",
     features: [
-      "Unlimited tracked opportunities",
-      "In-app inbox alerts (no email alerts yet)",
-      "90-day analytics + CSV exports",
-      "All Canadian government sources",
-      "Priority support + onboarding call",
+      "Unlimited searches",
+      "Full band + comps table",
+      "Unlimited saves · in-app digest",
+      "CSV export",
     ],
-    ctaLabel: "Get started",
+    ctaLabel: "Join waitlist",
+    href: "/landing",
     highlight: true,
   },
 ];
 
 export default function PricingPage() {
   return (
-    <section className="max-w-5xl mx-auto py-16 space-y-12">
+    <section className="mx-auto max-w-5xl space-y-10 px-4 py-12">
       <div className="space-y-3 text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">Pricing</p>
-        <h1 className="text-4xl font-bold text-quantum-50">Simple, transparent plans</h1>
-        <p className="text-quantum-400 max-w-xl mx-auto">
-          Start free. Upgrade when you&apos;re ready. No contracts, no surprises.
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--sb-accent)]">
+          Founder pricing
+        </p>
+        <h1 className="sb-title text-4xl text-[var(--sb-ink)]">Simple plans</h1>
+        <p className="mx-auto max-w-xl text-[var(--sb-ink-soft)]">
+          Live auctions stay on the official site — we link out. No fake scarcity, no contracts.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid gap-4 md:grid-cols-2">
         {plans.map((plan) => (
           <div
             key={plan.id}
-            className={`rounded-xl p-6 flex flex-col border transition ${
-              plan.highlight
-                ? "border-cyan-500/50 bg-cyan-950/20 shadow-lg shadow-cyan-500/10"
-                : "border-quantum-700 bg-quantum-900/60"
-            }`}
+            className={`card flex flex-col ${plan.highlight ? "border-[rgba(132,89,36,0.35)]" : ""}`}
           >
-            {plan.highlight && (
-              <div className="mb-4">
-                <span className="text-[11px] px-2 py-0.5 rounded-full border bg-cyan-500/15 text-cyan-300 border-cyan-500/40 uppercase tracking-wider font-medium">
-                  Most popular
-                </span>
-              </div>
-            )}
-            <h2 className="text-xl font-bold text-quantum-50">{plan.name}</h2>
-            <div className="mt-1 flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-cyan-300">{plan.price}</span>
-              <span className="text-sm text-quantum-400">{plan.priceNote}</span>
+            <h2 className="sb-title text-xl text-[var(--sb-ink)]">{plan.name}</h2>
+            <div className="sb-mono my-2.5 text-[32px] font-bold text-[var(--sb-ink)]">
+              {plan.price}{" "}
+              {plan.priceNote && (
+                <span className="text-sm font-medium text-[var(--sb-muted)]">{plan.priceNote}</span>
+              )}
             </div>
-            <p className="mt-2 text-sm text-quantum-400">{plan.tagline}</p>
-            <ul className="mt-5 space-y-2.5 text-sm text-quantum-200 flex-1">
+            <ul className="mb-5 flex-1 space-y-1.5 text-sm text-[var(--sb-ink-soft)]">
               {plan.features.map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <span className="text-cyan-400 mt-0.5">✓</span>
-                  <span>{f}</span>
+                <li
+                  key={f}
+                  className="relative pl-[18px] before:absolute before:left-0 before:top-2 before:h-2 before:w-2 before:rounded-full before:bg-[var(--sb-ok)]"
+                >
+                  {f}
                 </li>
               ))}
             </ul>
-            <div className="mt-6">
-              <PricingCheckoutButton plan={plan.id} />
-            </div>
+            <Link
+              href={plan.href}
+              className={`btn no-underline ${plan.highlight ? "btn-primary" : "btn-ghost text-[var(--sb-ink)]"}`}
+            >
+              {plan.ctaLabel}
+            </Link>
           </div>
         ))}
       </div>
 
-      <p className="text-center text-xs text-quantum-600">
-        Prices in CAD. Billed monthly. Cancel anytime.
+      <p className="text-center text-xs text-[var(--sb-muted)]">
+        Prices in CAD. Founder rate rises to C$19/mo after the founding window. Cancel anytime.
       </p>
     </section>
   );
