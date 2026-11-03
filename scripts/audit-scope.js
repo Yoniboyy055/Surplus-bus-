@@ -8,13 +8,14 @@ const path = require("path");
 
 const DIRS = ["app", "components", "lib", "middleware.ts"];
 const BAD_TERMS = [
-  "/buyer",
-  "/referrer",
-  "deals",
-  "payouts",
-  "commission",
-  "escrow",
-  "marketplace",
+  { term: "/buyer", literal: true },
+  { term: "/referrer", literal: true },
+  { term: "payouts", literal: false },
+  { term: "commission", literal: false },
+  { term: "escrow", literal: false },
+  { term: "marketplace", literal: false },
+  // "deals" alone (not "GovDeals", "deal_id" in unrelated contexts is fine if word-bound)
+  { term: "deals", literal: false },
 ];
 
 const EXCLUDE = [
@@ -27,6 +28,12 @@ const EXCLUDE = [
 
 let found = [];
 
+function matches(content, rule) {
+  if (rule.literal) return content.includes(rule.term);
+  const re = new RegExp(`(^|[^A-Za-z0-9_])${rule.term}([^A-Za-z0-9_]|$)`, "i");
+  return re.test(content);
+}
+
 function scan(dir) {
   if (!fs.existsSync(dir)) return;
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -37,7 +44,7 @@ function scan(dir) {
     } else if (/\.(tsx?|jsx?|json)$/.test(e.name)) {
       const c = fs.readFileSync(p, "utf8");
       for (const b of BAD_TERMS) {
-        if (c.includes(b)) found.push({ file: p, term: b });
+        if (matches(c, b)) found.push({ file: p, term: b.term });
       }
     }
   }
@@ -50,7 +57,7 @@ for (const d of DIRS) {
   } else {
     const c = fs.readFileSync(d, "utf8");
     for (const b of BAD_TERMS) {
-      if (c.includes(b)) found.push({ file: d, term: b });
+      if (matches(c, b)) found.push({ file: d, term: b.term });
     }
   }
 }

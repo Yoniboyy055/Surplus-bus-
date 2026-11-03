@@ -36,7 +36,7 @@ export type DemoAlertRule = {
 };
 
 export const demoAlertRules: DemoAlertRule[] = [
-  { id: "ar_1", name: "Ontario Industrial Deals", region: "Ontario", minScore: 78, categories: ["industrial", "equipment"], frequency: "instant", active: true, triggeredToday: 3 },
+  { id: "ar_1", name: "Ontario Industrial Listings", region: "Ontario", minScore: 78, categories: ["industrial", "equipment"], frequency: "instant", active: true, triggeredToday: 3 },
   { id: "ar_2", name: "Atlantic Land Assemblies", region: "Atlantic", minScore: 70, categories: ["land", "mixed_use"], frequency: "daily", active: true, triggeredToday: 1 },
   { id: "ar_3", name: "High-Value Western Pipeline", region: "West", minScore: 85, categories: ["commercial", "industrial"], frequency: "weekly", active: true, triggeredToday: 0 },
 ];

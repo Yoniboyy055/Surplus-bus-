@@ -36,12 +36,7 @@ const config: Config = {
           "warning": "#F59E0B",   // Warning state
           "info": "#3B82F6",      // Info state
         },
-        // Role-based colors
-        "role": {
-          "buyer": "#00D9FF",     // Cyan for buyer
-          "referrer": "#FBBF24",  // Amber for referrer
-          "operator": "#EF4444",  // Red for operator
-        },
+
       },
       spacing: {
         "xs": "4px",

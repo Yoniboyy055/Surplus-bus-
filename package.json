@@ -1,7 +1,7 @@
 {
-  "name": "surplus-referral-platform",
+  "name": "surplus-bus",
   "version": "1.0.0",
-  "description": "This repo contains the locked blueprint + governance rules + Supabase SQL for a surplus property sourcing/advisory platform.",
+  "description": "Surplus Bus — Canadian public surplus listings information service (not a broker).",
   "main": "index.js",
   "directories": {
     "doc": "docs"
