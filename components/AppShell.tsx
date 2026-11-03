@@ -2,28 +2,24 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   LogOut,
   Menu,
   X,
-  Rss,
-  Target,
-  Bell,
+  Search,
+  Star,
+  Mail,
   Settings,
   Wrench,
-  Home,
-  Inbox,
-  Bookmark,
-  Newspaper,
-  Database,
-  Eye,
   History,
   FileText,
+  Database,
 } from "lucide-react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
+import { BrandMark } from "./BrandMark";
 import { DataStatusPill } from "./DataStatusPill";
 import type { User } from "@supabase/supabase-js";
 
@@ -38,24 +34,19 @@ interface AppShellProps {
   profile: Profile | null;
 }
 
-const MAIN_NAV = [
-  { name: "Dashboard", href: "/dashboard", icon: <Home size={18} /> },
-  { name: "Feed", href: "/feed", icon: <Rss size={18} /> },
-  { name: "Opportunities", href: "/opportunities", icon: <Target size={18} /> },
-  { name: "Alerts", href: "/alerts", icon: <Bell size={18} /> },
-  { name: "Inbox", href: "/inbox", icon: <Inbox size={18} /> },
-  { name: "Saved", href: "/saved", icon: <Bookmark size={18} /> },
-  { name: "Watchlist", href: "/watchlist", icon: <Eye size={18} /> },
-  { name: "Price history", href: "/price-history", icon: <History size={18} /> },
-  { name: "Tenders", href: "/tenders", icon: <FileText size={18} /> },
-  { name: "Sources", href: "/sources", icon: <Database size={18} /> },
-  { name: "News", href: "/news", icon: <Newspaper size={18} /> },
+const APP_NAV = [
+  { name: "Search", href: "/search", icon: Search },
+  { name: "Watchlist", href: "/watchlist", icon: Star },
+  { name: "Digest", href: "/digest", icon: Mail },
+  { name: "Price history", href: "/price-history", icon: History },
+  { name: "Tenders", href: "/tenders", icon: FileText },
+  { name: "Sources", href: "/sources", icon: Database },
+  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function AppShell({ children, user, profile }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
   const supabase = createClient();
 
   const handleLogout = async () => {
@@ -66,183 +57,190 @@ export function AppShell({ children, user, profile }: AppShellProps) {
   };
 
   const isOperator = profile?.role === "operator";
-  const navItems = [...MAIN_NAV];
+  const navItems = [...APP_NAV];
   if (isOperator) {
-    navItems.splice(navItems.length - 1, 0, { name: "Ops", href: "/ops", icon: <Wrench size={18} /> });
+    navItems.push({ name: "Ops", href: "/ops", icon: Wrench });
   }
 
   const isPublic = !user;
+  const isMarketing =
+    pathname === "/" ||
+    pathname.startsWith("/landing") ||
+    pathname.startsWith("/pricing") ||
+    pathname.startsWith("/product") ||
+    pathname.startsWith("/faq") ||
+    pathname.startsWith("/legal") ||
+    pathname.startsWith("/auth");
+
+  if (isPublic && (isMarketing || pathname.startsWith("/demo"))) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[var(--sb-bg)] text-[var(--sb-ink)]">
+        <header className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 py-[18px] md:px-10">
+          <BrandMark href="/" size="nav" />
+          <nav className="flex items-center gap-4 md:gap-7 text-sm text-[var(--sb-ink-soft)]">
+            <Link href="/product" className="hidden sm:inline hover:text-[var(--sb-ink)]">
+              How it works
+            </Link>
+            <Link href="/pricing" className="hidden sm:inline hover:text-[var(--sb-ink)]">
+              Pricing
+            </Link>
+            <Link href="/sources" className="hidden sm:inline hover:text-[var(--sb-ink)]">
+              Sources
+            </Link>
+            <Link href="/search" className="hidden md:inline hover:text-[var(--sb-ink)]">
+              Search
+            </Link>
+            <Link href="/auth" className="btn btn-ghost !py-2 !px-4 text-sm no-underline text-[var(--sb-ink)]">
+              Sign in
+            </Link>
+          </nav>
+        </header>
+        <main className="flex-1">{children}</main>
+        <footer className="mx-auto w-full max-w-[1100px] border-t border-[var(--sb-line)] px-5 py-6 md:px-10 text-xs text-[var(--sb-muted)] space-y-2">
+          <p>
+            Contains information licensed under the Open Government Licence – Canada. Guidance only —
+            not an appraisal. Surplus Bus by YK+ Systems.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/legal/terms" className="hover:text-[var(--sb-ink)]">
+              Terms
+            </Link>
+            <Link href="/legal/privacy" className="hover:text-[var(--sb-ink)]">
+              Privacy
+            </Link>
+            <Link href="/legal/anti-spam" className="hover:text-[var(--sb-ink)]">
+              Anti-Spam
+            </Link>
+            <Link href="/faq" className="hover:text-[var(--sb-ink)]">
+              FAQ
+            </Link>
+          </div>
+        </footer>
+      </div>
+    );
+  }
 
   if (isPublic) {
     return (
-      <div className="min-h-screen flex flex-col bg-quantum-950 text-quantum-50">
-        <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-8 px-6 py-10">
-          <header className="flex items-center justify-between border-b border-quantum-700 pb-6">
-            <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-quantum-200">
-              <span>
-                Surplus Bus <span className="text-cyan-500">System</span>
-              </span>
-            </div>
-            <nav className="flex gap-6 text-xs font-medium uppercase tracking-wider text-quantum-400">
-              <Link href="/" className="hover:text-quantum-50 transition">
-                Home
-              </Link>
-              <Link href="/landing" className="hover:text-quantum-50 transition">
-                Beta
-              </Link>
-              <Link href="/watchlist" className="hover:text-quantum-50 transition">
-                Watchlist
-              </Link>
-              <Link href="/tenders" className="hover:text-quantum-50 transition">
-                Tenders
-              </Link>
-              <Link href="/price-history" className="hover:text-quantum-50 transition">
-                Prices
-              </Link>
-              <Link href="/pricing" className="hover:text-quantum-50 transition">
-                Pricing
-              </Link>
-              <Link href="/faq" className="hover:text-quantum-50 transition">
-                FAQ
-              </Link>
-              <Link href="/auth" className="hover:text-quantum-50 transition">
-                Login
-              </Link>
-            </nav>
-          </header>
-          <main className="flex flex-1 flex-col gap-6">{children}</main>
-          <footer className="border-t border-quantum-700 pt-6 flex flex-col items-center gap-2 text-[10px] uppercase tracking-widest text-quantum-500">
-            <div className="flex gap-4">
-              <Link href="/legal/terms" className="hover:text-quantum-300 transition">Terms</Link>
-              <Link href="/legal/privacy" className="hover:text-quantum-300 transition">Privacy</Link>
-              <Link href="/legal/anti-spam" className="hover:text-quantum-300 transition">Anti-Spam</Link>
-              <Link href="/faq" className="hover:text-quantum-300 transition">FAQ</Link>
-            </div>
-            <span>&copy; 2026 Surplus Bus. Information service only. Not a broker.</span>
-          </footer>
-        </div>
+      <div className="min-h-screen flex flex-col bg-[var(--sb-bg)] text-[var(--sb-ink)]">
+        <header className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 py-[18px] md:px-10 border-b border-[var(--sb-line)]">
+          <BrandMark href="/" size="nav" />
+          <nav className="flex flex-wrap items-center gap-4 md:gap-6 text-sm text-[var(--sb-ink-soft)]">
+            <Link href="/search" className="hover:text-[var(--sb-ink)]">
+              Search
+            </Link>
+            <Link href="/watchlist" className="hover:text-[var(--sb-ink)]">
+              Watchlist
+            </Link>
+            <Link href="/price-history" className="hover:text-[var(--sb-ink)]">
+              Prices
+            </Link>
+            <Link href="/tenders" className="hover:text-[var(--sb-ink)]">
+              Tenders
+            </Link>
+            <Link href="/pricing" className="hover:text-[var(--sb-ink)]">
+              Pricing
+            </Link>
+            <Link href="/auth" className="btn btn-ghost !py-2 !px-4 text-sm no-underline text-[var(--sb-ink)]">
+              Sign in
+            </Link>
+          </nav>
+        </header>
+        <main className="flex-1">{children}</main>
+        <footer className="mx-auto w-full max-w-[1100px] border-t border-[var(--sb-line)] px-5 py-6 md:px-10 text-xs text-[var(--sb-muted)]">
+          Contains information licensed under the Open Government Licence – Canada. Guidance only — not
+          an appraisal. Surplus Bus by YK+ Systems.
+        </footer>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-quantum-950 text-quantum-50">
+    <div className="min-h-screen flex bg-[var(--sb-bg)] text-[var(--sb-ink)]">
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 bg-[var(--sb-bg-overlay)] z-40 md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-quantum-900 border-r border-quantum-700 transform transition-transform duration-200 ease-in-out
-          md:translate-x-0 md:static md:h-auto md:min-h-screen
+          fixed inset-y-0 left-0 z-50 w-[72px] bg-[var(--sb-bg-deep)] border-r border-[var(--sb-line)]
+          flex flex-col items-center py-5 gap-3 transform transition-transform duration-200
+          md:translate-x-0 md:static md:min-h-screen
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-quantum-700 flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-quantum-200">
-              <span>Surplus Bus <span className="text-cyan-500">Pro</span></span>
-            </Link>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-quantum-400 hover:text-quantum-50"
-              title="Close sidebar"
-              aria-label="Close sidebar"
-            >
-              <X size={24} />
-            </button>
-          </div>
-
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors
-                    ${
-                      isActive
-                        ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
-                        : "text-quantum-400 hover:text-quantum-50 hover:bg-quantum-800"
-                    }
-                  `}
-                >
-                  {item.icon}
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="p-4 border-t border-quantum-700 space-y-2">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors text-quantum-400 hover:text-red-400 hover:bg-quantum-800"
-              title="Sign Out"
-              aria-label="Sign Out"
-            >
-              <LogOut size={18} />
-              <span className="sr-only">Sign Out</span>
-              Logout
-            </button>
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[10px] uppercase tracking-wider text-quantum-600">Environment</span>
-              <Badge variant="default" size="sm" className="text-[10px] py-0 px-2 h-5 bg-quantum-800 text-quantum-300 border border-quantum-700">
-                PRODUCTION
-              </Badge>
-            </div>
-          </div>
-        </div>
+        <BrandMark href="/search" size="side" showWordmark={false} />
+        <button
+          onClick={() => setSidebarOpen(false)}
+          className="md:hidden text-[var(--sb-muted)]"
+          aria-label="Close sidebar"
+        >
+          <X size={20} />
+        </button>
+        <nav className="flex flex-col items-center gap-2 mt-2 flex-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                title={item.name}
+                aria-label={item.name}
+                onClick={() => setSidebarOpen(false)}
+                className={`w-11 h-11 rounded-[14px] grid place-items-center transition-colors ${
+                  isActive
+                    ? "bg-[var(--sb-surface)] text-[var(--sb-action)] shadow-soft"
+                    : "text-[var(--sb-ink-soft)] hover:bg-[var(--sb-surface)]/60"
+                }`}
+              >
+                <Icon size={18} />
+              </Link>
+            );
+          })}
+        </nav>
+        <button
+          onClick={handleLogout}
+          className="w-11 h-11 rounded-[14px] grid place-items-center text-[var(--sb-ink-soft)] hover:text-[var(--sb-danger)]"
+          title="Sign out"
+          aria-label="Sign out"
+        >
+          <LogOut size={18} />
+        </button>
       </aside>
 
-      <div className="flex-1 flex flex-col min-h-screen transition-all duration-200">
-        <header className="sticky top-0 z-30 bg-quantum-950/80 backdrop-blur-sm border-b border-quantum-700 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <div className="flex-1 flex flex-col min-h-screen min-w-0">
+        <header className="sticky top-0 z-30 bg-[var(--sb-bg)]/90 backdrop-blur-sm border-b border-[var(--sb-line)] px-4 md:px-9 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="md:hidden text-quantum-400 hover:text-quantum-50"
-                title="Open sidebar navigation"
+                className="md:hidden text-[var(--sb-ink-soft)]"
+                aria-label="Open sidebar"
               >
                 <Menu size={24} />
               </button>
               <DataStatusPill />
             </div>
-
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
               <div className="hidden md:flex flex-col items-end">
-                <span className="text-sm font-medium text-quantum-200">{user.email}</span>
+                <span className="text-sm font-medium text-[var(--sb-ink)]">{user.email}</span>
                 {profile?.role && (
-                  <span className="text-xs text-quantum-500 capitalize">{profile.role}</span>
+                  <span className="text-xs text-[var(--sb-muted)] capitalize">{profile.role}</span>
                 )}
               </div>
-
               {profile?.role && (
-                <Badge variant="info" size="sm" className="capitalize">
+                <Badge variant="info" size="sm" className="capitalize !py-1 !px-2">
                   {profile.role}
                 </Badge>
               )}
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="!p-2 text-quantum-400 hover:text-red-400"
-                title="Sign Out"
-              >
-                <LogOut size={20} />
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="!p-2" title="Sign out">
+                <LogOut size={18} />
               </Button>
             </div>
           </div>
         </header>
-
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-9">{children}</main>
       </div>
     </div>
   );

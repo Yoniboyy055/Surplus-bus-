@@ -7,7 +7,7 @@ export function DataStatusPill() {
 
   useEffect(() => {
     fetch("/api/status")
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => (r.ok ? r.json() : null))
       .then((d) => d?.dataStatus && setStatus(d.dataStatus))
       .catch(() => {});
   }, []);
@@ -16,8 +16,10 @@ export function DataStatusPill() {
 
   return (
     <span
-      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-        status === "green" ? "bg-accent-success/20 text-accent-success" : "bg-amber-500/20 text-amber-400"
+      className={`chip !py-0.5 !px-2 text-[10px] font-bold uppercase tracking-wider ${
+        status === "green"
+          ? "!bg-[var(--sb-success-bg)] !text-[var(--sb-ok)] !border-[rgba(108,126,87,0.25)]"
+          : "!bg-[var(--sb-warning-bg)] !text-[var(--sb-warn)] !border-[rgba(188,143,25,0.28)]"
       }`}
     >
       Data {status === "green" ? "fresh" : "stale"}

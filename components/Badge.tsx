@@ -14,7 +14,7 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
       error: 'bg-accent-danger/20 text-accent-danger',
       warning: 'bg-accent-warning/20 text-accent-warning',
       info: 'bg-accent-info/20 text-accent-info',
-      default: 'bg-quantum-700 text-quantum-300',
+      default: 'bg-[var(--sb-primary-100)] text-[var(--sb-ink)] border border-[var(--sb-line)]',
     };
 
     const sizeStyles = {
