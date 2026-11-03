@@ -1,0 +1,17 @@
+{
+  "name": "yk-ui-internal",
+  "workId": "YK-OPS-PKG-001",
+  "published": false,
+  "items": [
+    "YKStatusBadge",
+    "YKAlert",
+    "YKLoadingState",
+    "YKEmptyState",
+    "YKErrorState",
+    "YKPermissionDeniedState",
+    "YKMetricCard",
+    "YKApprovalDialog",
+    "YKExecutionLock",
+    "YKCommandCenterShell"
+  ]
+}
