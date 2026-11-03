@@ -85,3 +85,12 @@ Paths: `/api/agents/run?parser_key=<key>`
 | is_active | boolean | If false, agents skip |
 | fetch_interval_minutes | int | Informational only. Scheduling is Vercel cron (daily). |
 | priority | int | Lower = higher priority |
+
+
+## Phase 2 open-data (2026-11-03)
+
+See `docs/SOURCE_POLICY_CHECK.md` for licence/robots/redistribution verdicts.
+
+- Cron: `/api/cron/opendata-ingest` (daily 11:30 UTC)
+- SQL: `supabase/sql/046_open_data_feeds.sql`
+- Public UI: `/watchlist`, `/price-history`, `/tenders`
