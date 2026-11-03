@@ -18,7 +18,7 @@ const PROTECTED_ROUTES = [
 ];
 
 // Public routes – never require auth
-const PUBLIC_ROUTES = ["/", "/landing", "/product", "/pricing", "/faq", "/auth", "/legal", "/demo", "/sources", "/401", "/403"];
+const PUBLIC_ROUTES = ["/", "/landing", "/product", "/pricing", "/faq", "/auth", "/legal", "/demo", "/sources", "/watchlist", "/price-history", "/tenders", "/401", "/403"];
 
 function isProtected(pathname: string): boolean {
   return PROTECTED_ROUTES.some((route) => pathname === route || pathname.startsWith(route + "/"));

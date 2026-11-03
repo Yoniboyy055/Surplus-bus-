@@ -16,8 +16,7 @@ export default function DemoDashboardClient() {
         <h1 className="text-3xl font-bold text-quantum-50">Demo</h1>
         <p className="text-quantum-300 max-w-2xl">
           Surplus Bus ranks public Canadian government surplus listings and links you to the
-          official page. We never bid, broker, or take a cut. Live feed ingest is waiting on a
-          data decision — there are no sample or mock listings here.
+          official page. We never bid, broker, or take a cut. Licensed open-data feeds are wired for tenders and price history. Auction hosts without a reuse licence stay link-out only — no invented listings.
         </p>
         <div className="flex flex-wrap gap-3 pt-2">
           <Link
@@ -71,9 +70,9 @@ export default function DemoDashboardClient() {
         </div>
 
         <div className="rounded-xl border border-quantum-700 bg-quantum-900/60 p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-quantum-100">Open-data hooks (not built)</h2>
+          <h2 className="text-sm font-semibold text-quantum-100">Open-data feeds</h2>
           <p className="text-xs text-quantum-400">
-            Clean hooks only — no ingestion until Yonatan decides the feed direction.
+            CanadaBuys open CSV + GCSurplus/NS sold history under OGL. See Watchlist, Price history, Tenders.
           </p>
           <ul className="space-y-2">
             {hooks.map((s) => (

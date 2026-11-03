@@ -18,6 +18,9 @@ import {
   Bookmark,
   Newspaper,
   Database,
+  Eye,
+  History,
+  FileText,
 } from "lucide-react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
@@ -42,6 +45,9 @@ const MAIN_NAV = [
   { name: "Alerts", href: "/alerts", icon: <Bell size={18} /> },
   { name: "Inbox", href: "/inbox", icon: <Inbox size={18} /> },
   { name: "Saved", href: "/saved", icon: <Bookmark size={18} /> },
+  { name: "Watchlist", href: "/watchlist", icon: <Eye size={18} /> },
+  { name: "Price history", href: "/price-history", icon: <History size={18} /> },
+  { name: "Tenders", href: "/tenders", icon: <FileText size={18} /> },
   { name: "Sources", href: "/sources", icon: <Database size={18} /> },
   { name: "News", href: "/news", icon: <Newspaper size={18} /> },
 ];
@@ -83,6 +89,15 @@ export function AppShell({ children, user, profile }: AppShellProps) {
               </Link>
               <Link href="/landing" className="hover:text-quantum-50 transition">
                 Beta
+              </Link>
+              <Link href="/watchlist" className="hover:text-quantum-50 transition">
+                Watchlist
+              </Link>
+              <Link href="/tenders" className="hover:text-quantum-50 transition">
+                Tenders
+              </Link>
+              <Link href="/price-history" className="hover:text-quantum-50 transition">
+                Prices
               </Link>
               <Link href="/pricing" className="hover:text-quantum-50 transition">
                 Pricing
