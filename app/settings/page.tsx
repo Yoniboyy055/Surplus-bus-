@@ -106,7 +106,7 @@ export default function SettingsPage() {
         const { error: upsertError } = await supabase.from("user_preferences").upsert(
           {
             user_id: user.id,
-            digest_frequency: "daily",
+            digest_frequency: "in_app",
             provinces: preferences.provinces,
             categories: preferences.categories,
             email_alerts: false,

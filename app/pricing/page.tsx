@@ -22,7 +22,7 @@ const plans: Plan[] = [
     tagline: "Perfect for evaluating Surplus Bus before you commit.",
     features: [
       "50 tracked opportunities / month",
-      "Daily alert digest",
+      "In-app inbox alerts",
       "30-day analytics history",
       "Government surplus sources (AB, BC, ON)",
       "Email support",
@@ -35,10 +35,10 @@ const plans: Plan[] = [
     name: "Pro",
     price: "$299",
     priceNote: "/mo CAD",
-    tagline: "For teams that need comprehensive coverage and real-time alerts.",
+    tagline: "For teams that need comprehensive coverage and ranked in-app alerts.",
     features: [
       "Unlimited tracked opportunities",
-      "Real-time alerts (instant push + email)",
+      "In-app inbox alerts (no email alerts yet)",
       "90-day analytics + CSV exports",
       "All Canadian government sources",
       "Priority support + onboarding call",

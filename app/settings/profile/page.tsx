@@ -30,14 +30,14 @@ export default function ProfileSettingsPage() {
       setPrefs(
         data || {
           timezone: "UTC",
-          digest_frequency: "daily",
+          digest_frequency: "in_app",
           provinces: [],
           categories: [],
           min_value: null,
           max_value: null,
           urgency_days: 7,
-          marketing_opt_in: true,
-          news_opt_in: true,
+          marketing_opt_in: false,
+          news_opt_in: false,
         }
       );
       setLoading(false);
@@ -56,14 +56,14 @@ export default function ProfileSettingsPage() {
       {
         profile_id: user.id,
         timezone: prefs.timezone || "UTC",
-        digest_frequency: prefs.digest_frequency || "daily",
+        digest_frequency: prefs.digest_frequency || "in_app",
         provinces: prefs.provinces || [],
         categories: prefs.categories || [],
         min_value: prefs.min_value ? Number(prefs.min_value) : null,
         max_value: prefs.max_value ? Number(prefs.max_value) : null,
         urgency_days: prefs.urgency_days ? Number(prefs.urgency_days) : 7,
-        marketing_opt_in: prefs.marketing_opt_in ?? true,
-        news_opt_in: prefs.news_opt_in ?? true,
+        marketing_opt_in: prefs.marketing_opt_in ?? false,
+        news_opt_in: prefs.news_opt_in ?? false,
         updated_at: new Date().toISOString(),
       },
       { onConflict: "profile_id" }
@@ -95,7 +95,7 @@ export default function ProfileSettingsPage() {
             className="rounded border-quantum-600"
           />
           <label htmlFor="marketing_opt_in" className="text-sm font-medium text-quantum-200">
-            Promos & discounts
+            Product updates about Surplus Bus
           </label>
         </div>
 
@@ -108,21 +108,16 @@ export default function ProfileSettingsPage() {
             className="rounded border-quantum-600"
           />
           <label htmlFor="news_opt_in" className="text-sm font-medium text-quantum-200">
-            News & updates
+            Occasional product news (optional)
           </label>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-quantum-200 mb-2">Digest frequency</label>
-          <select
-            value={prefs?.digest_frequency || "daily"}
-            onChange={(e) => setPrefs((p: any) => ({ ...p, digest_frequency: e.target.value }))}
-            className="w-full px-3 py-2 bg-quantum-800 border border-quantum-700 rounded-lg text-quantum-50"
-          >
-            <option value="realtime">Realtime</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-          </select>
+          <p className="text-sm text-quantum-300 px-3 py-2 bg-quantum-800 border border-quantum-700 rounded-lg">
+            In-app inbox only for now. Email digests are coming later.
+          </p>
+          <input type="hidden" value="in_app" readOnly />
         </div>
 
         <div>
