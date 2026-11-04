@@ -36,22 +36,24 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createClient();
-  if (supabase) {
-    const { error } = await supabase.from("beta_signups").upsert(
-      {
-        email,
-        use_case: use_case ?? null,
-        marketing_consent: true,
-        consent_text: consent_text || CONSENT_FALLBACK,
-        consent_at: new Date().toISOString(),
-      },
-      { onConflict: "email" }
-    );
-    if (error) {
-      // Schema may not yet have consent columns — fall back to email-only upsert
-      console.error("[Beta] Supabase upsert failed:", error.message);
-      await supabase.from("beta_signups").upsert({ email, use_case: use_case ?? null }, { onConflict: "email" });
-    }
+  if (!supabase) {
+    console.error("[Beta] Storage not configured; refusing signup without an auditable consent record.");
+    return NextResponse.json({ error: "Signups are temporarily unavailable. Please try again later." }, { status: 503 });
+  }
+  const { error } = await supabase.from("beta_signups").upsert(
+    {
+      email,
+      use_case: use_case ?? null,
+      marketing_consent: true,
+      consent_text: consent_text || CONSENT_FALLBACK,
+      consent_at: new Date().toISOString(),
+    },
+    { onConflict: "email" }
+  );
+  if (error) {
+    // Fail closed: never store an email without its consent record.
+    console.error("[Beta] Supabase upsert failed:", error.message);
+    return NextResponse.json({ error: "Signups are temporarily unavailable. Please try again later." }, { status: 503 });
   }
 
   const resendKey = process.env.RESEND_API_KEY;
@@ -100,7 +102,7 @@ export async function POST(request: NextRequest) {
           <li>Pricing: https://surplus-bus.vercel.app/pricing</li>
         </ul>
         <p>You won't get match alerts by email in this phase. After you have access, new matches show in your in-app inbox.</p>
-        <p>Didn't sign up? Ignore this email or unsubscribe below.</p>
+        <p>Didn't sign up? Ignore this email and you won't hear from us again. To stop future emails at any time, reply to this email with \"unsubscribe\".</p>
         <p>— Surplus Bus / YK+ Systems</p>
         <hr />
         <p style="font-size:12px;color:#666">YK+ Systems · Ontario, Canada<br/>

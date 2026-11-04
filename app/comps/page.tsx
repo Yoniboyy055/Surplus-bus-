@@ -109,6 +109,9 @@ function CompsInner() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 px-4 py-6 md:px-0">
+      <div className="banner" role="note">
+        Demo only. Every number, band and sold row on this page is made-up example data, not real sold-price guidance. Do not use it to set a bid.
+      </div>
       {isStale && (
         <div className="banner">
           Data pack is older than ~8 months. Treat the band as historical context until the next refresh.
@@ -264,7 +267,7 @@ function CompsInner() {
       )}
 
       {savedToast && (
-        <Toast message="Search saved. You’ll see new sold matches in Digest." type="success" onClose={() => setSavedToast(false)} />
+        <Toast message="Preview only: saved searches aren’t live yet, so nothing was stored." type="success" onClose={() => setSavedToast(false)} />
       )}
     </div>
   );

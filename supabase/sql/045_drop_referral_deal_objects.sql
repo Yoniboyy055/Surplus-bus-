@@ -1,4 +1,5 @@
 -- 045: Drop legacy referral / matching / fee objects.
+-- DO NOT auto-apply. Requires backup + dry-run + Yonatan's explicit approval (PR #28 review).
 -- Product is an information service only (no broker, matching, or success fees).
 -- Never edit applied migrations; this is additive and idempotent where possible.
 -- Safe to run on environments that still have the 001 marketplace schema.
@@ -8,7 +9,7 @@ drop view if exists public.v_deal_payout_summary cascade;
 
 -- Dependent tables (order matters)
 drop table if exists public.payouts cascade;
-drop table if exists public.audit_logs cascade;
+-- audit_logs intentionally NOT dropped (retention / shared audit data; needs owner decision).
 drop table if exists public.messages cascade;
 drop table if exists public.offers cascade;
 drop table if exists public.deals cascade;

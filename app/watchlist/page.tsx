@@ -29,7 +29,7 @@ export default function WatchlistPage() {
       </div>
 
       <div className="banner ok">
-        Digest is On · in-app only · fires when genuinely new sold data matches
+        Digest preview · not live yet · will be in-app only once saved searches are wired
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
