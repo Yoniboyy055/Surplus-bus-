@@ -147,8 +147,13 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
           ) : homo.reason === "mixed_kinds" ? (
             <div className="space-y-2 text-sm text-[var(--sb-ink-soft)]" data-testid="narrow-note">
               <p>
-                These matches mix different kinds of items
-                {homo.dominant ? `: only ${Math.round(homo.share * 100)}% look like ${KIND_LABEL[homo.dominant].toLowerCase()}` : ""}. One
+                These matches mix different kinds of items:{" "}
+                {(Object.entries(homo.kinds) as [keyof typeof KIND_LABEL, number][])
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 3)
+                  .map(([k, v]) => `${Math.round((v / homo.n) * 100)}% ${KIND_LABEL[k].toLowerCase()}`)
+                  .join(", ")}
+                . One
                 price range would mislead, so narrow the search first.
               </p>
               {homo.dominant && !params.kind && (

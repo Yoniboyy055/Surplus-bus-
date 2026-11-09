@@ -188,12 +188,13 @@ function orderClause(o: string | null): string {
 
 function toJsonRows(r: { rows: any[]; fields: { name: string; dataTypeID: number }[] }) {
   const numeric = new Set(r.fields.filter((f) => [1700, 20, 700, 701].includes(f.dataTypeID)).map((f) => f.name));
+  const dateCols = new Set(r.fields.filter((f) => f.dataTypeID === 1082).map((f) => f.name)); // date -> YYYY-MM-DD like PostgREST
   return r.rows.map((row) => {
     const o: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(row)) {
       if (typeof v === "bigint") o[k] = Number(v);
       else if (numeric.has(k) && v != null) o[k] = Number(v);
-      else if (v instanceof Date) o[k] = v.toISOString();
+      else if (v instanceof Date) o[k] = dateCols.has(k) ? v.toISOString().slice(0, 10) : v.toISOString();
       else o[k] = v;
     }
     return o;

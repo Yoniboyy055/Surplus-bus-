@@ -53,7 +53,7 @@ test.describe("Search relevance (/comps)", () => {
       await expect(page.locator("[data-range]")).toHaveAttribute("data-range", "mixed_kinds");
       await expect(page.getByText("Typical sold range")).toHaveCount(0);
     }
-    await page.getByRole("link", { name: /Show only everything else/ }).click();
+    await page.getByRole("link", { name: /Show only other items/ }).click();
     await expect(page.locator("[data-range]")).toHaveAttribute("data-range", "shown");
     await shot(page, "31_comps_laptop_narrowed");
   });

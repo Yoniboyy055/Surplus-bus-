@@ -45,7 +45,7 @@ export const PART_WORDS = [
   "seats", "headlight", "headlights", "battery", "batteries", "liner", "console", "consoles", "grille",
   "fender", "charger", "chargers", "adapter", "adapters", "bag", "bags", "sleeve", "sleeves", "dock", "docking station",
   "cable", "cables", "mount", "case", "cases", "storage box", "tool box", "toolbox", "truck box", "cylinder", "decal",
-  "decals", "manual", "manuals", "model kit", "replica", "scrap", "engine", "transmission", "lift truck", "truck lift", "hydraulic lift", "lift kit", "kit", "cart", "drawer", "lock", "suitcase", "knapsack", "briefcase", "holster", "strap",
+  "decals", "manual", "manuals", "model kit", "replica", "scrap", "engine", "transmission", "lift truck", "truck lift", "hydraulic lift", "lift kit", "kit", "cart", "drawer", "lock", "tailgate", "seating", "cargo storage", "cargo compartment", "cargo box", "cargo boxes", "pump", "suitcase", "knapsack", "briefcase", "holster", "strap",
 ];
 
 const YEAR = "^(19|20)[0-9]{2}[ ]+";
@@ -65,7 +65,7 @@ export const KIND_LABEL: Record<LotKind, string> = {
   equipment: "Tractors & heavy equipment",
   trailer: "Trailers",
   part: "Parts, accessories & for-parts lots",
-  other: "Everything else",
+  other: "Other items",
 };
 export const FILTERABLE_KINDS: LotKind[] = ["vehicle", "powersport", "equipment", "trailer", "part", "other"];
 
