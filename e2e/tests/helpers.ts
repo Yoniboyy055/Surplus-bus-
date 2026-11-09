@@ -32,7 +32,8 @@ export async function noHorizontalOverflow(page: Page) {
 }
 
 export async function axeSeriousOrCritical(page: Page) {
-  const res = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+  // Cast: @axe-core/playwright bundles its own playwright-core types.
+  const res = await new AxeBuilder({ page: page as any }).withTags(["wcag2a", "wcag2aa"]).analyze();
   test.info().annotations.push({
     type: "axe",
     description: JSON.stringify(res.violations.map((v) => ({ id: v.id, impact: v.impact, nodes: v.nodes.map((n) => n.target.join(" ")).slice(0, 5) }))),

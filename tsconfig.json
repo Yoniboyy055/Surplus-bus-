@@ -35,6 +35,7 @@
     "vendor",
     ".next",
     "scripts",
+    "e2e",
     "parsers",
     "stress-test.js"
   ],
