@@ -116,29 +116,7 @@ export function AppShell({ children, user, profile }: AppShellProps) {
   if (isPublic) {
     return (
       <div className="min-h-screen flex flex-col bg-[var(--sb-bg)] text-[var(--sb-ink)]">
-        <header className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 py-[18px] md:px-10 border-b border-[var(--sb-line)]">
-          <BrandMark href="/" size="nav" />
-          <nav className="flex flex-wrap items-center gap-4 md:gap-6 text-sm text-[var(--sb-ink-soft)]">
-            <Link href="/search" className="hover:text-[var(--sb-ink)]">
-              Search
-            </Link>
-            <Link href="/watchlist" className="hover:text-[var(--sb-ink)]">
-              Watchlist
-            </Link>
-            <Link href="/price-history" className="hover:text-[var(--sb-ink)]">
-              Prices
-            </Link>
-            <Link href="/tenders" className="hover:text-[var(--sb-ink)]">
-              Tenders
-            </Link>
-            <Link href="/pricing" className="hover:text-[var(--sb-ink)]">
-              Pricing
-            </Link>
-            <Link href="/auth" className="btn btn-ghost !py-2 !px-4 text-sm no-underline text-[var(--sb-ink)]">
-              Sign in
-            </Link>
-          </nav>
-        </header>
+        <PublicHeader pathname={pathname} />
         <main className="flex-1">{children}</main>
         <footer className="mx-auto w-full max-w-[1100px] border-t border-[var(--sb-line)] px-5 py-6 md:px-10 text-xs text-[var(--sb-muted)] space-y-2">
           <p>
@@ -243,5 +221,73 @@ export function AppShell({ children, user, profile }: AppShellProps) {
         <main className="flex-1 p-4 md:p-9">{children}</main>
       </div>
     </div>
+  );
+}
+
+const PUBLIC_LINKS = [
+  { href: "/search", label: "Search" },
+  { href: "/price-history", label: "Prices" },
+  { href: "/tenders", label: "Tenders" },
+  { href: "/watchlist", label: "Watchlist" },
+  { href: "/pricing", label: "Pricing" },
+];
+
+/**
+ * Signed-out header for app pages. Desktop: inline links. Mobile (< md): one row with the mark,
+ * a direct Search button (the most used action) and a Menu button that opens a soft raised sheet.
+ */
+function PublicHeader({ pathname }: { pathname: string }) {
+  const [open, setOpen] = useState(false);
+  React.useEffect(() => setOpen(false), [pathname]);
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+  const active = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  return (
+    <header className="relative border-b border-[var(--sb-line)]" data-testid="public-header">
+      <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 px-4 py-3 md:px-10 md:py-[18px]">
+        <BrandMark href="/" size="nav" className="whitespace-nowrap" />
+        <nav aria-label="Main" className="hidden items-center gap-6 text-sm text-[var(--sb-ink-soft)] md:flex">
+          {PUBLIC_LINKS.map((l) => (
+            <Link key={l.href} href={l.href} aria-current={active(l.href) ? "page" : undefined} className="hover:text-[var(--sb-ink)] aria-[current=page]:font-semibold aria-[current=page]:text-[var(--sb-ink)]">
+              {l.label}
+            </Link>
+          ))}
+          <Link href="/auth" className="btn btn-ghost !py-2 !px-4 text-sm no-underline text-[var(--sb-ink)]">
+            Sign in
+          </Link>
+        </nav>
+        <div className="flex items-center gap-2 md:hidden">
+          <Link href="/search" aria-label="Search" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--sb-line)] bg-[var(--sb-surface)] text-[var(--sb-ink)] shadow-[var(--sb-shadow-soft)] no-underline">
+            <Search className="h-5 w-5" aria-hidden />
+          </Link>
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls="public-menu"
+            onClick={() => setOpen((v) => !v)}
+            className="inline-flex h-11 items-center gap-1.5 rounded-full border border-[var(--sb-line)] bg-[var(--sb-surface)] px-4 text-sm font-semibold text-[var(--sb-ink)] shadow-[var(--sb-shadow-soft)]"
+          >
+            {open ? <X className="h-4 w-4" aria-hidden /> : <Menu className="h-4 w-4" aria-hidden />}
+            Menu
+          </button>
+        </div>
+      </div>
+      {open && (
+        <nav id="public-menu" aria-label="Main" className="absolute inset-x-3 top-full z-40 mt-2 rounded-[22px] border border-[var(--sb-line)] bg-[var(--sb-surface)] p-2 shadow-raised md:hidden">
+          {PUBLIC_LINKS.map((l) => (
+            <Link key={l.href} href={l.href} onClick={() => setOpen(false)} aria-current={active(l.href) ? "page" : undefined} className="flex min-h-[48px] items-center rounded-[14px] px-4 text-[15px] text-[var(--sb-ink)] no-underline hover:bg-[var(--sb-bg)] aria-[current=page]:font-semibold">
+              {l.label}
+            </Link>
+          ))}
+          <Link href="/auth" onClick={() => setOpen(false)} className="btn btn-primary mt-1 flex w-full justify-center no-underline">
+            Sign in
+          </Link>
+        </nav>
+      )}
+    </header>
   );
 }
