@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 import { sendEmail } from "@/lib/email/resend";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 
@@ -35,7 +35,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const supabase = createClient();
+  // Server-only write: beta_signups has RLS on and no client grants (migrations 051 + 054).
+  let supabase: ReturnType<typeof createServiceRoleClient> | null = null;
+  try {
+    supabase = createServiceRoleClient();
+  } catch {
+    supabase = null;
+  }
   if (!supabase) {
     console.error("[Beta] Storage not configured; refusing signup without an auditable consent record.");
     return NextResponse.json({ error: "Signups are temporarily unavailable. Please try again later." }, { status: 503 });
