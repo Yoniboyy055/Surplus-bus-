@@ -1,3 +1,4 @@
+import { isAuthorizedCron } from "@/lib/security/cronAuth";
 import { NextRequest, NextResponse } from "next/server";
 import { executeAgentRun, AgentRunError } from "@/lib/agents/runAgentRunner";
 import { logApiStart, logApiEnd } from "@/lib/observability";
@@ -22,10 +23,7 @@ import { logApiStart, logApiEnd } from "@/lib/observability";
  * This must be run to populate opportunities and clear the DATA STALE state.
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  console.log('[agents/run] CRON_SECRET defined:', !!process.env.CRON_SECRET);
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!isAuthorizedCron(request)) {
     return new Response('Unauthorized', { status: 401 });
   }
 

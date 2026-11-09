@@ -1,3 +1,4 @@
+import { isAuthorizedCron } from "@/lib/security/cronAuth";
 import { NextRequest, NextResponse } from "next/server";
 import { ingestOpenDataFeeds } from "@/lib/opendata/ingest";
 import { logApiStart, logApiEnd } from "@/lib/observability";
@@ -9,9 +10,7 @@ import { logApiStart, logApiEnd } from "@/lib/observability";
  * Never scrapes HTML (CanadaBuys robots Disallow:/).
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!isAuthorizedCron(request)) {
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -23,7 +22,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ok: !results.some((r) => r.status === "error"),
       results,
-      note: "Apply supabase/sql/046_open_data_feeds.sql before production upserts. Attribution required in UI.",
+      note: "Requires migration 20261109150100_052_open_data_feeds. Attribution required in UI.",
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
