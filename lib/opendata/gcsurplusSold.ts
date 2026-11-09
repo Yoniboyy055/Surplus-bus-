@@ -1,3 +1,4 @@
+import { redactContactDetails } from "./redact";
 import { createHash } from "crypto";
 import { parseCsv, moneyToNumber, provinceCode } from "./csv";
 import { OGL_CANADA } from "./attribution";
@@ -65,7 +66,7 @@ export function parseGcSurplusSoldCsv(csvText: string): GcSurplusSoldRow[] {
   type Pending = { row: GcSurplusSoldRow; contract: string | null; saleKey: string };
   const pending: Pending[] = [];
   for (const row of rows) {
-    const desc = collapseDoubledText((row.LOT_DESC || "").trim());
+    const desc = redactContactDetails(collapseDoubledText((row.LOT_DESC || "").trim())) || "";
     const sold = moneyToNumber(row.SOLD_AMT);
     const closing = (row.CLOSING_DT || "").trim() || null;
     const city = (row.ASSET_LOC_CITY || "").trim() || null;

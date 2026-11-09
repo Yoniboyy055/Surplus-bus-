@@ -1,3 +1,4 @@
+import { redactContactDetails } from "./redact";
 import { createHash } from "crypto";
 import type { ParsedOpportunity } from "@/lib/agents/parsers/types";
 import { parseCsv, provinceCode } from "./csv";
@@ -59,7 +60,7 @@ export function parseCanadaBuysOpenTendersCsv(csvText: string): CanadaBuysTender
     const pub = (row["publicationDate-datePublication"] || "").trim() || null;
     const entity = (row["contractingEntityName-nomEntitContractante-eng"] || "").trim() || null;
     const prov = provinceCode(row["contractingEntityAddressProvince-entiteContractanteAdresseProvince-eng"]);
-    const desc = (row["tenderDescription-descriptionAppelOffres-eng"] || "").replace(/\s+/g, " ").trim();
+    const desc = redactContactDetails(row["tenderDescription-descriptionAppelOffres-eng"] || "") || "";
     const procurement = (row["procurementCategory-categorieApprovisionnement"] || "").trim() || null;
     const noticeType = (row["noticeType-avisType-eng"] || "").trim() || null;
     const regions = (row["regionsOfDelivery-regionsLivraison-eng"] || "").trim() || null;

@@ -10,6 +10,7 @@ import { parseNsPublicTenderCsv, parseNsRealPropertyCsv } from "../lib/opendata/
 import { scoreOpportunityV2 } from "../lib/intelligence/scoring";
 import { ingestOpenDataFeeds, gcSurplusRowCap, dedupeByExternalId } from "../lib/opendata/ingest";
 import { extractFirstCsvFromZip } from "../lib/opendata/zip";
+import { redactContactDetails } from "../lib/opendata/redact";
 import { zipSync, strToU8 } from "fflate";
 
 const root = path.join(process.cwd(), "fixtures", "open-data");
@@ -214,6 +215,12 @@ async function main() {
       assert(!emailRe.test(v), `email in value: ${v.slice(0, 60)}`);
       assert(!phoneRe.test(v), `phone in value: ${v.slice(0, 60)}`);
     }
+  });
+
+  await test("redactContactDetails strips emails, phones and labelled names", () => {
+    const out = redactContactDetails("Contracting Authority: Jane Q Public Email address: &nbsp;jane.public@tpsgc-pwgsc.gc.ca Telephone No. - (647) 273-1369 ext 22. Bid by Friday.")!;
+    assert(!/@|273-1369|Jane/.test(out), `not redacted: ${out}`);
+    assert(out.includes("Bid by Friday."), "keeps the rest");
   });
 
   await test("dedupeByExternalId collapses in-batch duplicates (no upsert self-conflict)", () => {

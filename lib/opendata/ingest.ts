@@ -65,6 +65,17 @@ export function dedupeByExternalId<T extends { external_id: string; feed_key?: s
   return Array.from(m.values());
 }
 
+/**
+ * A feed that parses to zero rows is an upstream outage or format change, not
+ * an empty dataset. Fail the run so it is recorded as an error and the UI
+ * shows the data as failing/stale instead of "refreshed".
+ */
+function assertParsedRows(feed: string, n: number): void {
+  if (n === 0) {
+    throw new Error(`${feed}: parsed 0 rows (upstream outage or format change); existing rows kept`);
+  }
+}
+
 function hasServiceRole(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
@@ -151,6 +162,7 @@ export async function ingestOpenDataFeeds(opts?: {
           opts?.fixtures?.gcsurplusSoldCsv ??
           (await fetchGcSurplusCsvText()).text;
         const parsed = parseGcSurplusSoldCsv(text);
+        assertParsedRows("gcsurplus_sold", parsed.length);
         const cap = gcSurplusRowCap();
         const rows = cap != null ? parsed.slice(0, cap) : parsed;
         const dropped = parsed.length - rows.length;
@@ -241,6 +253,7 @@ export async function ingestOpenDataFeeds(opts?: {
           opts?.fixtures?.canadabuysCsv ??
           (await fetchText(source_url)).text;
         const rows = parseCanadaBuysOpenTendersCsv(text);
+        assertParsedRows("canadabuys", rows.length);
         let upserted = 0;
         if (!dryRun && supabase) {
           const payload = dedupeByExternalId(rows.map((r) => {
@@ -343,6 +356,7 @@ export async function ingestOpenDataFeeds(opts?: {
           ...parseNsPublicTenderCsv(tenderText),
           ...parseNsRealPropertyCsv(realText),
         ];
+        assertParsedRows("ns_surplus", rows.length);
         let upserted = 0;
         if (!dryRun && supabase) {
           const payload = dedupeByExternalId(rows.map((r) => ({

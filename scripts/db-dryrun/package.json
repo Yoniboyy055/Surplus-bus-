@@ -6,7 +6,11 @@
   "scripts": {
     "before": "node live_exploits.mjs",
     "after": "node live_exploits.mjs ../../supabase/migrations/20261109150000_051_security_hardening.sql ../../supabase/migrations/20261109150100_052_open_data_feeds.sql ../../supabase/migrations/20261109150200_053_saved_searches_inbox.sql",
-    "idempotency": "node live_exploits.mjs ../../supabase/migrations/20261109150000_051_security_hardening.sql ../../supabase/migrations/20261109150100_052_open_data_feeds.sql ../../supabase/migrations/20261109150200_053_saved_searches_inbox.sql ../../supabase/migrations/20261109150000_051_security_hardening.sql ../../supabase/migrations/20261109150100_052_open_data_feeds.sql ../../supabase/migrations/20261109150200_053_saved_searches_inbox.sql"
+    "idempotency": "node live_exploits.mjs ../../supabase/migrations/20261109150000_051_security_hardening.sql ../../supabase/migrations/20261109150100_052_open_data_feeds.sql ../../supabase/migrations/20261109150200_053_saved_searches_inbox.sql ../../supabase/migrations/20261109150000_051_security_hardening.sql ../../supabase/migrations/20261109150100_052_open_data_feeds.sql ../../supabase/migrations/20261109150200_053_saved_searches_inbox.sql",
+    "ingest:e2e": "cd ../.. && npx tsx scripts/db-dryrun/e2e-ingest.ts",
+    "ingest:e2e:live": "cd ../.. && npx tsx scripts/db-dryrun/e2e-ingest.ts --live"
   },
-  "dependencies": { "@electric-sql/pglite": "^0.5.15" }
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.15"
+  }
 }
