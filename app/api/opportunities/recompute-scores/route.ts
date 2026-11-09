@@ -11,7 +11,13 @@ export async function POST() {
     .select("id,category,province,estimated_value,closing_date,source_url,first_seen_at,status,created_at")
     .neq("status", "closed");
 
-  if (oppError) return NextResponse.json({ error: oppError.message }, { status: 400 });
+  if (oppError) {
+
+    console.error("[opportunities/recompute-scores]", oppError.message);
+
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
+
+  }
   if (!opportunities?.length) {
     return NextResponse.json({ ok: true, processed: 0 });
   }
@@ -72,7 +78,13 @@ export async function POST() {
     .from("opportunity_features")
     .upsert(finalRows, { onConflict: "opportunity_id", ignoreDuplicates: false });
 
-  if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 400 });
+  if (upsertError) {
+
+    console.error("[opportunities/recompute-scores]", upsertError.message);
+
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
+
+  }
 
   return NextResponse.json({ ok: true, processed: finalRows.length, score_version: 2 });
 }

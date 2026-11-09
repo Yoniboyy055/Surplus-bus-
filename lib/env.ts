@@ -33,15 +33,8 @@ if (!parsed.success) {
   console.error("❌ Invalid environment variables:", parsed.error.flatten().fieldErrors);
 }
 
-// Supabase auth check: only depends on the two Supabase vars, not the full schema.
-// This prevents unrelated env issues (e.g. missing RESEND_API_KEY) from disabling login.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-export const isSupabaseConfigured =
-  typeof supabaseUrl === "string" &&
-  supabaseUrl.startsWith("http") &&
-  typeof supabaseKey === "string" &&
-  supabaseKey.length > 0;
+// Supabase auth check: only depends on the two public Supabase vars (shared with the browser-safe module).
+export { isSupabaseConfigured } from "./env.public";
 
 // Production (Vercel): require SUPABASE_SERVICE_ROLE_KEY at boot
 if (

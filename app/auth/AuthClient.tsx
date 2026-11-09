@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { isSupabaseConfigured } from "@/lib/env";
+import { isSupabaseConfigured } from "@/lib/env.public";
 import { sanitizeRedirectPath } from "@/lib/auth/sanitizeRedirect";
 import { createClient } from "@/lib/supabase/client";
 

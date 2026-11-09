@@ -16,7 +16,7 @@
     "validate:source-records": "npx tsx scripts/validate-source-records-upsert.ts",
     "test:opendata": "npx tsx scripts/test-opendata-parsers.ts",
     "typecheck": "tsc --noEmit --incremental false",
-    "test:security": "npx tsx scripts/test-rate-limit.ts",
+    "test:security": "npx tsx scripts/test-rate-limit.ts && npx tsx scripts/test-input-hardening.ts",
     "check:crons": "node scripts/check-crons.mjs",
     "test:analytics": "npx tsx scripts/test-analytics.ts",
     "test": "npm run test:opendata && npm run test:security && npm run test:analytics && npm run check:crons"

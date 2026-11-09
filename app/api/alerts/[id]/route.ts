@@ -1,3 +1,4 @@
+import { alertRulePatch, readJson } from "@/lib/account/legacyAlertSchemas";
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
 
@@ -9,8 +10,11 @@ export async function PATCH(
   if (error || !supabase || !user) return error!;
 
   const { id } = await params;
-  const body = await request.json();
-  const { category, min_price, max_price, region, channel, is_active } = body;
+  const parsed = alertRulePatch.safeParse(await readJson(request));
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+  }
+  const { category, min_price, max_price, region, channel, is_active } = parsed.data;
 
   const updates: Record<string, unknown> = {};
   if (category !== undefined) updates.category = category;
@@ -28,7 +32,13 @@ export async function PATCH(
     .select("*")
     .single();
 
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 400 });
+  if (updateError) {
+
+    console.error("[alerts/[id]]", updateError.message);
+
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
+
+  }
   return NextResponse.json({ alert: data });
 }
 
@@ -47,6 +57,12 @@ export async function DELETE(
     .eq("id", id)
     .eq("profile_id", user.id);
 
-  if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 400 });
+  if (deleteError) {
+
+    console.error("[alerts/[id]]", deleteError.message);
+
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
+
+  }
   return new NextResponse(null, { status: 204 });
 }

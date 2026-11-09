@@ -37,8 +37,9 @@ export async function GET(request: NextRequest) {
   if (province) query = query.eq("province", province);
   if (category) query = query.eq("category", category);
   if (q?.trim()) {
-    const term = q.trim();
-    query = query.or(`title.ilike.%${term}%,description.ilike.%${term}%`);
+    // Strip PostgREST filter syntax (commas, parens, quotes, wildcards) so `q` can't add clauses.
+    const term = q.trim().replace(/[,()"'\\*%_:.]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+    if (term) query = query.or(`title.ilike."%${term}%",description.ilike."%${term}%"`);
   }
 
   const validSort = ["created_at", "closing_date", "estimated_value", "updated_at"].includes(sort)
@@ -53,7 +54,8 @@ export async function GET(request: NextRequest) {
   logApiEnd("/api/opportunities", requestId, start, fetchError ? 400 : 200);
 
   if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 400 });
+    console.error("[opportunities]", fetchError.message);
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
   }
 
   const items = data || [];

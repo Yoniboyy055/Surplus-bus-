@@ -8,7 +8,7 @@ type Profile = {
 };
 
 export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
-  console.log(`[ensureProfile] user.id=${user.id} user.email=${user.email}`);
+  
 
   const { data: existing, error: selectError } = await userClient
     .from("profiles")
@@ -22,7 +22,7 @@ export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
 
   if (existing) {
     if (isOwnerEmail(user.email) && existing.role !== "operator") {
-      console.log(`ensureProfile: Upgrading ${user.email} to operator`);
+      console.log("ensureProfile: owner account upgraded to operator");
       const adminClient = getAdminClient();
       const { data: updated, error: updateError } = await adminClient
         .from("profiles")

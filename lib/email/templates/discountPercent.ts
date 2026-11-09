@@ -1,5 +1,17 @@
+import { siteUrl } from "@/lib/email/unsubscribe";
+
 function esc(s: string) {
-  return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+}
+
+/** Only https links go into the button; anything else falls back to the site root. */
+export function safeHttpsUrl(u: string | null | undefined, fallback: string): string {
+  try {
+    const url = new URL(String(u || ""));
+    return url.protocol === "https:" ? url.toString() : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 export function renderDiscountEmail(input: {
@@ -21,7 +33,7 @@ export function renderDiscountEmail(input: {
     <h1 style="margin:0 0 8px">Save ${percent}% on Pro</h1>
     <p style="margin:0 0 16px;color:#444">Use code <b>${esc(input.code)}</b>. ${exp}</p>
 
-    <a href="${esc(input.cta_url)}"
+    <a href="${esc(safeHttpsUrl(input.cta_url, siteUrl() + "/"))}"
        style="display:inline-block;padding:12px 18px;border-radius:10px;text-decoration:none;background:#111;color:#fff">
       Unlock Pro
     </a>

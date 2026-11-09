@@ -38,7 +38,8 @@ export async function GET(req: NextRequest) {
     .eq('phase_current', 'A_recon');
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to fetch sources', details: error.message }, { status: 500 });
+    console.error('[agents/recon] fetch sources failed:', error.message);
+    return NextResponse.json({ error: 'Failed to fetch sources' }, { status: 500 });
   }
 
   const results: Record<string, { reconUrl: string | null; outcome: string; notes: string }> = {};

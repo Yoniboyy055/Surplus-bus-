@@ -57,7 +57,10 @@ export async function POST(req: NextRequest) {
     .select("id")
     .single();
 
-  if (cErr || !campaign) return json(500, { error: "campaign_create_failed", details: cErr?.message });
+  if (cErr || !campaign) {
+    console.error("[discount/send] campaign create failed:", cErr?.message);
+    return json(500, { error: "campaign_create_failed" });
+  }
 
   // Recipients: marketing_opt_in=true with a recorded express consent (CASL), email and unsub_token.
   // Legacy opt-ins without marketing_consent_at (pre-053) are not mailed.
@@ -67,7 +70,10 @@ export async function POST(req: NextRequest) {
     .eq("marketing_opt_in", true)
     .not("marketing_consent_at", "is", null);
 
-  if (rErr) return json(500, { error: "recipient_query_failed", details: rErr.message });
+  if (rErr) {
+    console.error("[discount/send] recipient query failed:", rErr.message);
+    return json(500, { error: "recipient_query_failed" });
+  }
 
   const profileIds = (prefRows || []).filter((r) => r.unsub_token).map((r) => r.profile_id);
   if (profileIds.length === 0) {

@@ -32,7 +32,13 @@ export async function GET(request: Request) {
     .neq("status", "closed")
     .limit(500);
 
-  if (listError) return NextResponse.json({ error: listError.message }, { status: 400 });
+  if (listError) {
+
+    console.error("[opportunities/ranked]", listError.message);
+
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
+
+  }
 
   const prefs = {
     provinces: preferences?.provinces || [],
