@@ -36,7 +36,8 @@ CREATE TABLE IF NOT EXISTS public.price_history_lots (
   kind TEXT,
   fiscal_year TEXT,
   file_number TEXT,
-  awarded_to TEXT,
+  -- No awarded_to / paid_party: NS awardee and payer names can be personal
+  -- information (outside OGL–NS); dropped at parse time (PR #28 review).
   source_url TEXT NOT NULL,
   licence_id TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'sold',

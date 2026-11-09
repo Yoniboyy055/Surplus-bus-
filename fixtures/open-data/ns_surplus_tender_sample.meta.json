@@ -4,7 +4,8 @@
   "note": "Small real samples for unit tests. Personal contact fields redacted in GCSurplus fixture.",
   "source_url": "https://data.novascotia.ca/api/views/f89b-7ujj/rows.csv?accessType=DOWNLOAD",
   "dataset": "https://data.novascotia.ca/Internal-Government-Services/Surplus-Crown-Property-Purchase-and-Removal-Public/f89b-7ujj",
-  "licence": "Open Government Licence \u2013 Nova Scotia",
+  "licence": "Open Government Licence – Nova Scotia",
   "licence_url": "https://novascotia.ca/opendata/licence.asp",
-  "rows": 15
+  "rows": 15,
+  "personal_data": "Awardee and payer columns redacted to [REDACTED] on 2026-11-09 (PR #28 review); parser drops them regardless."
 }

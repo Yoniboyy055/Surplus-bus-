@@ -8,7 +8,9 @@ import { parseGcSurplusSoldCsv } from "../lib/opendata/gcsurplusSold";
 import { parseCanadaBuysOpenTendersCsv } from "../lib/opendata/canadabuys";
 import { parseNsPublicTenderCsv, parseNsRealPropertyCsv } from "../lib/opendata/nsSurplus";
 import { scoreOpportunityV2 } from "../lib/intelligence/scoring";
-import { ingestOpenDataFeeds } from "../lib/opendata/ingest";
+import { ingestOpenDataFeeds, gcSurplusRowCap } from "../lib/opendata/ingest";
+import { extractFirstCsvFromZip } from "../lib/opendata/zip";
+import { zipSync, strToU8 } from "fflate";
 
 const root = path.join(process.cwd(), "fixtures", "open-data");
 
@@ -82,6 +84,87 @@ async function main() {
     assert(r.length >= 3, "real rows");
     assert(t.every((x) => x.licence_id === "ogl-nova-scotia"), "ns licence");
     assert(r.every((x) => x.kind === "real_property"), "kind");
+  });
+
+  await test("NS rows never carry awardee / payer fields (personal data)", () => {
+    const t = parseNsPublicTenderCsv(load("ns_surplus_tender_sample.csv"));
+    const r = parseNsRealPropertyCsv(load("ns_surplus_real_property_sample.csv"));
+    for (const row of [...t, ...r]) {
+      const keys = Object.keys(row);
+      assert(!keys.includes("awarded_to"), "awarded_to must not exist");
+      assert(!keys.includes("paid_party"), "paid_party must not exist");
+      assert(!JSON.stringify(row).includes("[REDACTED]"), "no source personal column leaks");
+    }
+    // Synthetic row with a person's name in the personal columns: must not appear anywhere.
+    const csv =
+      "Fiscal Year,File #,Location,Description,Successful Contractor,Paid By,Contract Price\n" +
+      "2020-2021,X1,SYDNEY,Sale & Removal,\"Jane Testperson, 1 Main St, Sydney, NS\",Jane Testperson,100.00\n";
+    const [one] = parseNsPublicTenderCsv(csv);
+    assert(one, "parsed synthetic row");
+    assert(!JSON.stringify(one).includes("Testperson"), "name dropped at parse time");
+  });
+
+  await test("NS external_ids are unique within fixtures", () => {
+    const all = [
+      ...parseNsPublicTenderCsv(load("ns_surplus_tender_sample.csv")),
+      ...parseNsRealPropertyCsv(load("ns_surplus_real_property_sample.csv")),
+    ];
+    const ids = new Set(all.map((x) => x.external_id));
+    assert(ids.size === all.length, `duplicate ids: ${all.length - ids.size}`);
+  });
+
+  await test("ZIP extraction is pure JS (fflate) and returns the CSV", () => {
+    const csv = load("gcsurplus_sold_sample.csv");
+    const zip = zipSync({
+      "readme.txt": strToU8("not a csv"),
+      "gcsurplus-sample-eng.csv": strToU8("\ufeff" + csv),
+    });
+    const out = extractFirstCsvFromZip(zip);
+    assert(out.name === "gcsurplus-sample-eng.csv", `picked ${out.name}`);
+    assert(out.text === csv, "BOM stripped and content intact");
+    assert(parseGcSurplusSoldCsv(out.text).length >= 5, "parses after unzip");
+    let threw = false;
+    try {
+      extractFirstCsvFromZip(zipSync({ "a.txt": strToU8("x") }));
+    } catch {
+      threw = true;
+    }
+    assert(threw, "throws when ZIP has no CSV");
+  });
+
+  await test("ingest source has no OS unzip / child_process", () => {
+    const src = readFileSync(path.join(process.cwd(), "lib", "opendata", "ingest.ts"), "utf8");
+    assert(!src.includes("child_process"), "no child_process");
+    assert(!/execFile|\"unzip\"/.test(src), "no unzip shell-out");
+    assert(!src.includes("slice(0, 5000)"), "no silent 5000 cap");
+  });
+
+  await test("GCSurplus row cap is explicit, opt-in and reported", async () => {
+    const prev = process.env.OPENDATA_GCSURPLUS_MAX_ROWS;
+    try {
+      delete process.env.OPENDATA_GCSURPLUS_MAX_ROWS;
+      assert(gcSurplusRowCap() === null, "no cap by default");
+      const all = parseGcSurplusSoldCsv(load("gcsurplus_sold_sample.csv")).length;
+      const [noCap] = await ingestOpenDataFeeds({
+        dryRun: true,
+        feeds: ["gcsurplus_sold"],
+        fixtures: { gcsurplusSoldCsv: load("gcsurplus_sold_sample.csv") },
+      });
+      assert(noCap && noCap.rows_parsed === all && noCap.row_cap === undefined, "uncapped");
+      process.env.OPENDATA_GCSURPLUS_MAX_ROWS = "2";
+      const [capped] = await ingestOpenDataFeeds({
+        dryRun: true,
+        feeds: ["gcsurplus_sold"],
+        fixtures: { gcsurplusSoldCsv: load("gcsurplus_sold_sample.csv") },
+      });
+      assert(capped && capped.row_cap === 2, "cap reported");
+      assert(capped.rows_dropped_by_cap === all - 2, "dropped count reported");
+      process.env.OPENDATA_GCSURPLUS_MAX_ROWS = "abc";
+      assert(gcSurplusRowCap() === null, "invalid cap ignored");
+    } finally {
+      if (prev === undefined) delete process.env.OPENDATA_GCSURPLUS_MAX_ROWS;
+      else process.env.OPENDATA_GCSURPLUS_MAX_ROWS = prev;
+    }
   });
 
   await test("ingest dry-run with fixtures (no service role)", async () => {

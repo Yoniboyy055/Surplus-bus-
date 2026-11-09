@@ -36,7 +36,7 @@ export async function parseNsOpenDataHook(_ctx: ParserContext): Promise<ParserRe
         province: "NS",
         category: r.kind,
         title: r.title,
-        description: r.awarded_to ? `Awarded: ${r.awarded_to}` : null,
+        description: null, // awardee / payer names are not stored (possible personal data)
         estimated_value: r.contract_price,
         closing_date: null,
         issuing_entity: "Government of Nova Scotia",
