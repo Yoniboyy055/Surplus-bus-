@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
 import { savedSearchCreate } from "@/lib/alerts/schemas";
 import { checkRateLimit } from "@/lib/security/rateLimit";
+import { getUserLimits } from "@/lib/billing/entitlements";
 
 const COLS = "id,name,query,scope,province,min_price,max_price,alert_frequency,alert_email,last_checked_at,last_alerted_at,created_at";
 
@@ -20,6 +21,14 @@ export async function POST(request: NextRequest) {
   if (error || !supabase || !user) return error!;
   const parsed = savedSearchCreate.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid saved search." }, { status: 400 });
+  const limits = await getUserLimits(supabase, user.id);
+  const { count } = await supabase.from("saved_searches").select("id", { count: "exact", head: true }).eq("profile_id", user.id);
+  if ((count ?? 0) >= limits.savedSearches) {
+    return NextResponse.json(
+      { error: "plan_limit", message: `Your plan includes ${limits.savedSearches} saved search${limits.savedSearches === 1 ? "" : "es"}. Upgrade to Pro for up to 25.` },
+      { status: 402 }
+    );
+  }
   const { data, error: e } = await supabase
     .from("saved_searches")
     .insert({ ...parsed.data, profile_id: user.id })

@@ -184,3 +184,15 @@ export async function fetchFeedStatus(
   }
   return { state: "ok", feeds: out };
 }
+
+/** Real corpus counts for the homepage; null when unavailable (never a made-up number). */
+export async function fetchCorpusStats(): Promise<{ sold: number; tenders: number } | null> {
+  const db = await reader();
+  if (!db) return null;
+  const [a, b] = await Promise.all([
+    db.from("price_history_lots").select("id", { count: "exact", head: true }).gt("sold_amount", 0),
+    db.from("tender_notices").select("id", { count: "exact", head: true }).eq("status", "open"),
+  ]);
+  if (a.error || b.error || a.count == null || b.count == null) return null;
+  return { sold: a.count, tenders: b.count };
+}

@@ -19,7 +19,7 @@ export function SaveSearchButton({ q, province, scope = "sold" }: { q: string; p
       if (res.status === 401) return setState("signin");
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setMsg(body?.error || "Couldn't save. Try again.");
+        setMsg(body?.message || "Couldn't save. Try again.");
         return setState("error");
       }
       setState("saved");

@@ -1,25 +1,17 @@
-"use client";
-
 import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { PlanCards } from "@/components/PlanCards";
+import { fetchCorpusStats } from "@/lib/opendata/queries";
+import { PAID_PLAN_IDS, PLANS, stripePriceId } from "@/lib/billing/plans";
+import { stripeConfigured } from "@/lib/billing/stripe";
 
-const STATS = [
-  { label: "sold lots indexed", value: "84,995" },
-  { label: "vehicle lots", value: "5,988" },
-  { label: "electronics lots", value: "2,852" },
-];
+export const dynamic = "force-dynamic";
 
-export default function HomePage() {
-  const router = useRouter();
-  const [q, setQ] = useState("");
 
-  function onSearch(e: FormEvent) {
-    e.preventDefault();
-    const query = q.trim();
-    router.push(query ? `/comps?q=${encodeURIComponent(query)}` : "/search");
-  }
+
+export default async function HomePage() {
+  // Real counts from the database only; hidden when unavailable (no hard-coded stats).
+  const stats = await fetchCorpusStats();
+  const checkoutEnabled = stripeConfigured() && PAID_PLAN_IDS.every((id) => Boolean(stripePriceId(PLANS[id])));
 
   return (
     <>
@@ -48,12 +40,14 @@ export default function HomePage() {
         </p>
 
         <form
-          onSubmit={onSearch}
+          action="/comps"
+          method="get"
+          role="search"
           className="mx-auto mt-7 flex max-w-[640px] items-center gap-2.5 rounded-full border border-[var(--sb-line)] bg-[var(--sb-surface-raised)] py-2 pl-[22px] pr-2 shadow-raised"
         >
           <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+            name="q"
+            required
             placeholder='Try “pickup truck” or “office chair”'
             aria-label="Search sold surplus"
             className="min-w-0 flex-1 border-0 bg-transparent px-0 py-3 text-base text-[var(--sb-ink)] shadow-none focus:ring-0"
@@ -64,58 +58,26 @@ export default function HomePage() {
         </form>
 
         <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-          {STATS.map((s) => (
-            <span key={s.label} className="chip">
-              <strong>{s.value}</strong> {s.label}
-            </span>
-          ))}
+          {stats && (
+            <>
+              <span className="chip" data-stat="sold">
+                <strong>{stats.sold.toLocaleString("en-CA")}</strong>&nbsp;sold lots indexed
+              </span>
+              <span className="chip" data-stat="tenders">
+                <strong>{stats.tenders.toLocaleString("en-CA")}</strong>&nbsp;open tenders
+              </span>
+            </>
+          )}
           <span className="chip">OGL–Canada</span>
         </div>
       </section>
 
       <section className="mx-auto max-w-[1100px] px-5 pb-16 md:px-10">
-        <h2 className="sb-title text-[28px] text-[var(--sb-ink)]">Founder pricing</h2>
+        <h2 className="sb-title text-[28px] text-[var(--sb-ink)]">Pricing</h2>
         <p className="mb-6 text-[var(--sb-ink-soft)]">
           Simple plans. Live auctions stay on the official site — we link out.
         </p>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="card">
-            <h3 className="sb-title text-xl">Free</h3>
-            <div className="sb-mono my-2.5 text-[32px] font-bold text-[var(--sb-ink)]">C$0</div>
-            <ul className="mb-5 space-y-1.5 text-sm text-[var(--sb-ink-soft)]">
-              {["5 searches / day", "Preview guidance band", "1 saved search"].map((f) => (
-                <li key={f} className="relative pl-[18px] before:absolute before:left-0 before:top-2 before:h-2 before:w-2 before:rounded-full before:bg-[var(--sb-ok)]">
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link href="/search" className="btn btn-ghost no-underline text-[var(--sb-ink)]">
-              Start free
-            </Link>
-          </div>
-          <div className="card border-[rgba(132,89,36,0.35)]">
-            <h3 className="sb-title text-xl">Founder</h3>
-            <div className="sb-mono my-2.5 text-[32px] font-bold text-[var(--sb-ink)]">
-              C$9{" "}
-              <span className="text-sm font-medium text-[var(--sb-muted)]">→ C$19/mo</span>
-            </div>
-            <ul className="mb-5 space-y-1.5 text-sm text-[var(--sb-ink-soft)]">
-              {[
-                "Unlimited searches",
-                "Full band + comps table",
-                "Unlimited saves · in-app digest",
-                "CSV export",
-              ].map((f) => (
-                <li key={f} className="relative pl-[18px] before:absolute before:left-0 before:top-2 before:h-2 before:w-2 before:rounded-full before:bg-[var(--sb-ok)]">
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link href="/landing" className="btn btn-primary no-underline">
-              Join waitlist
-            </Link>
-          </div>
-        </div>
+        <PlanCards checkoutEnabled={checkoutEnabled} />
       </section>
     </>
   );

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/requireUser";
 import { savedSearchPatch } from "@/lib/alerts/schemas";
+import { getUserLimits } from "@/lib/billing/entitlements";
 
 const COLS = "id,name,query,scope,province,min_price,max_price,alert_frequency,alert_email,last_checked_at,last_alerted_at,created_at";
 const uuid = z.string().uuid();
@@ -14,6 +15,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (!parsed.success) return NextResponse.json({ error: "Invalid update." }, { status: 400 });
 
   if (parsed.data.alert_email === true) {
+    const limits = await getUserLimits(supabase, user.id);
+    if (!limits.emailAlerts) {
+      return NextResponse.json({ error: "plan_limit", message: "Email alerts are part of Pro. In-app alerts are free." }, { status: 402 });
+    }
     // CASL: email alerts need a recorded, express consent first.
     const { data: pref } = await supabase
       .from("user_preferences")
