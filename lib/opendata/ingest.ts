@@ -93,12 +93,24 @@ async function fetchText(url: string): Promise<{ text: string; finalUrl: string 
   return { text: await res.text(), finalUrl: res.url };
 }
 
+/** GCSurplus publishes "What has sold" as half-year ZIPs (Jan–Jun, Jul–Dec). */
+export function gcSurplusZipCandidates(now: Date, halves = 4): string[] {
+  const base = "https://donnees-data.tpsgc-pwgsc.gc.ca/bi1/gcsurplus/gcsurplus-";
+  const out: string[] = [];
+  let y = now.getUTCFullYear();
+  let h = now.getUTCMonth() < 6 ? 1 : 2;
+  for (let i = 0; i < halves; i++) {
+    out.push(h === 1 ? `${base}${y}-01-01--${y}-06-30-eng.zip` : `${base}${y}-07-01--${y}-12-31-eng.zip`);
+    if (h === 1) { h = 2; y -= 1; } else { h = 1; }
+  }
+  if (!out.includes(OPEN_DATA_URLS.gcsurplusSoldLatestEngZip)) out.push(OPEN_DATA_URLS.gcsurplusSoldLatestEngZip);
+  return out;
+}
+
 async function fetchGcSurplusCsvText(): Promise<{ text: string; sourceUrl: string }> {
   // Prefer latest ENG zip; fall back to previous half-year if needed.
-  const candidates = [
-    OPEN_DATA_URLS.gcsurplusSoldLatestEngZip,
-    "https://donnees-data.tpsgc-pwgsc.gc.ca/bi1/gcsurplus/gcsurplus-2025-01-01--2025-06-30-eng.zip",
-  ];
+  // Newest half-year first, so a newly published file is picked up automatically.
+  const candidates = gcSurplusZipCandidates(new Date());
   let lastErr: Error | null = null;
   for (const url of candidates) {
     try {
