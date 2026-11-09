@@ -120,7 +120,7 @@ export default async function TendersPage({
       <footer className="space-y-1">
         <LicenceAttribution licence={OGL_CANADA} />
         <p className="text-xs text-[var(--sb-ink-soft)]">
-          Contracting officers' names, emails and phone numbers are removed; find them on the official notice.
+          Contracting officers’ names, emails and phone numbers are removed; find them on the official notice.
         </p>
       </footer>
     </div>

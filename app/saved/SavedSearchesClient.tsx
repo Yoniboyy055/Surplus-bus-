@@ -106,7 +106,7 @@ export function SavedSearchesClient({
         </button>
         {rows.length >= limit && (
           <p className="w-full text-sm text-[var(--sb-ink-soft)]">
-            You've used all {limit} saved search{limit === 1 ? "" : "es"} on your plan. <Link href="/pricing" className="underline">See Pro</Link>
+            You’ve used all {limit} saved search{limit === 1 ? "" : "es"} on your plan. <Link href="/pricing" className="underline">See Pro</Link>
           </p>
         )}
       </form>

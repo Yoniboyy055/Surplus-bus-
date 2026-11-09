@@ -34,7 +34,7 @@ export default async function SavedPage() {
       </header>
       {error ? (
         <div className="banner danger" role="alert">
-          We couldn't load your saved searches. Please refresh. If it keeps happening, the feature may still be being set up.
+          We couldn’t load your saved searches. Please refresh. If it keeps happening, the feature may still be being set up.
         </div>
       ) : (
         <SavedSearchesClient

@@ -23,7 +23,7 @@ export default async function InboxPage() {
         </p>
       </header>
       {error ? (
-        <div className="banner danger" role="alert">We couldn't load your inbox. Please refresh.</div>
+        <div className="banner danger" role="alert">We couldn’t load your inbox. Please refresh.</div>
       ) : (
         <InboxClient initial={(data || []) as InboxItem[]} />
       )}

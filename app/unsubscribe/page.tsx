@@ -12,9 +12,9 @@ export default function UnsubscribePage({ searchParams }: { searchParams: { toke
   if (searchParams.done) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="sb-title mb-2 text-[26px]">You're unsubscribed</h1>
+        <h1 className="sb-title mb-2 text-[26px]">You’re unsubscribed</h1>
         <p className="text-sm text-[var(--sb-ink-soft)]">
-          We won't send you {LABEL[kind]} any more. It takes effect immediately. You can turn emails back on in Settings.
+          We won’t send you {LABEL[kind]} any more. It takes effect immediately. You can turn emails back on in Settings.
         </p>
       </div>
     );
@@ -24,7 +24,7 @@ export default function UnsubscribePage({ searchParams }: { searchParams: { toke
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="sb-title mb-2 text-[26px]">Unsubscribe link incomplete</h1>
         <p className="text-sm text-[var(--sb-ink-soft)]">
-          Use the link in the email, reply "unsubscribe" to any email, or change email settings after signing in.
+          Use the link in the email, reply “unsubscribe” to any email, or change email settings after signing in.
         </p>
       </div>
     );
