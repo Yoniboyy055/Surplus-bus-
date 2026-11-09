@@ -11,6 +11,8 @@ import { scoreOpportunityV2 } from "../lib/intelligence/scoring";
 import { ingestOpenDataFeeds, gcSurplusRowCap, dedupeByExternalId } from "../lib/opendata/ingest";
 import { extractFirstCsvFromZip } from "../lib/opendata/zip";
 import { redactContactDetails } from "../lib/opendata/redact";
+import { computeCompStats, toIlikePattern } from "../lib/opendata/comps";
+import { computeFeedFreshness } from "../lib/opendata/freshness";
 import { zipSync, strToU8 } from "fflate";
 
 const root = path.join(process.cwd(), "fixtures", "open-data");
@@ -221,6 +223,26 @@ async function main() {
     const out = redactContactDetails("Contracting Authority: Jane Q Public Email address: &nbsp;jane.public@tpsgc-pwgsc.gc.ca Telephone No. - (647) 273-1369 ext 22. Bid by Friday.")!;
     assert(!/@|273-1369|Jane/.test(out), `not redacted: ${out}`);
     assert(out.includes("Bid by Friday."), "keeps the rest");
+  });
+
+  await test("comp stats: ignore non-positive, band only at n>=20, percentiles", () => {
+    assert(computeCompStats([]) === null, "empty -> null");
+    assert(computeCompStats([0, -5, null, NaN]) === null, "invalid -> null");
+    const few = computeCompStats([100, 200, 300])!;
+    assert(few.n === 3 && few.median === 200 && few.showBand === false, "few");
+    const many = computeCompStats(Array.from({ length: 21 }, (_, i) => (i + 1) * 100))!;
+    assert(many.showBand && many.p25 === 600 && many.median === 1100 && many.p75 === 1600, JSON.stringify(many));
+    assert(toIlikePattern("50% off (truck)*,") === "%50 off truck%", toIlikePattern("50% off (truck)*,"));
+  });
+
+  await test("freshness: never / fresh / stale / failing", () => {
+    const now = new Date("2026-11-09T12:00:00Z");
+    assert(computeFeedFreshness([], "canadabuys", now).state === "never", "never");
+    const ok = [{ feed_key: "canadabuys", status: "ok", retrieved_at: "2026-11-09T06:00:00Z" }];
+    assert(computeFeedFreshness(ok, "canadabuys", now).state === "fresh", "fresh");
+    assert(computeFeedFreshness(ok, "canadabuys", new Date("2026-11-13T12:00:00Z")).state === "stale", "stale");
+    const failing = [...ok, { feed_key: "canadabuys", status: "error", retrieved_at: "2026-11-09T10:00:00Z" }];
+    assert(computeFeedFreshness(failing, "canadabuys", now).state === "failing", "failing");
   });
 
   await test("dedupeByExternalId collapses in-batch duplicates (no upsert self-conflict)", () => {

@@ -1,104 +1,128 @@
-import { readFileSync, existsSync } from "fs";
-import path from "path";
-import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { LicenceAttribution } from "@/components/LicenceAttribution";
+import { DataStateNotice, FeedFreshnessChip } from "@/components/DataStateNotice";
 import { OGL_CANADA } from "@/lib/opendata/attribution";
-import { parseCanadaBuysOpenTendersCsv } from "@/lib/opendata/canadabuys";
-import { scoreOpportunityV2 } from "@/lib/intelligence/scoring";
-import { ScoreBreakdown } from "@/components/ScoreBreakdown";
-import { SourceStatusBadge } from "@/components/SourceStatusBadge";
+import { fetchFeedStatus, fetchTenders, cleanProvince } from "@/lib/opendata/queries";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "CanadaBuys tenders — Surplus Bus",
   description: "Open federal tender notices from the CanadaBuys open-data CSV (OGL–Canada).",
 };
 
-function loadFixture(name: string): string | null {
-  const p = path.join(process.cwd(), "fixtures", "open-data", name);
-  if (!existsSync(p)) return null;
-  return readFileSync(p, "utf8");
+const PAGE = 20;
+
+function fmtDate(d: string | null) {
+  if (!d) return "—";
+  const t = Date.parse(d);
+  return Number.isNaN(t) ? d : new Date(t).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" });
 }
 
-export default function TendersPage() {
-  const csv = loadFixture("canadabuys_open_tenders_sample.csv");
-  const all = csv ? parseCanadaBuysOpenTendersCsv(csv) : [];
-  const open = all.filter((r) => r.status === "open");
+export default async function TendersPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; province?: string; page?: string };
+}) {
+  const q = (searchParams.q || "").slice(0, 80);
+  const province = cleanProvince(searchParams.province);
+  const page = Math.max(1, Number.parseInt(searchParams.page || "1", 10) || 1);
+  const [res, status] = await Promise.all([
+    fetchTenders({ q, province, limit: PAGE, offset: (page - 1) * PAGE }),
+    fetchFeedStatus(["canadabuys"]),
+  ]);
+  const qs = (p: number) => {
+    const u = new URLSearchParams();
+    if (q) u.set("q", q);
+    if (province) u.set("province", province);
+    u.set("page", String(p));
+    return `/tenders?${u.toString()}`;
+  };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-4 py-10">
-      <div className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--sb-accent)]">
-          CanadaBuys tenders
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-0">
+      <header className="space-y-2">
+        <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--sb-accent-700)]">CanadaBuys tenders</p>
+        <h1 className="sb-title text-[28px] text-[var(--sb-ink)]">Open federal tender notices</h1>
+        <p className="max-w-2xl text-sm text-[var(--sb-ink-soft)]">
+          From the official CanadaBuys open-data CSV only. Closed notices are not shown. Always confirm details on the
+          official notice before acting.
         </p>
-        <h1 className="text-3xl font-bold text-[var(--sb-text)] tracking-tight">
-          Open federal tender notices
-        </h1>
-        <p className="max-w-2xl text-sm text-[var(--sb-text-secondary)]">
-          Sourced only from the official CanadaBuys open-data CSV. We do not scrape the CanadaBuys
-          HTML UI (robots Disallow:/). Closed notices are filtered from ranking.
-        </p>
-        <LicenceAttribution licence={OGL_CANADA} />
-        <p className="text-xs text-[var(--sb-text-muted)]">
-          Showing in-repo fixture sample (real CSV rows). Full refresh via daily cron after SQL
-          migration 046 + service role key.
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        {open.map((t) => {
-          const scored = scoreOpportunityV2({
-            id: t.external_id,
-            category: t.category,
-            province: t.province,
-            estimated_value: t.estimated_value,
-            closing_date: t.closing_date,
-            source_url: t.source_url,
-            first_seen_at: t.publication_date,
-            status: t.status,
-          });
-          return (
-            <article
-              key={t.external_id}
-              className="rounded-xl border border-[var(--sb-border)] bg-[var(--sb-surface)] p-5 space-y-3"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <SourceStatusBadge level="live" />
-                <span className="text-xs text-[var(--sb-text-muted)]">{t.province}</span>
-                {t.category && (
-                  <span className="text-xs text-[var(--sb-text-muted)]">· {t.category}</span>
-                )}
-              </div>
-              <h2 className="text-lg font-semibold text-[var(--sb-text)]">{t.title}</h2>
-              {t.issuing_entity && (
-                <p className="text-sm text-[var(--sb-text-secondary)]">{t.issuing_entity}</p>
-              )}
-              {!scored.excluded && (
-                <ScoreBreakdown
-                  score={scored.score}
-                  status="open"
-                  parts={scored.parts}
-                  reasons={scored.reasons}
-                  variant="compact"
-                />
-              )}
-              <a
-                href={t.source_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--sb-accent)] hover:underline"
-              >
-                View official listing <ExternalLink size={14} />
-              </a>
-              <p className="text-xs text-[var(--sb-text-muted)]">Opens the source site. Not ours.</p>
-            </article>
-          );
-        })}
-        {!open.length && (
-          <div className="rounded-xl border border-[var(--sb-border)] p-10 text-center text-[var(--sb-text-muted)]">
-            No open tenders in the fixture sample.
+        {status.state === "ok" && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            <FeedFreshnessChip label="CanadaBuys" status={status.feeds.canadabuys} />
           </div>
         )}
-      </div>
+      </header>
+
+      <form className="flex flex-wrap items-end gap-3" action="/tenders" method="get" role="search">
+        <label className="flex min-w-[220px] flex-1 flex-col text-sm text-[var(--sb-ink-soft)]">
+          Search titles
+          <input name="q" defaultValue={q} placeholder="vehicles, IT, furniture…" className="mt-1" />
+        </label>
+        <label className="flex flex-col text-sm text-[var(--sb-ink-soft)]">
+          Province
+          <select name="province" defaultValue={province || ""} className="mt-1">
+            <option value="">All</option>
+            {["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"].map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" className="btn btn-primary">Search</button>
+      </form>
+
+      {res.state !== "ok" ? (
+        <DataStateNotice state={res.state} what="Tender notices" />
+      ) : res.rows.length === 0 ? (
+        <div className="card text-center" data-state="empty">
+          <h2 className="sb-title text-xl">{q || province ? "No open tenders match" : "No tender notices loaded yet"}</h2>
+          <p className="mt-1 text-sm text-[var(--sb-ink-soft)]">
+            {q || province ? "Try a broader word or another province." : "The first CanadaBuys ingest hasn't run yet."}
+          </p>
+        </div>
+      ) : (
+        <section className="space-y-4" aria-label="Open tenders">
+          <p className="text-sm text-[var(--sb-ink-soft)]" data-total={res.total}>
+            {res.total.toLocaleString("en-CA")} open notices{q ? ` matching “${q}”` : ""}
+          </p>
+          {res.rows.map((t) => (
+            <article key={t.id} className="card space-y-2">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--sb-ink-soft)]">
+                {t.province && <span className="chip !py-0.5">{t.province}</span>}
+                {t.notice_type && <span>{t.notice_type}</span>}
+                {t.reference_number && <span className="sb-mono">{t.reference_number}</span>}
+              </div>
+              <h2 className="sb-title text-lg text-[var(--sb-ink)]">{t.title}</h2>
+              {t.issuing_entity && <p className="text-sm text-[var(--sb-ink-soft)]">{t.issuing_entity}</p>}
+              <p className="text-sm text-[var(--sb-ink-soft)]">
+                Published {fmtDate(t.publication_date)} · Closes <strong className="text-[var(--sb-ink)]">{fmtDate(t.closing_date)}</strong>
+              </p>
+              {t.score != null && (
+                <p className="text-sm text-[var(--sb-ink-soft)]">
+                  Fit score <strong className="sb-mono text-[var(--sb-ink)]">{Math.round(t.score)}</strong>
+                  {t.score_reasons?.length ? ` · ${t.score_reasons.slice(0, 3).join(" · ")}` : ""}
+                </p>
+              )}
+              <a href={t.source_url} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm no-underline text-[var(--sb-ink)]">
+                View official notice ↗<span className="sr-only"> (opens CanadaBuys in a new tab)</span>
+              </a>
+            </article>
+          ))}
+          <nav className="flex items-center justify-between text-sm" aria-label="Pages">
+            {page > 1 ? <Link href={qs(page - 1)} className="btn btn-outline btn-sm no-underline">Previous</Link> : <span />}
+            <span className="text-[var(--sb-ink-soft)]">Page {page} of {Math.max(1, Math.ceil(res.total / PAGE))}</span>
+            {page * PAGE < res.total ? <Link href={qs(page + 1)} className="btn btn-outline btn-sm no-underline">Next</Link> : <span />}
+          </nav>
+        </section>
+      )}
+
+      <footer className="space-y-1">
+        <LicenceAttribution licence={OGL_CANADA} />
+        <p className="text-xs text-[var(--sb-ink-soft)]">
+          Contracting officers' names, emails and phone numbers are removed; find them on the official notice.
+        </p>
+      </footer>
     </div>
   );
 }

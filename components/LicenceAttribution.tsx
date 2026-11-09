@@ -8,13 +8,13 @@ export function LicenceAttribution({
   className?: string;
 }) {
   return (
-    <p className={`text-xs text-[var(--sb-text-muted)] leading-relaxed ${className}`}>
+    <p className={`text-xs text-[var(--sb-ink-soft)] leading-relaxed ${className}`}>
       {licence.statement}{" "}
       <a
         href={licence.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-[var(--sb-accent)] hover:underline"
+        className="text-[var(--sb-accent-700)] underline"
       >
         {licence.shortName}
       </a>
