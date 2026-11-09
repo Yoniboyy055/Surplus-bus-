@@ -8,7 +8,7 @@ Sources: `vercel.json` on `origin/main` and on this branch, `lib/agents/parsers/
 
 ## What changed
 
-`main` has 11 crons. This branch has 3. The parser crons were removed in commit
+`main` has 11 crons. This branch has 4. The parser crons were removed in commit
 `bf1e4cd` ("Pause parser crons in vercel.json until feed direction is approved").
 
 | # | Cron on `main` (UTC) | On branch? | What the job does **on this branch** (from code) | Proposal | Why |
@@ -24,7 +24,8 @@ Sources: `vercel.json` on `origin/main` and on this branch, `lib/agents/parsers/
 | 9 | `agents/run?parser_key=city_edmonton_surplus` 18:00 | No | `parseLinkOutOnly` → 0 rows | Retire | `official_site_only`: MA Auctions, no scrape. |
 | 10 | `agents/run?parser_key=city_hamilton_surplus` 19:00 | No | `parseLinkOutOnly` → 0 rows | Retire | `official_site_only`: auction host bans spiders. |
 | 11 | `agents/news` 20:00 | **Yes** (20:00) | Builds a daily brief from opportunities created in the last 24 h; no-op if none | Keep | Unchanged path; fail-closed CRON_SECRET check added in `10e813c`. |
-| 12 | — (new) `cron/opendata-ingest` 11:30 | **Yes** (new) | GCSurplus sold ZIP + NS OGL CSVs + CanadaBuys CSV → `price_history_lots` / `tender_notices` | Add | Needs migration 046 applied and service role key set (owner action). Without them it runs in dry-run and reports `skipped`. |
+| 12 | — (new) `cron/opendata-ingest` 11:30 | **Yes** (new) | GCSurplus sold ZIP + NS OGL CSVs + CanadaBuys CSV → `price_history_lots` / `tender_notices` | Add | Needs migration 052 (`20261109150100_052_open_data_feeds.sql`, formerly `sql/046`, renamed because live already has a 046) applied and service role key set (owner action). Without them it runs in dry-run and reports `skipped`. Set `OPENDATA_GCSURPLUS_FILES=6` for a one-off 2023–2025 backfill, then back to 1. |
+| 13 | — (new) `cron/saved-search-alerts` 12:30 | **Yes** (new) | Matches new `price_history_lots` / `tender_notices` rows to each due saved search → `inbox_items`; emails only Pro users with a recorded alert-email consent and `RESEND_API_KEY` + CASL sender envs set | Add | Runs after #12 (11:30) and #3 (12:00) so alerts see the day's data. Needs migration 053. Without email envs it writes in-app inbox items only. |
 
 `ns_surplus_open_data` has a parser hook but was never in a cron on either branch; NS is
 covered by #12.
@@ -43,8 +44,7 @@ covered by #12.
 - **Email alerts**: none of the 11 `main` crons sends email. `git grep` on `origin/main` finds
   email sending only in `app/api/beta-signups`, `app/api/ops/email/discount/send` and
   `lib/email/resend.ts`. So the cron change itself does not remove an email-alert job. The
-  separate product question (daily email alert digest promised on `main` pricing/settings vs
-  in-app-only copy on this branch) is still open and is not decided here.
+  saved-search alert job (#13) is the only cron that can send email, and only as described in its row.
 - **Timing**: `cron/opendata-ingest` at 11:30 UTC runs after the old `gc_buyandsell` slot and
   before `canadabuys` at 12:00. A live dry run on 2026-11-09 fetched, unzipped and parsed
   all three feeds in about 2.4 s (15,347 GCSurplus rows, 924 CanadaBuys, 225 NS). DB upsert
@@ -54,6 +54,12 @@ covered by #12.
 
 1. Approve retiring crons #1, #2, #4–#10 (or name any to keep).
 2. Keep #3 and #11 as is?
-3. Approve adding #12, and when to apply migration 046 + set the service role key.
+3. Approve adding #12 and #13, and when to apply migrations 051–053 (054 after deploy) + set the service role key.
 4. What to do with run history for retired sources (mark inactive vs heartbeat).
-5. Product: email digest vs in-app only (separate from this cron list).
+5. ~~Product: email digest vs in-app only~~ — implemented as: in-app inbox alerts for everyone; email alerts are Pro and opt-in with a recorded CASL consent (pending your pricing approval).
+
+## Consistency check
+
+`npm run check:crons` (`scripts/check-crons.mjs`) fails if a `vercel.json` cron has no route,
+a cron route is missing from `vercel.json` or from this file, or a cron route does not call
+`isAuthorizedCron`.

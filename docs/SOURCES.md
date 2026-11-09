@@ -92,5 +92,5 @@ Paths: `/api/agents/run?parser_key=<key>`
 See `docs/SOURCE_POLICY_CHECK.md` for licence/robots/redistribution verdicts.
 
 - Cron: `/api/cron/opendata-ingest` (daily 11:30 UTC)
-- SQL: `supabase/sql/046_open_data_feeds.sql`
+- SQL: `supabase/migrations/20261109150100_052_open_data_feeds.sql` (was `sql/046`; renamed — live already has a 046)
 - Public UI: `/watchlist`, `/price-history`, `/tenders`
