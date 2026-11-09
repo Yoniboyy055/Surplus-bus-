@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Bell, Home, CheckCircle } from "lucide-react";
 
 export default async function OnboardingPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) redirect("/auth?error=supabase_not_configured");
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/auth?callbackUrl=/onboarding");

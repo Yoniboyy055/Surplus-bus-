@@ -14,7 +14,8 @@ export const metadata = {
   description: "What similar Canadian public surplus has actually sold for, from open government data.",
 };
 
-export default async function CompsPage({ searchParams }: { searchParams: { q?: string; province?: string } }) {
+export default async function CompsPage({ searchParams: searchParamsP }: { searchParams: Promise<{ q?: string; province?: string }> }) {
+  const searchParams = await searchParamsP;
   const q = (searchParams.q || "").trim().slice(0, 80);
   const province = cleanProvince(searchParams.province);
 

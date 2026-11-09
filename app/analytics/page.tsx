@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
 export default async function AnalyticsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) redirect("/auth?error=supabase_not_configured");
 
   const { data } = await supabase.auth.getUser();

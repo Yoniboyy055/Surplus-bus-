@@ -7,7 +7,8 @@ const LABEL: Record<string, string> = {
   all: "all emails",
 };
 
-export default function UnsubscribePage({ searchParams }: { searchParams: { token?: string; kind?: string; done?: string } }) {
+export default async function UnsubscribePage({ searchParams: searchParamsP }: { searchParams: Promise<{ token?: string; kind?: string; done?: string }> }) {
+  const searchParams = await searchParamsP;
   const kind = LABEL[searchParams.kind || ""] ? (searchParams.kind as string) : "marketing";
   if (searchParams.done) {
     return (

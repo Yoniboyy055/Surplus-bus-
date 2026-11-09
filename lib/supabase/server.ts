@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 import { env, isSupabaseConfigured } from "@/lib/env";
 
-export const createClient = () => {
+export const createClient = async () => {
   const url = env?.NEXT_PUBLIC_SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = env?.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -11,7 +11,7 @@ export const createClient = () => {
     return null;
   }
 
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
 
   return createServerClient(url, key, {
     cookies: {

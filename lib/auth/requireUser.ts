@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function requireUser() {
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) {
     return { supabase: null, user: null, error: NextResponse.json({ error: "Supabase not configured" }, { status: 500 }) };
   }

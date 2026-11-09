@@ -11,7 +11,7 @@ import { timingSafeEqual } from "crypto";
  * Returns null if authorized, or a NextResponse with error if unauthorized.
  */
 export async function verifyAgentAuth(request: Request): Promise<NextResponse | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) {
     return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
   }

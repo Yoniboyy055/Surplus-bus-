@@ -5,7 +5,8 @@ import { requireUser } from "@/lib/auth/requireUser";
 const uuid = z.string().uuid();
 const body = z.object({ read: z.boolean() }).strict();
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params: paramsP }: { params: Promise<{ id: string }> }) {
+  const params = await paramsP;
   if (!uuid.safeParse(params.id).success) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;
@@ -22,7 +23,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   return NextResponse.json({ item: data[0] });
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, { params: paramsP }: { params: Promise<{ id: string }> }) {
+  const params = await paramsP;
   if (!uuid.safeParse(params.id).success) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;

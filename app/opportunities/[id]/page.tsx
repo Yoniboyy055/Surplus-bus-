@@ -8,7 +8,7 @@ export default async function OpportunityDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) redirect("/auth?error=supabase_not_configured");
 
   const { data } = await supabase.auth.getUser();

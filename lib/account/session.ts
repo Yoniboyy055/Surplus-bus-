@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 /** For signed-in server pages: returns the RLS client + user, or redirects to /auth. */
 export async function requirePageUser(path: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) redirect(`/auth?error=supabase_not_configured`);
   const {
     data: { user },

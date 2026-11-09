@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Newspaper } from "lucide-react";
 
 export default async function NewsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) redirect("/auth?error=supabase_not_configured");
 
   const { data } = await supabase.auth.getUser();

@@ -8,7 +8,8 @@ import { track } from "@/lib/analytics/track";
 const COLS = "id,name,query,scope,province,min_price,max_price,alert_frequency,alert_email,last_checked_at,last_alerted_at,created_at";
 const uuid = z.string().uuid();
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params: paramsP }: { params: Promise<{ id: string }> }) {
+  const params = await paramsP;
   if (!uuid.safeParse(params.id).success) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;
@@ -42,7 +43,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   return NextResponse.json({ saved_search: data[0] });
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, { params: paramsP }: { params: Promise<{ id: string }> }) {
+  const params = await paramsP;
   if (!uuid.safeParse(params.id).success) return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, reason: "supabase_not_configured" });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) {
     return NextResponse.json({ ok: false, reason: "supabase_not_configured" });
   }

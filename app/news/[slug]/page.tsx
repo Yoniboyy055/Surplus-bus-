@@ -8,7 +8,7 @@ export default async function NewsPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const supabase = createClient();
+  const supabase = await createClient();
   if (!supabase) redirect("/auth?error=supabase_not_configured");
 
   const { data } = await supabase.auth.getUser();

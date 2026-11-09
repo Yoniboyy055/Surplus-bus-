@@ -15,10 +15,11 @@ export const metadata = {
 const PAGE = 25;
 
 export default async function PriceHistoryPage({
-  searchParams,
+  searchParams: searchParamsP,
 }: {
-  searchParams: { q?: string; province?: string; feed?: string; page?: string };
+  searchParams: Promise<{ q?: string; province?: string; feed?: string; page?: string }>;
 }) {
+  const searchParams = await searchParamsP;
   const q = (searchParams.q || "").slice(0, 80);
   const province = cleanProvince(searchParams.province);
   const feed = searchParams.feed === "ns_surplus" ? "ns_surplus" : searchParams.feed === "gcsurplus_sold" ? "gcsurplus_sold" : null;

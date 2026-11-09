@@ -21,10 +21,11 @@ function fmtDate(d: string | null) {
 }
 
 export default async function TendersPage({
-  searchParams,
+  searchParams: searchParamsP,
 }: {
-  searchParams: { q?: string; province?: string; page?: string };
+  searchParams: Promise<{ q?: string; province?: string; page?: string }>;
 }) {
+  const searchParams = await searchParamsP;
   const q = (searchParams.q || "").slice(0, 80);
   const province = cleanProvince(searchParams.province);
   const page = Math.max(1, Number.parseInt(searchParams.page || "1", 10) || 1);
