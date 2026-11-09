@@ -7,6 +7,7 @@ import { fetchFeedStatus, fetchMatchSample, fetchPriceHistory } from "@/lib/open
 import { BAND_MIN_N, computeCompStats, formatCad } from "@/lib/opendata/comps";
 import { assessHomogeneity, classifyLot, KIND_LABEL, planSearch, RANGE_MAX_SPREAD } from "@/lib/opendata/search";
 import { excludeOutliers } from "@/lib/opendata/outliers";
+import { resolveLotSourceLink } from "@/lib/opendata/sourceLinks";
 import { ReportLink } from "@/components/ReportLink";
 import { kindFacets, lotHref, parseLotParams, toFilters } from "@/lib/opendata/lotParams";
 import { KindFacets } from "@/components/KindFacets";
@@ -227,26 +228,43 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
       <div className="card overflow-x-auto">
         <p className="mb-2 text-sm text-[var(--sb-ink-soft)]">Most recent matching sales</p>
         <div className="relative -mx-2 overflow-x-auto px-2" tabIndex={0} role="region" aria-label="Sold lots table (scrolls sideways)">
-          <table className="w-full min-w-[560px] text-sm">
+          <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="border-b border-[var(--sb-line)] text-left text-xs uppercase tracking-wider text-[var(--sb-ink-soft)]">
               <th className="px-2 py-2.5 font-semibold">Lot</th>
               <th className="px-2 py-2.5 font-semibold">Sold</th>
               <th className="px-2 py-2.5 font-semibold">Closed</th>
               <th className="px-2 py-2.5 font-semibold">Where</th>
+              <th className="px-2 py-2.5 font-semibold">Source</th>
               <th className="px-2 py-2.5 font-semibold"><span className="sr-only">Report</span></th>
             </tr>
           </thead>
           <tbody>
-            {rows.rows.map((r) => (
-              <tr key={r.id} className="border-b border-[var(--sb-line)]">
-                <td className="px-2 py-3 text-[var(--sb-ink)]">{r.title}</td>
+            {rows.rows.map((r) => {
+              const link = resolveLotSourceLink(r);
+              return (
+              <tr key={r.id} className="border-b border-[var(--sb-line)] align-top">
+                <td className="px-2 py-3 text-[var(--sb-ink)]">
+                  <div>{r.title}</div>
+                  {link.findBy && (
+                    <div className="mt-1 text-xs text-[var(--sb-ink-soft)]">
+                      {link.findByLabel}: <span className="sb-mono text-[var(--sb-ink)]">{link.findBy}</span>
+                    </div>
+                  )}
+                </td>
                 <td className="sb-mono px-2 py-3 font-bold text-[var(--sb-ink)]">{formatCad(r.sold_amount)}</td>
                 <td className="px-2 py-3 text-[var(--sb-ink-soft)]">{r.closing_date || r.fiscal_year || "—"}</td>
                 <td className="px-2 py-3 text-[var(--sb-ink-soft)]">{[r.city, r.province].filter(Boolean).join(", ") || "—"}</td>
+                <td className="px-2 py-3">
+                  <a href={link.href} target="_blank" rel="noopener noreferrer" className="text-[var(--sb-accent-700)] underline" data-testid="source-link" data-source-kind={link.kind}>
+                    {link.label}
+                    <span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                </td>
                 <td className="px-2 py-3 text-right"><ReportLink feedKey={r.feed_key} externalId={r.external_id} title={r.title} /></td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
           </div>

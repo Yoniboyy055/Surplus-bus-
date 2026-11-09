@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { formatCad } from "@/lib/opendata/comps";
 import type { PriceHistoryRow } from "@/lib/opendata/queries";
+import { resolveLotSourceLink } from "@/lib/opendata/sourceLinks";
 import { ReportLink } from "./ReportLink";
 
-/** Sold-lot results table + pager. Every row links to its source dataset (OGL attribution). */
+/** Sold-lot results table + pager. Every row links to the best legal source page. */
 export function LotTable({ rows, total, page, pageSize, hrefFor, label }: { rows: PriceHistoryRow[]; total: number; page: number; pageSize: number; hrefFor: (p: number) => string; label: string }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
   return (
@@ -23,23 +24,40 @@ export function LotTable({ rows, total, page, pageSize, hrefFor, label }: { rows
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className="border-b border-[var(--sb-line)] align-top">
-                <td className="whitespace-nowrap px-2 py-3 text-[var(--sb-ink-soft)]">{r.closing_date || r.fiscal_year || "—"}</td>
-                <td className="px-2 py-3 text-[var(--sb-ink)]">{r.title}</td>
-                <td className="px-2 py-3 text-[var(--sb-ink-soft)]">{[r.city, r.province].filter(Boolean).join(", ") || "—"}</td>
-                <td className="sb-mono whitespace-nowrap px-2 py-3 text-right font-bold text-[var(--sb-ink)]">{formatCad(r.sold_amount)}</td>
-                <td className="px-2 py-3">
-                  <a href={r.source_url} target="_blank" rel="noopener noreferrer" className="text-[var(--sb-accent-700)] underline">
-                    {r.feed_key === "ns_surplus" ? "NS open data" : "GCSurplus open data"}
-                    <span className="sr-only"> (opens in a new tab)</span>
-                  </a>
-                  <div>
-                    <ReportLink feedKey={r.feed_key} externalId={r.external_id} title={r.title} />
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {rows.map((r) => {
+              const link = resolveLotSourceLink(r);
+              return (
+                <tr key={r.id} className="border-b border-[var(--sb-line)] align-top">
+                  <td className="whitespace-nowrap px-2 py-3 text-[var(--sb-ink-soft)]">{r.closing_date || r.fiscal_year || "—"}</td>
+                  <td className="px-2 py-3 text-[var(--sb-ink)]">
+                    <div>{r.title}</div>
+                    {link.findBy && (
+                      <div className="mt-1 text-xs text-[var(--sb-ink-soft)]">
+                        {link.findByLabel}: <span className="sb-mono text-[var(--sb-ink)]">{link.findBy}</span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-2 py-3 text-[var(--sb-ink-soft)]">{[r.city, r.province].filter(Boolean).join(", ") || "—"}</td>
+                  <td className="sb-mono whitespace-nowrap px-2 py-3 text-right font-bold text-[var(--sb-ink)]">{formatCad(r.sold_amount)}</td>
+                  <td className="px-2 py-3">
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--sb-accent-700)] underline"
+                      data-testid="source-link"
+                      data-source-kind={link.kind}
+                    >
+                      {link.label}
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </a>
+                    <div>
+                      <ReportLink feedKey={r.feed_key} externalId={r.external_id} title={r.title} />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

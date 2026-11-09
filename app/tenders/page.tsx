@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LicenceAttribution } from "@/components/LicenceAttribution";
 import { DataStateNotice, FeedFreshnessChip } from "@/components/DataStateNotice";
 import { OGL_CANADA } from "@/lib/opendata/attribution";
+import { resolveTenderSourceLink } from "@/lib/opendata/sourceLinks";
 import { fetchFeedStatus, fetchTenders, cleanProvince } from "@/lib/opendata/queries";
 import { classifyNotice } from "@/lib/opendata/tenderKind";
 
@@ -129,9 +130,14 @@ export default async function TendersPage({
                   {t.score_reasons?.length ? ` · ${t.score_reasons.slice(0, 3).join(" · ")}` : ""}
                 </p>
               )}
-              <a href={t.source_url} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm no-underline text-[var(--sb-ink)]">
-                View official notice ↗<span className="sr-only"> (opens CanadaBuys in a new tab)</span>
-              </a>
+              {(() => {
+                const link = resolveTenderSourceLink(t);
+                return (
+                  <a href={link.href} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm no-underline text-[var(--sb-ink)]" data-testid="source-link" data-source-kind={link.kind}>
+                    {link.label} ↗<span className="sr-only"> (opens in a new tab)</span>
+                  </a>
+                );
+              })()}
             </article>
             );
           })}

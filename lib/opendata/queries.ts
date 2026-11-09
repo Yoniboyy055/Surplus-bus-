@@ -27,6 +27,7 @@ export type PriceHistoryRow = {
   city: string | null;
   category: string | null;
   kind: string | null;
+  file_number: string | null;
   source_url: string;
   licence_id: string;
 };
@@ -156,7 +157,7 @@ export async function fetchPriceHistory(opts: LotFilters & {
     db
       .from("price_history_lots")
       .select(
-        "id,external_id,feed_key,title,sold_amount,closing_date,fiscal_year,province,city,category,kind,source_url,licence_id",
+        "id,external_id,feed_key,title,sold_amount,closing_date,fiscal_year,province,city,category,kind,file_number,source_url,licence_id",
         { count: "exact" }
       ),
     opts
@@ -288,7 +289,7 @@ export async function fetchLot(feedKey: string, externalId: string): Promise<Dat
   if (!/^(gcsurplus_sold|ns_surplus)$/.test(feedKey) || !/^[A-Za-z0-9._:-]{1,80}$/.test(externalId)) return { state: "ok", rows: [], total: 0 };
   const { data, error } = await db
     .from("price_history_lots")
-    .select("id,external_id,feed_key,title,sold_amount,closing_date,fiscal_year,province,city,category,kind,source_url,licence_id")
+    .select("id,external_id,feed_key,title,sold_amount,closing_date,fiscal_year,province,city,category,kind,file_number,source_url,licence_id")
     .eq("feed_key", feedKey)
     .eq("external_id", externalId)
     .limit(1);
