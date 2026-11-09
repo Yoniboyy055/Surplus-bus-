@@ -1,4 +1,16 @@
--- Migration 046: Open-data feeds (GCSurplus sold history, CanadaBuys tenders, NS surplus history)
+-- =============================================================================
+-- 052_open_data_feeds  (was supabase/sql/046_open_data_feeds.sql on PR #28)
+-- Renamed: live already records a different "046" (20260315195410
+-- 046_fix_phase_c_allow_multi_selection). Version 20261109150100 sorts after
+-- live's last (20260316025652) and after 051. NOT applied live.
+-- Changes vs the PR #28 file: open_data_ingest_runs is operator-read only
+-- (error messages/URLs are ops data); explicit anon revokes; public pages read
+-- these tables server-side with explicit column lists.
+-- Rollback (tables are new and contain only re-ingestable OGL data):
+--   DROP TABLE public.watchlist_follows, public.tender_notices,
+--              public.price_history_lots, public.open_data_ingest_runs;
+-- =============================================================================
+-- Open-data feeds (GCSurplus sold history, CanadaBuys tenders, NS surplus history)
 -- Licences: OGL–Canada / OGL–Nova Scotia. No placeholder rows. Service role writes only.
 -- Idempotent.
 
@@ -123,9 +135,20 @@ BEGIN
     SELECT 1 FROM pg_policies WHERE tablename = 'open_data_ingest_runs' AND policyname = 'open_data_ingest_runs_authenticated_read'
   ) THEN
     CREATE POLICY open_data_ingest_runs_authenticated_read ON public.open_data_ingest_runs
-      FOR SELECT TO authenticated USING (true);
+      FOR SELECT TO authenticated USING (public.is_operator());
   END IF;
 END $$;
+
+REVOKE ALL ON public.open_data_ingest_runs, public.price_history_lots,
+  public.tender_notices, public.watchlist_follows FROM anon;
+REVOKE INSERT, UPDATE, DELETE ON public.open_data_ingest_runs, public.price_history_lots,
+  public.tender_notices FROM authenticated;
+GRANT ALL ON public.open_data_ingest_runs, public.price_history_lots,
+  public.tender_notices, public.watchlist_follows TO service_role;
+GRANT SELECT ON public.open_data_ingest_runs, public.price_history_lots,
+  public.tender_notices TO authenticated;
+REVOKE UPDATE ON public.watchlist_follows FROM authenticated;
+GRANT SELECT, INSERT, DELETE ON public.watchlist_follows TO authenticated;
 
 COMMENT ON TABLE public.price_history_lots IS 'OGL sold/award history only. No live scraped auctions. Attribution required in UI.';
 COMMENT ON TABLE public.tender_notices IS 'CanadaBuys open-data CSV only (robots Disallow:/ for HTML). OGL–Canada attribution required.';
