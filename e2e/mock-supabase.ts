@@ -84,17 +84,8 @@ function whereClause(sp: URLSearchParams, params: unknown[]): string {
   const parts: string[] = [];
   const entries: [string, string][] = [];
   for (const [col, raw] of sp.entries()) {
-    if (col === "or") {
-      // or=(a.op.v,b.op.v): split on top-level commas, honour "quoted" values
-      const inner = raw.replace(/^\(/, "").replace(/\)$/, "");
-      const terms = inner.match(/(?:[^,"]|"[^"]*")+/g) || [];
-      const sub = terms.map((term) => {
-        const i = term.indexOf(".");
-        const p2 = new URLSearchParams();
-        p2.append(term.slice(0, i), term.slice(i + 1).replace(/^(not\.)?([a-z]+)\."(.*)"$/, "$1$2.$3"));
-        return whereClause(p2, params).replace(/^ WHERE /, "");
-      });
-      if (sub.length) parts.push(`(${sub.join(" OR ")})`);
+    if (col === "or" || col === "and") {
+      parts.push(logicTree(col, raw, params));
       continue;
     }
     entries.push([col, raw]);
@@ -125,6 +116,8 @@ function whereClause(sp: URLSearchParams, params: unknown[]): string {
       case "lte": sql = `${c} <= ${p(val)}`; break;
       case "like": sql = `${c}::text LIKE ${p(val.replace(/\*/g, "%"))}`; break;
       case "ilike": sql = `${c}::text ILIKE ${p(val.replace(/\*/g, "%"))}`; break;
+      case "match": sql = `${c}::text ~ ${p(val)}`; break;
+      case "imatch": sql = `${c}::text ~* ${p(val)}`; break;
       case "is": {
         const v = val.toLowerCase();
         if (!["null", "true", "false"].includes(v)) throw Object.assign(new Error("bad is value"), { status: 400 });
@@ -143,6 +136,35 @@ function whereClause(sp: URLSearchParams, params: unknown[]): string {
     parts.push(neg ? `NOT (${sql})` : sql);
   }
   return parts.length ? ` WHERE ${parts.join(" AND ")}` : "";
+}
+
+/** Split on top-level commas, honouring "quoted" values and nested parentheses. */
+function splitTop(s: string): string[] {
+  const out: string[] = [];
+  let depth = 0, q = false, cur = "";
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i]!;
+    if (ch === '"' && s[i - 1] !== "\\") q = !q;
+    if (!q && ch === "(") depth++;
+    if (!q && ch === ")") depth--;
+    if (!q && depth === 0 && ch === ",") { out.push(cur); cur = ""; continue; }
+    cur += ch;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+/** PostgREST logic trees: or=(a.op.v,and(b.op.v,or(c.op.v,d.op.v))). */
+function logicTree(kind: string, raw: string, params: unknown[]): string {
+  const inner = raw.replace(/^\(/, "").replace(/\)$/, "");
+  const sub = splitTop(inner).map((term) => {
+    const m = term.match(/^(not\.)?(and|or)\((.*)\)$/);
+    if (m) return (m[1] ? "NOT " : "") + logicTree(m[2]!, `(${m[3]})`, params);
+    const i = term.indexOf(".");
+    const p2 = new URLSearchParams();
+    p2.append(term.slice(0, i), term.slice(i + 1).replace(/^(not\.)?([a-z]+)\."(.*)"$/, "$1$2.$3"));
+    return whereClause(p2, params).replace(/^ WHERE /, "");
+  });
+  return sub.length ? `(${sub.join(kind === "and" ? " AND " : " OR ")})` : "true";
 }
 
 function orderClause(o: string | null): string {
@@ -238,7 +260,7 @@ export async function buildDb(): Promise<Db> {
   const { headers } = parseCsv(gc) as unknown as { headers: string[] };
   const synth: Record<string, string> = {
     SOLD_AMT: "18250",
-    LOT_DESC: "Pickup truck 4x4 - contact Zelda Quintero at zelda.quintero@tpsgc-pwgsc.gc.ca or 613-555-0199",
+    LOT_DESC: "2016 Chevrolet Silverado 1500 Pickup truck 4x4 - contact Zelda Quintero at zelda.quintero@tpsgc-pwgsc.gc.ca or 613-555-0199",
     MIN_BID_AMT: "0",
     CLOSING_DT: "2025-10-01",
     LOT_ITEMS: "Quantity: 1(unit(s)) : - For further information, please contact Yuri Okonkwo at 819-555-0123 or at yuri.okonkwo@tpsgc-pwgsc.gc.ca",
@@ -276,6 +298,26 @@ export async function buildDb(): Promise<Db> {
     values ('e2e-past','canadabuys','E2E-PAST','E2E past closing notice','open','ON','Request for Proposal','Test Dept','https://canadabuys.canada.ca/','2026-01-15T14:00:00-05:00','ogl-canada'),
            ('e2e-rfi','canadabuys','E2E-RFI','E2E market sounding notice','open','ON','Request for Information','Test Dept','https://canadabuys.canada.ca/','2099-01-15T14:00:00-05:00','ogl-canada'),
            ('e2e-acan','canadabuys','E2E-ACAN','E2E sole source notice','open','ON','Advance Contract Award Notice','Test Dept','https://canadabuys.canada.ca/','2099-01-16T14:00:00-05:00','ogl-canada')`);
+  // Real GCSurplus titles and prices (OGL–Canada) for search-relevance tests: trucks vs truck parts,
+  // generators vs sold-for-parts, laptops vs laptop bags, F-150 / F150 spellings.
+  const rel = JSON.parse(readFileSync(path.join(FIX, "search_relevance_sample.json"), "utf8")).rows as Array<Record<string, any>>;
+  for (const r of rel) {
+    await db.query(
+      `insert into public.price_history_lots(external_id,feed_key,title,sold_amount,closing_date,city,province,kind,status,source_url,licence_id)
+       values ($1,'gcsurplus_sold',$2,$3,$4,$5,$6,'gcsurplus_sold','sold','https://open.canada.ca/data/en/dataset/1a09c5c1-3554-4b70-9e53-6322a72ec7d4','ogl-canada')
+       on conflict (feed_key, external_id) do nothing`,
+      [r.external_id, r.title, r.sold_amount, r.closing_date, r.city, r.province]
+    );
+  }
+  // Optional: load a local copy of the live open-data load (the ingest batch SQL) for screenshots
+  // and manual checks. Never used in CI. E2E_LIVE_COPY=<dir with batch_*.sql and runs.sql>
+  if (process.env.E2E_LIVE_COPY) {
+    const dir = process.env.E2E_LIVE_COPY;
+    const { readdirSync } = await import("node:fs");
+    for (const f of readdirSync(dir).filter((x) => /^batch_\d+\.sql$/.test(x)).sort()) await db.exec(readFileSync(path.join(dir, f), "utf8"));
+    await db.exec(readFileSync(path.join(dir, "runs.sql"), "utf8"));
+    console.log("[mock-supabase] loaded local copy of live data from", dir);
+  }
   // Make every seeded row look a day old, so alert tests can add "new" rows deterministically.
   await db.exec(`update public.price_history_lots set first_seen_at = now() - interval '1 day'; update public.tender_notices set first_seen_at = now() - interval '1 day';`);
   return db;
@@ -424,7 +466,7 @@ export async function startMock(port = PORT) {
           db.query(
             `insert into public.price_history_lots(external_id,feed_key,title,sold_amount,closing_date,city,province,source_url,licence_id,first_seen_at,last_seen_at)
              values ($1,'gcsurplus_sold',$2,$3,current_date,'Ottawa','ON','https://open.canada.ca/data/en/dataset/1a09c5c1-3554-4b70-9e53-6322a72ec7d4','ogl-canada',now(),now()) returning id`,
-            [`e2e-${crypto.randomUUID()}`, String(b?.title || "Pickup truck e2e"), Number(b?.sold_amount || 15500)]
+            [`e2e-${crypto.randomUUID()}`, String(b?.title || "2019 Ford F-150 XLT SuperCrew 4WD e2e"), Number(b?.sold_amount || 15500)]
           )
         );
         return send(res, 201, r.rows[0]);

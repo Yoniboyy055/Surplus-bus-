@@ -41,7 +41,7 @@ test("saved search -> alerts cron -> inbox, end to end", async ({ page, request 
   expect(pe.status()).toBe(402);
 
   // 3. A new matching sold lot arrives, then the daily alerts cron runs
-  const title = `Pickup truck e2e ${Date.now()}`;
+  const title = `2019 Ford F-150 XLT SuperCrew 4WD pickup truck e2e ${Date.now()}`;
   expect((await fetch(`${MOCK}/__test/new-lot`, { method: "POST", body: JSON.stringify({ title }) })).status).toBe(201);
   expect((await request.get("/api/cron/saved-search-alerts")).status()).toBe(401);
   const cron = await request.get("/api/cron/saved-search-alerts", { headers: { Authorization: `Bearer ${CRON_SECRET}` } });
