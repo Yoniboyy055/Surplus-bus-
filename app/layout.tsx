@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/AppShell";
+import { siteUrl } from "@/lib/email/unsubscribe";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,6 +22,30 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   manifest: "/site.webmanifest",
+  metadataBase: new URL(siteUrl()),
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Surplus Bus",
+    locale: "en_CA",
+    title: "Surplus Bus — know the sold range before you bid",
+    description:
+      "Sold-price guidance from Canadian government surplus open data. Information service — not a broker.",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Surplus Bus — know the sold range before you bid. Clay price tags, AI-generated illustration",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Surplus Bus — know the sold range before you bid",
+    description: "Sold-price guidance from Canadian government surplus open data.",
+    images: ["/og.png"],
+  },
 };
 
 export const viewport: Viewport = {
