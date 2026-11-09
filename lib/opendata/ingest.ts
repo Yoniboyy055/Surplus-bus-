@@ -4,6 +4,7 @@ import { parseCanadaBuysOpenTendersCsv } from "./canadabuys";
 import { parseNsPublicTenderCsv, parseNsRealPropertyCsv } from "./nsSurplus";
 import { OGL_CANADA, OGL_NOVA_SCOTIA } from "./attribution";
 import { OPEN_DATA_URLS } from "./urls";
+import { extractFirstCsvFromZip } from "./zip";
 import { scoreOpportunityV2 } from "@/lib/intelligence/scoring";
 
 export type IngestFeedResult = {
@@ -15,7 +16,36 @@ export type IngestFeedResult = {
   licence_id: string;
   error_message?: string;
   skipped_reason?: string;
+  /** Set when an explicit row cap was applied (never silent). */
+  row_cap?: number;
+  rows_dropped_by_cap?: number;
 };
+
+/**
+ * Optional explicit cap on GCSurplus sold rows per run.
+ * Default: no cap (all parsed rows are upserted in batches of 500).
+ * Set OPENDATA_GCSURPLUS_MAX_ROWS to a positive integer to cap; the cap and the
+ * number of dropped rows are logged and returned in the run result.
+ */
+export function gcSurplusRowCap(): number | null {
+  const raw = process.env.OPENDATA_GCSURPLUS_MAX_ROWS;
+  if (!raw) return null;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+async function recordRun(
+  supabase: { from: (t: string) => any } | null,
+  row: Record<string, unknown>
+): Promise<void> {
+  if (!supabase) return;
+  const { error } = await supabase.from("open_data_ingest_runs").insert(row);
+  if (error) {
+    console.error(
+      `[opendata-ingest] failed to record run for ${String(row.feed_key)}: ${error.message}`
+    );
+  }
+}
 
 function hasServiceRole(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -51,27 +81,16 @@ async function fetchGcSurplusCsvText(): Promise<{ text: string; sourceUrl: strin
         cache: "no-store",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const buf = Buffer.from(await res.arrayBuffer());
-      // Lazy unzip via dynamic import of node:zlib only works for gzip; use JSZip-free approach:
-      // unzip with child_process unzip if available, else require 'fflate' — avoid new deps:
-      // write temp and unzip.
-      const fs = await import("fs/promises");
-      const os = await import("os");
-      const path = await import("path");
-      const { execFile } = await import("child_process");
-      const { promisify } = await import("util");
-      const execFileAsync = promisify(execFile);
-      const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "gcsurplus-"));
-      const zipPath = path.join(tmp, "in.zip");
-      await fs.writeFile(zipPath, buf);
-      await execFileAsync("unzip", ["-o", zipPath, "-d", tmp]);
-      const files = await fs.readdir(tmp);
-      const csvName = files.find((f) => f.endsWith(".csv"));
-      if (!csvName) throw new Error("No CSV in GCSurplus zip");
-      const text = await fs.readFile(path.join(tmp, csvName), "utf8");
+      const buf = new Uint8Array(await res.arrayBuffer());
+      // Pure-JS unzip (fflate, MIT): no OS `unzip` binary and no temp files.
+      const { name, text, bytes } = extractFirstCsvFromZip(buf);
+      console.log(
+        `[opendata-ingest] gcsurplus_sold: unzipped ${name} (${bytes} bytes) from ${url}`
+      );
       return { text, sourceUrl: url };
     } catch (e) {
       lastErr = e instanceof Error ? e : new Error(String(e));
+      console.warn(`[opendata-ingest] gcsurplus_sold: ${url} failed: ${lastErr.message}`);
     }
   }
   throw lastErr || new Error("GCSurplus zip fetch failed");
@@ -106,10 +125,18 @@ export async function ingestOpenDataFeeds(opts?: {
         const text =
           opts?.fixtures?.gcsurplusSoldCsv ??
           (await fetchGcSurplusCsvText()).text;
-        const rows = parseGcSurplusSoldCsv(text);
+        const parsed = parseGcSurplusSoldCsv(text);
+        const cap = gcSurplusRowCap();
+        const rows = cap != null ? parsed.slice(0, cap) : parsed;
+        const dropped = parsed.length - rows.length;
+        if (dropped > 0) {
+          console.warn(
+            `[opendata-ingest] gcsurplus_sold: OPENDATA_GCSURPLUS_MAX_ROWS=${cap} applied; ${dropped} of ${parsed.length} parsed rows NOT upserted this run`
+          );
+        }
         let upserted = 0;
         if (!dryRun && supabase) {
-          const chunk = rows.slice(0, 5000).map((r) => ({
+          const chunk = rows.map((r) => ({
             external_id: r.external_id,
             feed_key: "gcsurplus_sold",
             title: r.title,
@@ -135,19 +162,22 @@ export async function ingestOpenDataFeeds(opts?: {
             if (error) throw new Error(error.message);
             upserted += count ?? slice.length;
           }
-          await supabase.from("open_data_ingest_runs").insert({
+          await recordRun(supabase, {
             feed_key: "gcsurplus_sold",
             source_url,
             licence_id: OGL_CANADA.id,
             status: "ok",
-            rows_parsed: rows.length,
+            rows_parsed: parsed.length,
             rows_upserted: upserted,
+            error_message:
+              dropped > 0 ? `row cap ${cap} applied; ${dropped} rows not upserted` : null,
           });
         }
         results.push({
           feed_key: "gcsurplus_sold",
           status: dryRun ? "skipped" : "ok",
-          rows_parsed: rows.length,
+          rows_parsed: parsed.length,
+          ...(cap != null ? { row_cap: cap, rows_dropped_by_cap: dropped } : {}),
           rows_upserted: dryRun ? 0 : upserted,
           source_url,
           licence_id: OGL_CANADA.id,
@@ -157,6 +187,16 @@ export async function ingestOpenDataFeeds(opts?: {
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        console.error(`[opendata-ingest] gcsurplus_sold failed: ${msg}`);
+        await recordRun(supabase, {
+          feed_key: "gcsurplus_sold",
+          source_url,
+          licence_id: OGL_CANADA.id,
+          status: "error",
+          rows_parsed: 0,
+          rows_upserted: 0,
+          error_message: msg,
+        });
         results.push({
           feed_key: "gcsurplus_sold",
           status: "error",
@@ -221,7 +261,7 @@ export async function ingestOpenDataFeeds(opts?: {
             if (error) throw new Error(error.message);
             upserted += slice.length;
           }
-          await supabase.from("open_data_ingest_runs").insert({
+          await recordRun(supabase, {
             feed_key: "canadabuys",
             source_url,
             licence_id: OGL_CANADA.id,
@@ -243,6 +283,16 @@ export async function ingestOpenDataFeeds(opts?: {
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        console.error(`[opendata-ingest] canadabuys failed: ${msg}`);
+        await recordRun(supabase, {
+          feed_key: "canadabuys",
+          source_url,
+          licence_id: OGL_CANADA.id,
+          status: "error",
+          rows_parsed: 0,
+          rows_upserted: 0,
+          error_message: msg,
+        });
         results.push({
           feed_key: "canadabuys",
           status: "error",
@@ -284,7 +334,6 @@ export async function ingestOpenDataFeeds(opts?: {
             kind: r.kind,
             fiscal_year: r.fiscal_year,
             file_number: r.file_number,
-            awarded_to: r.awarded_to,
             source_url: r.source_url,
             licence_id: r.licence_id,
             status: r.status,
@@ -298,7 +347,7 @@ export async function ingestOpenDataFeeds(opts?: {
             if (error) throw new Error(error.message);
             upserted += slice.length;
           }
-          await supabase.from("open_data_ingest_runs").insert({
+          await recordRun(supabase, {
             feed_key: "ns_surplus",
             source_url,
             licence_id: OGL_NOVA_SCOTIA.id,
@@ -320,6 +369,16 @@ export async function ingestOpenDataFeeds(opts?: {
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        console.error(`[opendata-ingest] ns_surplus failed: ${msg}`);
+        await recordRun(supabase, {
+          feed_key: "ns_surplus",
+          source_url,
+          licence_id: OGL_NOVA_SCOTIA.id,
+          status: "error",
+          rows_parsed: 0,
+          rows_upserted: 0,
+          error_message: msg,
+        });
         results.push({
           feed_key: "ns_surplus",
           status: "error",

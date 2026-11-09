@@ -1,7 +1,7 @@
 {
   "name": "surplus-bus",
   "version": "1.0.0",
-  "description": "Surplus Bus \u2014 Canadian public surplus listings information service (not a broker).",
+  "description": "Surplus Bus — Canadian public surplus listings information service (not a broker).",
   "main": "index.js",
   "directories": {
     "doc": "docs"
@@ -31,6 +31,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.90.1",
+    "fflate": "^0.8.3",
     "lucide-react": "^0.562.0",
     "nanoid": "^5.1.6",
     "next": "^14.2.35",

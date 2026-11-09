@@ -1,49 +1,74 @@
 /** Minimal RFC4180-ish CSV parser (quoted fields, commas, newlines). No deps. */
 
 export function parseCsv(text: string): { headers: string[]; rows: Record<string, string>[] } {
+  // Slice-based scanner: avoids per-character string concatenation, which on the
+  // ~40 MB GCSurplus CSV built rope strings and pushed RSS past 1.4 GB.
+  // Semantics match the previous parser: "" escapes, \r dropped outside quotes,
+  // blank lines skipped, trailing field without newline kept.
   const rows: string[][] = [];
-  let field = "";
   let row: string[] = [];
-  let inQuotes = false;
-  const s = text.replace(/^\uFEFF/, "");
+  const s = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+  const n = s.length;
+  let i = 0;
+  let pending = false; // a field has started on this row (for EOF handling)
 
-  for (let i = 0; i < s.length; i++) {
-    const c = s[i];
-    if (inQuotes) {
-      if (c === '"') {
-        if (s[i + 1] === '"') {
-          field += '"';
-          i++;
-        } else {
-          inQuotes = false;
+  const endRow = () => {
+    if (row.length > 1 || row[0] !== "") rows.push(row);
+    row = [];
+    pending = false;
+  };
+
+  while (i < n) {
+    let field = "";
+    pending = true;
+    // A field may mix quoted and unquoted segments (same as the old parser).
+    for (;;) {
+      if (i >= n) break;
+      const c = s.charCodeAt(i);
+      if (c === 34 /* " */) {
+        i++;
+        const parts: string[] = [];
+        let segStart = i;
+        for (;;) {
+          const q = s.indexOf('"', i);
+          if (q === -1) {
+            parts.push(s.slice(segStart));
+            i = n;
+            break;
+          }
+          if (s.charCodeAt(q + 1) === 34) {
+            parts.push(s.slice(segStart, q + 1));
+            i = q + 2;
+            segStart = i;
+            continue;
+          }
+          parts.push(s.slice(segStart, q));
+          i = q + 1;
+          break;
         }
-      } else {
-        field += c;
+        field += parts.join("");
+        continue;
       }
-      continue;
+      if (c === 44 /* , */ || c === 10 /* \n */) break;
+      // Unquoted run up to the next delimiter, quote or newline.
+      let j = i;
+      while (j < n) {
+        const d = s.charCodeAt(j);
+        if (d === 44 || d === 10 || d === 34) break;
+        j++;
+      }
+      const run = s.slice(i, j);
+      field += run.indexOf("\r") === -1 ? run : run.replace(/\r/g, "");
+      i = j;
     }
-    if (c === '"') {
-      inQuotes = true;
-      continue;
-    }
-    if (c === ",") {
-      row.push(field);
-      field = "";
-      continue;
-    }
-    if (c === "\n") {
-      row.push(field);
-      field = "";
-      if (row.length > 1 || row[0] !== "") rows.push(row);
-      row = [];
-      continue;
-    }
-    if (c === "\r") continue;
-    field += c;
-  }
-  if (field.length || row.length) {
     row.push(field);
-    rows.push(row);
+    if (i >= n) break;
+    const c = s.charCodeAt(i);
+    i++;
+    if (c === 10) endRow();
+  }
+  if (pending || row.length) {
+    if (row.length) rows.push(row);
   }
   if (!rows.length) return { headers: [], rows: [] };
   const headerRow = rows[0] ?? [];
