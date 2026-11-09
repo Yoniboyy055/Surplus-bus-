@@ -5,6 +5,7 @@
  * Nothing is reported as delivered unless the send call succeeded.
  */
 import { toIlikePattern } from "@/lib/opendata/comps";
+import { startOfTodayToronto } from "@/lib/opendata/tenderKind";
 
 export type SavedSearch = {
   id: string;
@@ -120,6 +121,7 @@ export async function runSavedSearchAlerts(opts: {
         .from("tender_notices")
         .select("id,title,province,closing_date,source_url,issuing_entity")
         .eq("status", "open")
+        .or(`closing_date.gte."${startOfTodayToronto(now)}",closing_date.is.null`)
         .ilike("title", pattern)
         .gt("first_seen_at", since);
       if (s.province) q = q.eq("province", s.province);

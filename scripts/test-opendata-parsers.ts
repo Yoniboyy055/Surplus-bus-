@@ -15,6 +15,7 @@ import { parseCsv } from "../lib/opendata/csv";
 import { computeCompStats, toIlikePattern } from "../lib/opendata/comps";
 import { computeFeedFreshness } from "../lib/opendata/freshness";
 import { zipSync, strToU8 } from "fflate";
+import { classifyNotice, startOfTodayToronto } from "../lib/opendata/tenderKind";
 
 const root = path.join(process.cwd(), "fixtures", "open-data");
 
@@ -274,6 +275,16 @@ async function main() {
     assert(synthOut.includes("Truck"), "lot kept");
     const out = JSON.stringify(parseGcSurplusSoldCsv(raw));
     for (const v of secrets) assert(!out.includes(v), `staff value leaked: ${v.slice(0, 4)}…`);
+  });
+
+  await test("CanadaBuys notice types: RFIs and ACANs are labelled, not shown as bids", () => {
+    assert(classifyNotice("Request for Information").kind === "rfi", "rfi");
+    assert(classifyNotice("Advance Contract Award Notice").kind === "acan", "acan");
+    assert(classifyNotice("Request for Proposal").kind === "bid", "rfp is a bid");
+    assert(classifyNotice("").kind === "unspecified", "blank type");
+    // Midnight Toronto on Nov 9, 2026 (EST, UTC-5)
+    assert(startOfTodayToronto(new Date("2026-11-09T15:00:00Z")) === "2026-11-09T05:00:00.000Z", startOfTodayToronto(new Date("2026-11-09T15:00:00Z")));
+    assert(startOfTodayToronto(new Date("2026-07-01T03:00:00Z")) === "2026-06-30T04:00:00.000Z", "EDT day boundary");
   });
 
   await test("dedupeByExternalId collapses in-batch duplicates (no upsert self-conflict)", () => {

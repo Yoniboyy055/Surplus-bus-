@@ -3,12 +3,13 @@ import { LicenceAttribution } from "@/components/LicenceAttribution";
 import { DataStateNotice, FeedFreshnessChip } from "@/components/DataStateNotice";
 import { OGL_CANADA } from "@/lib/opendata/attribution";
 import { fetchFeedStatus, fetchTenders, cleanProvince } from "@/lib/opendata/queries";
+import { classifyNotice } from "@/lib/opendata/tenderKind";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "CanadaBuys tenders — Surplus Bus",
-  description: "Open federal tender notices from the CanadaBuys open-data CSV (OGL–Canada).",
+  description: "Tender notices listed as open on CanadaBuys, from its open-data CSV (OGL–Canada).",
 };
 
 const PAGE = 20;
@@ -43,7 +44,7 @@ export default async function TendersPage({
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-0">
       <header className="space-y-2">
         <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--sb-accent-700)]">CanadaBuys tenders</p>
-        <h1 className="sb-title text-[28px] text-[var(--sb-ink)]">Open federal tender notices</h1>
+        <h1 className="sb-title text-[28px] text-[var(--sb-ink)]">Tender notices open on CanadaBuys</h1>
         <p className="max-w-2xl text-sm text-[var(--sb-ink-soft)]">
           From the official CanadaBuys open-data CSV only. Closed notices are not shown. Always confirm details on the
           official notice before acting.
@@ -86,18 +87,41 @@ export default async function TendersPage({
           <p className="text-sm text-[var(--sb-ink-soft)]" data-total={res.total}>
             {res.total.toLocaleString("en-CA")} open notices{q ? ` matching “${q}”` : ""}
           </p>
-          {res.rows.map((t) => (
-            <article key={t.id} className="card space-y-2">
+          {!!res.hiddenPastClosing && (
+            <p className="banner !mb-0 text-sm" data-hidden-past={res.hiddenPastClosing}>
+              {res.hiddenPastClosing.toLocaleString("en-CA")} more notice{res.hiddenPastClosing === 1 ? " is" : "s are"} still marked “Open” on
+              CanadaBuys but closed before today, so we don’t show {res.hiddenPastClosing === 1 ? "it" : "them"}.
+            </p>
+          )}
+          {res.rows.map((t) => {
+            const kind = classifyNotice(t.notice_type);
+            return (
+            <article key={t.id} className="card space-y-2" data-notice-kind={kind.kind}>
               <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--sb-ink-soft)]">
                 {t.province && <span className="chip !py-0.5">{t.province}</span>}
-                {t.notice_type && <span>{t.notice_type}</span>}
+                <span
+                  className={
+                    kind.kind === "bid"
+                      ? ""
+                      : "rounded-full border border-[rgba(188,143,25,0.35)] bg-[var(--sb-warning-bg)] px-2 py-0.5 font-semibold text-[var(--sb-warn-text)]"
+                  }
+                >
+                  {kind.label}
+                </span>
                 {t.reference_number && <span className="sb-mono">{t.reference_number}</span>}
               </div>
               <h2 className="sb-title text-lg text-[var(--sb-ink)]">{t.title}</h2>
               {t.issuing_entity && <p className="text-sm text-[var(--sb-ink-soft)]">{t.issuing_entity}</p>}
               <p className="text-sm text-[var(--sb-ink-soft)]">
-                Published {fmtDate(t.publication_date)} · Closes <strong className="text-[var(--sb-ink)]">{fmtDate(t.closing_date)}</strong>
+                Published {fmtDate(t.publication_date)} ·{" "}
+                {t.closing_date ? (
+                  <>Closes <strong className="text-[var(--sb-ink)]">{fmtDate(t.closing_date)}</strong></>
+                ) : (
+                  "No closing date listed"
+                )}{" "}
+                · check the official notice for amendments
               </p>
+              {kind.note && <p className="text-sm text-[var(--sb-warn-text)]">{kind.note}</p>}
               {t.score != null && (
                 <p className="text-sm text-[var(--sb-ink-soft)]">
                   Fit score <strong className="sb-mono text-[var(--sb-ink)]">{Math.round(t.score)}</strong>
@@ -108,7 +132,8 @@ export default async function TendersPage({
                 View official notice ↗<span className="sr-only"> (opens CanadaBuys in a new tab)</span>
               </a>
             </article>
-          ))}
+            );
+          })}
           <nav className="flex items-center justify-between text-sm" aria-label="Pages">
             {page > 1 ? <Link href={qs(page - 1)} className="btn btn-outline btn-sm no-underline">Previous</Link> : <span />}
             <span className="text-[var(--sb-ink-soft)]">Page {page} of {Math.max(1, Math.ceil(res.total / PAGE))}</span>

@@ -82,7 +82,24 @@ function selectList(sel: string | null): string {
 const RESERVED = new Set(["select", "order", "limit", "offset", "on_conflict", "columns"]);
 function whereClause(sp: URLSearchParams, params: unknown[]): string {
   const parts: string[] = [];
+  const entries: [string, string][] = [];
   for (const [col, raw] of sp.entries()) {
+    if (col === "or") {
+      // or=(a.op.v,b.op.v): split on top-level commas, honour "quoted" values
+      const inner = raw.replace(/^\(/, "").replace(/\)$/, "");
+      const terms = inner.match(/(?:[^,"]|"[^"]*")+/g) || [];
+      const sub = terms.map((term) => {
+        const i = term.indexOf(".");
+        const p2 = new URLSearchParams();
+        p2.append(term.slice(0, i), term.slice(i + 1).replace(/^(not\.)?([a-z]+)\."(.*)"$/, "$1$2.$3"));
+        return whereClause(p2, params).replace(/^ WHERE /, "");
+      });
+      if (sub.length) parts.push(`(${sub.join(" OR ")})`);
+      continue;
+    }
+    entries.push([col, raw]);
+  }
+  for (const [col, raw] of entries) {
     if (RESERVED.has(col)) continue;
     let expr = raw;
     let neg = false;
@@ -253,6 +270,12 @@ export async function buildDb(): Promise<Db> {
   });
   await db.exec("RESET ROLE");
   console.log("[mock-supabase] seed:", results.map((r) => `${r.feed_key}=${r.status}/${r.rows_upserted}`).join(" "));
+  // CanadaBuys edge cases (YkData, Nov 9 file): "Open" notices whose closing date has passed,
+  // and notice types that are not bids.
+  await db.query(`insert into public.tender_notices(external_id,feed_key,reference_number,title,status,province,notice_type,issuing_entity,source_url,closing_date,licence_id)
+    values ('e2e-past','canadabuys','E2E-PAST','E2E past closing notice','open','ON','Request for Proposal','Test Dept','https://canadabuys.canada.ca/','2026-01-15T14:00:00-05:00','ogl-canada'),
+           ('e2e-rfi','canadabuys','E2E-RFI','E2E market sounding notice','open','ON','Request for Information','Test Dept','https://canadabuys.canada.ca/','2099-01-15T14:00:00-05:00','ogl-canada'),
+           ('e2e-acan','canadabuys','E2E-ACAN','E2E sole source notice','open','ON','Advance Contract Award Notice','Test Dept','https://canadabuys.canada.ca/','2099-01-16T14:00:00-05:00','ogl-canada')`);
   // Make every seeded row look a day old, so alert tests can add "new" rows deterministically.
   await db.exec(`update public.price_history_lots set first_seen_at = now() - interval '1 day'; update public.tender_notices set first_seen_at = now() - interval '1 day';`);
   return db;

@@ -14,8 +14,8 @@ export default function WatchlistPage() {
           <p className="max-w-2xl text-sm text-[var(--sb-ink-soft)]">
             Live auctions stay on these official sites — we link out and never copy their listings. Most offer free
             new-listing alerts of their own. For sold-price history use{" "}
-            <Link href="/price-history" className="underline text-[var(--sb-accent-700)]">Price history</Link>; for federal
-            tenders, <Link href="/tenders" className="underline text-[var(--sb-accent-700)]">Tenders</Link>; to get matches in
+            <Link href="/price-history" className="underline text-[var(--sb-accent-700)]">Price history</Link>; for tender notices on
+            CanadaBuys, <Link href="/tenders" className="underline text-[var(--sb-accent-700)]">Tenders</Link>; to get matches in
             your inbox, <Link href="/saved" className="underline text-[var(--sb-accent-700)]">save a search</Link>.
           </p>
         </div>

@@ -6,6 +6,7 @@
  */
 import { computeFeedFreshness, type FeedFreshness, type FeedKey } from "./freshness";
 import { toIlikePattern } from "./comps";
+import { startOfTodayToronto } from "./tenderKind";
 
 export type DataState<T> =
   | { state: "ok"; rows: T[]; total: number }
@@ -128,25 +129,31 @@ export async function fetchTenders(opts: {
   province?: string | null;
   limit?: number;
   offset?: number;
-}): Promise<DataState<TenderRow>> {
+}): Promise<DataState<TenderRow> & { hiddenPastClosing?: number }> {
   const db = await reader();
   if (!db) return { state: "not_configured" };
   const limit = Math.min(Math.max(opts.limit ?? 25, 1), 100);
   const offset = Math.max(opts.offset ?? 0, 0);
+  const today = startOfTodayToronto();
   let query = db
     .from("tender_notices")
     .select(
       "id,external_id,reference_number,title,status,province,category,notice_type,issuing_entity,source_url,publication_date,closing_date,licence_id,score,score_reasons",
       { count: "exact" }
     )
-    .eq("status", "open");
+    .eq("status", "open")
+    // CanadaBuys keeps some notices "Open" after their closing date; never show those as open.
+    .or(`closing_date.gte."${today}",closing_date.is.null`);
   if (opts.q?.trim()) query = query.ilike("title", toIlikePattern(opts.q));
   const prov = cleanProvince(opts.province);
   if (prov) query = query.eq("province", prov);
-  query = query.order("score", { ascending: false, nullsFirst: false }).range(offset, offset + limit - 1);
-  const { data, error, count } = await query;
+  query = query.order("score", { ascending: false, nullsFirst: false }).order("closing_date", { ascending: true, nullsFirst: false }).range(offset, offset + limit - 1);
+  let pastQ = db.from("tender_notices").select("id", { count: "exact", head: true }).eq("status", "open").lt("closing_date", today);
+  if (opts.q?.trim()) pastQ = pastQ.ilike("title", toIlikePattern(opts.q));
+  if (prov) pastQ = pastQ.eq("province", prov);
+  const [{ data, error, count }, past] = await Promise.all([query, pastQ]);
   if (error) return classify(error);
-  return { state: "ok", rows: (data || []) as TenderRow[], total: count ?? (data || []).length };
+  return { state: "ok", rows: (data || []) as TenderRow[], total: count ?? (data || []).length, hiddenPastClosing: past.count ?? 0 };
 }
 
 export type FeedStatus = FeedFreshness & { coverage_to: string | null };
@@ -191,7 +198,11 @@ export async function fetchCorpusStats(): Promise<{ sold: number; tenders: numbe
   if (!db) return null;
   const [a, b] = await Promise.all([
     db.from("price_history_lots").select("id", { count: "exact", head: true }).gt("sold_amount", 0),
-    db.from("tender_notices").select("id", { count: "exact", head: true }).eq("status", "open"),
+    db
+      .from("tender_notices")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "open")
+      .or(`closing_date.gte."${startOfTodayToronto()}",closing_date.is.null`),
   ]);
   if (a.error || b.error || a.count == null || b.count == null) return null;
   return { sold: a.count, tenders: b.count };

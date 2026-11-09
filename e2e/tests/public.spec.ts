@@ -59,6 +59,14 @@ test.describe("Open-data pages (real tables via mock Supabase)", () => {
     expect(await page.locator("article").count()).toBeGreaterThan(0);
     await expect(page.getByText(/Open Government Licence/i).first()).toBeVisible();
     assertNoStaffPii(await page.content(), "/tenders");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Tender notices open on CanadaBuys");
+    // "Open" on CanadaBuys but closed before today: hidden and counted
+    await expect(page.getByText("E2E past closing notice")).toHaveCount(0);
+    await expect(page.locator("[data-hidden-past]")).toContainText("closed before today");
+    // RFI and ACAN keep their real type, flagged as not normal bids
+    await expect(page.locator('[data-notice-kind="rfi"]')).toContainText("Request for information");
+    await expect(page.locator('[data-notice-kind="rfi"]')).toContainText("not a bid opportunity");
+    await expect(page.locator('[data-notice-kind="acan"]')).toContainText("Advance contract award notice");
     await shot(page, "06_tenders");
     await noHorizontalOverflow(page);
   });

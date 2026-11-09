@@ -65,7 +65,7 @@ export default async function HomePage() {
           </a>
           {stats && (
             <span className="chip" data-stat="tenders">
-              <strong>{stats.tenders.toLocaleString("en-CA")}</strong>&nbsp;open federal tenders today
+              <strong>{stats.tenders.toLocaleString("en-CA")}</strong>&nbsp;tender notices open on CanadaBuys today
             </span>
           )}
           <a href={OGL_CANADA.url} target="_blank" rel="noopener noreferrer" className="chip no-underline">Open Government Licence – Canada</a>
