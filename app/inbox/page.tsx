@@ -1,104 +1,29 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { EmptyState } from "@/components/EmptyState";
-import { Inbox } from "lucide-react";
+import { requirePageUser } from "@/lib/account/session";
+import { InboxClient, type InboxItem } from "./InboxClient";
 
-export default function InboxPage() {
-  const [matches, setMatches] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const supabase = createClient();
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Inbox" };
 
-  useEffect(() => {
-    const init = async () => {
-      if (!supabase) return;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-
-      const { data } = await supabase
-        .from("alert_matches")
-        .select(`
-          id, matched_at,
-          alert_rules(category),
-          opportunities(id, title, province, category, estimated_value, closing_date, source)
-        `)
-        .order("matched_at", { ascending: false })
-        .limit(50);
-
-      setMatches(data || []);
-      setLoading(false);
-    };
-    init();
-  }, [router, supabase]);
-
-  if (loading) return <div className="text-center py-20 text-quantum-500">Loading inbox...</div>;
-
+export default async function InboxPage() {
+  const { supabase } = await requirePageUser("/inbox");
+  const { data, error } = await supabase
+    .from("inbox_items")
+    .select("id,kind,title,body,url,created_at,read_at,emailed_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-quantum-50">Inbox</h1>
-      <p className="text-quantum-400">Alerts that matched opportunities.</p>
-
-      {matches.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          title="Alerts will appear here when they match"
-          description="Create alerts and when new opportunities match your criteria, they will show up here."
-          actionLabel="Create alert"
-          onAction={() => router.push("/alerts")}
-        />
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 md:px-0">
+      <header>
+        <h1 className="sb-title text-[28px] text-[var(--sb-ink)]">Inbox</h1>
+        <p className="text-sm text-[var(--sb-ink-soft)]">
+          New sold lots and tenders that match your <Link href="/saved" className="underline">saved searches</Link>.
+        </p>
+      </header>
+      {error ? (
+        <div className="banner danger" role="alert">We couldn't load your inbox. Please refresh.</div>
       ) : (
-        <ul className="space-y-4">
-          {matches.map((m: any) => {
-            const opp = m.opportunities;
-            const rule = m.alert_rules;
-            if (!opp) return null;
-            return (
-              <li
-                key={m.id}
-                className="bg-quantum-900 border border-quantum-700 rounded-lg p-4 hover:border-quantum-600 transition"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    {rule && (
-                      <span className="text-xs text-quantum-500 uppercase tracking-wider">
-                        Matched: {rule.category}
-                      </span>
-                    )}
-                    <Link
-                      href={`/opportunities/${opp.id}`}
-                      className="block text-cyan-400 hover:text-cyan-300 font-medium mt-1"
-                    >
-                      {opp.title}
-                    </Link>
-                    <div className="flex gap-4 mt-2 text-sm text-quantum-500">
-                      <span>{opp.province}</span>
-                      <span>{opp.category || "—"}</span>
-                      {opp.estimated_value != null && (
-                        <span>${opp.estimated_value.toLocaleString()}</span>
-                      )}
-                    </div>
-                    <p className="text-xs text-quantum-600 mt-1">
-                      {new Date(m.matched_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <Link
-                    href={`/opportunities/${opp.id}`}
-                    className="text-cyan-400 hover:text-cyan-300 text-sm font-medium"
-                  >
-                    View →
-                  </Link>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <InboxClient initial={(data || []) as InboxItem[]} />
       )}
     </div>
   );

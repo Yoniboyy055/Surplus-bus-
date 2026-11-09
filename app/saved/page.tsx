@@ -1,106 +1,51 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { EmptyState } from "@/components/EmptyState";
-import { Bookmark } from "lucide-react";
+import { requirePageUser } from "@/lib/account/session";
+import { getUserLimits } from "@/lib/billing/entitlements";
+import { ALERT_EMAIL_CONSENT_TEXT } from "@/lib/alerts/schemas";
+import { ALERTS_HONESTY_NOTE } from "@/lib/billing/plans";
+import { SavedSearchesClient, type SavedSearchRow } from "./SavedSearchesClient";
 
-export default function SavedPage() {
-  const [saved, setSaved] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const supabase = createClient();
+export const dynamic = "force-dynamic";
+export const metadata = { title: "Saved searches" };
 
-  const fetchSaved = async () => {
-    const res = await fetch("/api/saved");
-    if (!res.ok) return;
-    const json = await res.json();
-    setSaved(json.saved || []);
-  };
-
-  useEffect(() => {
-    const init = async () => {
-      if (!supabase) return;
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-      await fetchSaved();
-      setLoading(false);
-    };
-    init();
-  }, [router, supabase]);
-
-  const handleRemove = async (opportunityId: string) => {
-    await fetch(`/api/saved?opportunity_id=${opportunityId}`, { method: "DELETE" });
-    await fetchSaved();
-  };
-
-  if (loading) return <div className="text-center py-20 text-quantum-500">Loading saved...</div>;
+export default async function SavedPage() {
+  const { supabase, user } = await requirePageUser("/saved");
+  const [{ data, error }, { data: pref }, limits] = await Promise.all([
+    supabase
+      .from("saved_searches")
+      .select("id,name,query,scope,province,min_price,max_price,alert_frequency,alert_email,last_checked_at,last_alerted_at,created_at")
+      .order("created_at", { ascending: false }),
+    supabase.from("user_preferences").select("alert_email_consent_at").eq("profile_id", user.id).maybeSingle(),
+    getUserLimits(supabase, user.id),
+  ]);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-quantum-50">Saved</h1>
-      <p className="text-quantum-400">Opportunities you saved to revisit later.</p>
-
-      {saved.length === 0 ? (
-        <EmptyState
-          icon={Bookmark}
-          title="Save opportunities to revisit later"
-          description="When viewing an opportunity, click Save to add it here."
-          actionLabel="Browse opportunities"
-          onAction={() => router.push("/opportunities")}
-        />
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 md:px-0">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="sb-title text-[28px] text-[var(--sb-ink)]">Saved searches</h1>
+          <p className="text-sm text-[var(--sb-ink-soft)]">
+            We check these after each data refresh and put new matches in your <Link href="/inbox" className="underline">inbox</Link>.
+          </p>
+        </div>
+        <span className="chip" data-limit={limits.savedSearches}>
+          {(data || []).length} of {limits.savedSearches} used
+        </span>
+      </header>
+      {error ? (
+        <div className="banner danger" role="alert">
+          We couldn't load your saved searches. Please refresh. If it keeps happening, the feature may still be being set up.
+        </div>
       ) : (
-        <ul className="space-y-4">
-          {saved.map((s: any) => {
-            const opp = s.opportunities;
-            if (!opp) return null;
-            return (
-              <li
-                key={s.opportunity_id}
-                className="bg-quantum-900 border border-quantum-700 rounded-lg p-4 flex justify-between items-start"
-              >
-                <div>
-                  <Link
-                    href={`/opportunities/${opp.id}`}
-                    className="text-cyan-400 hover:text-cyan-300 font-medium"
-                  >
-                    {opp.title}
-                  </Link>
-                  <div className="flex gap-4 mt-2 text-sm text-quantum-500">
-                    <span>{opp.province}</span>
-                    <span>{opp.category || "—"}</span>
-                    {opp.estimated_value != null && (
-                      <span>${opp.estimated_value.toLocaleString()}</span>
-                    )}
-                  </div>
-                  <p className="text-xs text-quantum-600 mt-1">
-                    Saved {new Date(s.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Link
-                    href={`/opportunities/${opp.id}`}
-                    className="text-cyan-400 hover:text-cyan-300 text-sm"
-                  >
-                    View
-                  </Link>
-                  <button
-                    onClick={() => handleRemove(s.opportunity_id)}
-                    className="text-quantum-500 hover:text-red-400 text-sm"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <SavedSearchesClient
+          initial={(data || []) as SavedSearchRow[]}
+          limit={limits.savedSearches}
+          emailAllowed={limits.emailAlerts}
+          consentAt={pref?.alert_email_consent_at ?? null}
+          consentText={ALERT_EMAIL_CONSENT_TEXT}
+        />
       )}
+      <p className="text-xs text-[var(--sb-ink-soft)]">{ALERTS_HONESTY_NOTE}</p>
     </div>
   );
 }

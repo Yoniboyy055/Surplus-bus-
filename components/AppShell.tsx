@@ -4,19 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import {
-  LogOut,
-  Menu,
-  X,
-  Search,
-  Star,
-  Mail,
-  Settings,
-  Wrench,
-  History,
-  FileText,
-  Database,
-} from "lucide-react";
+import { LogOut, Menu, X, Search, Star, Mail, Settings, Wrench, History, FileText, Database, LayoutDashboard, Bookmark } from "lucide-react";
 import { Badge } from "./Badge";
 import { Button } from "./Button";
 import { BrandMark } from "./BrandMark";
@@ -35,11 +23,13 @@ interface AppShellProps {
 }
 
 const APP_NAV = [
+  { name: "Home", href: "/dashboard", icon: LayoutDashboard },
   { name: "Search", href: "/search", icon: Search },
-  { name: "Watchlist", href: "/watchlist", icon: Star },
-  { name: "Digest", href: "/digest", icon: Mail },
+  { name: "Saved searches", href: "/saved", icon: Bookmark },
+  { name: "Inbox", href: "/inbox", icon: Mail },
   { name: "Price history", href: "/price-history", icon: History },
   { name: "Tenders", href: "/tenders", icon: FileText },
+  { name: "Watchlist", href: "/watchlist", icon: Star },
   { name: "Sources", href: "/sources", icon: Database },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
