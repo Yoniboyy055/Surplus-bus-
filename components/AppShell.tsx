@@ -101,6 +101,9 @@ export function AppShell({ children, user, profile }: AppShellProps) {
             <Link href="/legal/anti-spam" className="hover:text-[var(--sb-ink)]">
               Anti-Spam
             </Link>
+            <Link href="/legal/attributions" className="hover:text-[var(--sb-ink)]">
+              Attributions
+            </Link>
             <Link href="/faq" className="hover:text-[var(--sb-ink)]">
               FAQ
             </Link>
@@ -137,9 +140,16 @@ export function AppShell({ children, user, profile }: AppShellProps) {
           </nav>
         </header>
         <main className="flex-1">{children}</main>
-        <footer className="mx-auto w-full max-w-[1100px] border-t border-[var(--sb-line)] px-5 py-6 md:px-10 text-xs text-[var(--sb-muted)]">
-          Contains information licensed under the Open Government Licence – Canada. Guidance only — not
-          an appraisal. Surplus Bus by YK+ Systems.
+        <footer className="mx-auto w-full max-w-[1100px] border-t border-[var(--sb-line)] px-5 py-6 md:px-10 text-xs text-[var(--sb-muted)] space-y-2">
+          <p>
+            Contains information licensed under the Open Government Licence – Canada. Guidance only — not
+            an appraisal. Surplus Bus by YK+ Systems.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/legal/terms" className="hover:text-[var(--sb-ink)]">Terms</Link>
+            <Link href="/legal/privacy" className="hover:text-[var(--sb-ink)]">Privacy</Link>
+            <Link href="/legal/attributions" className="hover:text-[var(--sb-ink)]">Attributions</Link>
+          </div>
         </footer>
       </div>
     );
