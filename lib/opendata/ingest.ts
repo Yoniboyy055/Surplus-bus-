@@ -50,6 +50,21 @@ async function recordRun(
   }
 }
 
+/**
+ * Postgres rejects an upsert batch that touches the same conflict key twice
+ * ("ON CONFLICT DO UPDATE command cannot affect row a second time"). Keep the
+ * last occurrence and log how many duplicates were collapsed (never silent).
+ */
+export function dedupeByExternalId<T extends { external_id: string; feed_key?: string }>(rows: T[]): T[] {
+  const m = new Map<string, T>();
+  for (const r of rows) m.set(`${r.feed_key ?? ""}|${r.external_id}`, r);
+  const dropped = rows.length - m.size;
+  if (dropped > 0) {
+    console.warn(`[opendata-ingest] collapsed ${dropped} duplicate external_id rows in one batch`);
+  }
+  return Array.from(m.values());
+}
+
 function hasServiceRole(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
@@ -103,6 +118,11 @@ export async function ingestOpenDataFeeds(opts?: {
   feeds?: Array<"gcsurplus_sold" | "canadabuys" | "ns_surplus">;
   /** When true, parse only — no DB writes (tests / no service role). */
   dryRun?: boolean;
+  /**
+   * Inject a client (local e2e tests against PGlite). When set, writes go to it
+   * even without SUPABASE_SERVICE_ROLE_KEY.
+   */
+  client?: ServiceRoleClient;
   /** Inject CSV text for unit tests (skips network). */
   fixtures?: {
     gcsurplusSoldCsv?: string;
@@ -112,11 +132,13 @@ export async function ingestOpenDataFeeds(opts?: {
   };
 }): Promise<IngestFeedResult[]> {
   const feeds = opts?.feeds ?? ["gcsurplus_sold", "canadabuys", "ns_surplus"];
-  const dryRun = opts?.dryRun === true || !hasServiceRole();
+  const dryRun = opts?.dryRun === true || (!opts?.client && !hasServiceRole());
   const results: IngestFeedResult[] = [];
 
   let supabase: ServiceRoleClient | null = null;
-  if (!dryRun) {
+  if (!dryRun && opts?.client) {
+    supabase = opts.client;
+  } else if (!dryRun) {
     const { createServiceRoleClient } = await import("@/lib/supabase/serviceRole");
     supabase = createServiceRoleClient();
   }
@@ -139,7 +161,7 @@ export async function ingestOpenDataFeeds(opts?: {
         }
         let upserted = 0;
         if (!dryRun && supabase) {
-          const chunk = rows.map((r) => ({
+          const chunk = dedupeByExternalId(rows.map((r) => ({
             external_id: r.external_id,
             feed_key: "gcsurplus_sold",
             title: r.title,
@@ -156,7 +178,7 @@ export async function ingestOpenDataFeeds(opts?: {
             status: r.status,
             raw_hash: createHash("sha256").update(r.external_id + r.title).digest("hex").slice(0, 16),
             last_seen_at: new Date().toISOString(),
-          }));
+          })));
           for (let i = 0; i < chunk.length; i += 500) {
             const slice = chunk.slice(i, i + 500);
             const { error, count } = await supabase
@@ -221,7 +243,7 @@ export async function ingestOpenDataFeeds(opts?: {
         const rows = parseCanadaBuysOpenTendersCsv(text);
         let upserted = 0;
         if (!dryRun && supabase) {
-          const payload = rows.map((r) => {
+          const payload = dedupeByExternalId(rows.map((r) => {
             const scored = scoreOpportunityV2({
               id: r.external_id,
               category: r.category,
@@ -255,7 +277,7 @@ export async function ingestOpenDataFeeds(opts?: {
               score_reasons: scored.excluded ? null : scored.reasons,
               last_seen_at: new Date().toISOString(),
             };
-          });
+          }));
           for (let i = 0; i < payload.length; i += 400) {
             const slice = payload.slice(i, i + 400);
             const { error } = await supabase
@@ -323,7 +345,7 @@ export async function ingestOpenDataFeeds(opts?: {
         ];
         let upserted = 0;
         if (!dryRun && supabase) {
-          const payload = rows.map((r) => ({
+          const payload = dedupeByExternalId(rows.map((r) => ({
             external_id: r.external_id,
             feed_key: "ns_surplus",
             title: r.title,
@@ -341,7 +363,7 @@ export async function ingestOpenDataFeeds(opts?: {
             licence_id: r.licence_id,
             status: r.status,
             last_seen_at: new Date().toISOString(),
-          }));
+          })));
           for (let i = 0; i < payload.length; i += 500) {
             const slice = payload.slice(i, i + 500);
             const { error } = await supabase

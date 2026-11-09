@@ -4,11 +4,11 @@
  */
 import { readFileSync } from "fs";
 import path from "path";
-import { parseGcSurplusSoldCsv } from "../lib/opendata/gcsurplusSold";
+import { parseGcSurplusSoldCsv, collapseDoubledText } from "../lib/opendata/gcsurplusSold";
 import { parseCanadaBuysOpenTendersCsv } from "../lib/opendata/canadabuys";
 import { parseNsPublicTenderCsv, parseNsRealPropertyCsv } from "../lib/opendata/nsSurplus";
 import { scoreOpportunityV2 } from "../lib/intelligence/scoring";
-import { ingestOpenDataFeeds, gcSurplusRowCap } from "../lib/opendata/ingest";
+import { ingestOpenDataFeeds, gcSurplusRowCap, dedupeByExternalId } from "../lib/opendata/ingest";
 import { extractFirstCsvFromZip } from "../lib/opendata/zip";
 import { zipSync, strToU8 } from "fflate";
 
@@ -165,6 +165,64 @@ async function main() {
       if (prev === undefined) delete process.env.OPENDATA_GCSURPLUS_MAX_ROWS;
       else process.env.OPENDATA_GCSURPLUS_MAX_ROWS = prev;
     }
+  });
+
+  await test("GCSurplus titles are not doubled (LOT_DESC repeats the title)", () => {
+    const rows = parseGcSurplusSoldCsv(load("gcsurplus_sold_sample.csv"));
+    for (const r of rows) {
+      const t = r.title;
+      const half = t.length / 2;
+      assert(!(t.length % 2 === 0 && t.slice(0, half) === t.slice(half)), `doubled title: ${t}`);
+    }
+    assert(collapseDoubledText("Truck - RCMP EdsonTruck - RCMP Edson") === "Truck - RCMP Edson", "collapse");
+    assert(collapseDoubledText("Boat Boat") === "Boat Boat", "short words untouched");
+  });
+
+  await test("GCSurplus identity: contract id is the stable external id; one sale = one comp", () => {
+    const csv = load("gcsurplus_sold_sample.csv");
+    const a = parseGcSurplusSoldCsv(csv);
+    const b = parseGcSurplusSoldCsv(csv);
+    assert(JSON.stringify(a.map((r) => r.external_id)) === JSON.stringify(b.map((r) => r.external_id)), "stable across parses");
+    assert(new Set(a.map((r) => r.external_id)).size === a.length, "unique ids");
+    assert(a.every((r) => r.external_id.startsWith("gcs-")), "contract-based ids");
+    const mtl = a.filter((r) => r.external_id === "gcs-K5MO007200");
+    assert(mtl.length === 1, `K5MO007200 (same sale at 2 locations) must be one comp, got ${mtl.length}`);
+    assert((mtl[0]?.city || "").includes("Montreal") && (mtl[0]?.city || "").includes("Sainte-Catherine"), "locations merged");
+    assert(a.length === 11, `12 CSV rows -> 11 comps, got ${a.length}`);
+  });
+
+  await test("GCSurplus identity: same contract, different amounts stay separate", () => {
+    const hdr = "SOLD_AMT,LOT_DESC,MIN_BID_AMT,CLOSING_DT,LOT_ITEMS,ASSET_LOC_CITY,ASSET_LOC_PROV,SALE_CNTRCT_REG_ID";
+    const csv = [hdr, "100,Lot A,0,2025-01-01,x,Ottawa,ON,K1", "250,Lot B,0,2025-01-01,x,Ottawa,ON,K1"].join("\n");
+    const rows = parseGcSurplusSoldCsv(csv);
+    assert(rows.length === 2 && rows[0]!.external_id !== rows[1]!.external_id, "two lots");
+  });
+
+  await test("No personal/contact fields in any parsed open-data row", () => {
+    const banned = /custodian|sales_person|sales_email|phone|phn|email|postal|awarded_to|paid_party|awardee|payer|contact/i;
+    const all: Record<string, unknown>[] = [
+      ...parseGcSurplusSoldCsv(load("gcsurplus_sold_sample.csv")),
+      ...parseCanadaBuysOpenTendersCsv(load("canadabuys_open_tenders_sample.csv")),
+      ...parseNsPublicTenderCsv(load("ns_surplus_tender_sample.csv")),
+      ...parseNsRealPropertyCsv(load("ns_surplus_real_property_sample.csv")),
+    ];
+    for (const r of all) for (const k of Object.keys(r)) assert(!banned.test(k), `banned key ${k}`);
+    const emailRe = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+    const phoneRe = /\(?\b\d{3}\)?[ .-]\d{3}[ .-]\d{4}\b/;
+    for (const r of all) for (const v of Object.values(r)) {
+      if (typeof v !== "string") continue;
+      assert(!emailRe.test(v), `email in value: ${v.slice(0, 60)}`);
+      assert(!phoneRe.test(v), `phone in value: ${v.slice(0, 60)}`);
+    }
+  });
+
+  await test("dedupeByExternalId collapses in-batch duplicates (no upsert self-conflict)", () => {
+    const out = dedupeByExternalId([
+      { external_id: "a", feed_key: "f", v: 1 },
+      { external_id: "a", feed_key: "f", v: 2 },
+      { external_id: "b", feed_key: "f", v: 3 },
+    ]);
+    assert(out.length === 2 && out.find((r) => r.external_id === "a")?.v === 2, "kept last");
   });
 
   await test("ingest dry-run with fixtures (no service role)", async () => {
