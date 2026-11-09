@@ -303,8 +303,8 @@ async function handleRest(db: Db, req: http.IncomingMessage, res: http.ServerRes
   const wantObject = String(req.headers["accept"] || "").includes("vnd.pgrst.object");
   const params: unknown[] = [];
   const method = req.method || "GET";
-  const sel = selectList(sp.get("select"));
   try {
+    const sel = selectList(sp.get("select"));
     const out = await asRole(db, role, uid, claims, async (tx) => {
       if (method === "GET" || method === "HEAD") {
         const where = whereClause(sp, params);
@@ -361,6 +361,7 @@ async function handleRest(db: Db, req: http.IncomingMessage, res: http.ServerRes
     return send(res, out.status, method === "HEAD" ? undefined : out.rows, headers);
   } catch (e) {
     const { status, body } = pgError(e);
+    if (status >= 500 || (e as any)?.code === "PGRST100") console.error(`[mock-supabase] ${method} ${url.pathname}${url.search} -> ${status} ${body.message}`);
     return send(res, status, body);
   }
 }

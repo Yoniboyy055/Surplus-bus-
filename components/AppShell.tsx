@@ -201,7 +201,7 @@ export function AppShell({ children, user, profile }: AppShellProps) {
         </nav>
         <button
           onClick={handleLogout}
-          className="w-11 h-11 rounded-[14px] grid place-items-center text-[var(--sb-ink-soft)] hover:text-[var(--sb-danger)]"
+          className="w-11 h-11 rounded-[14px] grid place-items-center text-[var(--sb-ink-soft)] hover:text-[var(--sb-danger-text)]"
           title="Sign out"
           aria-label="Sign out"
         >

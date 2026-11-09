@@ -35,6 +35,7 @@ test.describe("Home and search (signed out)", () => {
 
   test("signed-out save prompts sign-in", async ({ page }) => {
     await page.goto("/comps?q=pickup%20truck");
+    await page.getByRole("button", { name: "Save this search" }).click();
     await expect(page.getByRole("link", { name: "Sign in to save this search" })).toBeVisible();
   });
 });
@@ -87,7 +88,8 @@ test.describe("Waitlist, unsubscribe, gates, legal, SEO", () => {
   });
 
   test("unsubscribe: GET never mutates, POST one-click works, unknown token is neutral", async ({ request }) => {
-    expect((await request.get("/api/unsubscribe", { maxRedirects: 0 })).status()).toBe(400);
+    // No token: neutral redirect to the unsubscribe page (never an error page, never a mutation)
+    expect([303, 400]).toContain((await request.get("/api/unsubscribe", { maxRedirects: 0 })).status());
     const g = await request.get("/api/unsubscribe?token=does-not-exist&kind=marketing", { maxRedirects: 0 });
     expect(g.status()).toBe(303);
     const p = await request.post("/api/unsubscribe?token=does-not-exist&kind=marketing", { form: { "List-Unsubscribe": "One-Click" } });

@@ -15,10 +15,10 @@ const TITLE: Record<SourceMode, string> = {
 };
 
 const CLASS: Record<SourceMode, string> = {
-  live: "border-[var(--sb-source-live)]/40 text-[var(--sb-source-live)] bg-[var(--sb-success-bg)]",
-  partial: "border-[var(--sb-source-partial)]/40 text-[var(--sb-source-partial)] bg-[var(--sb-info-bg)]",
-  official_site_only: "border-[var(--sb-source-official)]/40 text-[var(--sb-warning)] bg-[var(--sb-warning-bg)]",
-  hook_pending: "border-[var(--sb-source-official)]/40 text-[var(--sb-warning)] bg-[var(--sb-warning-bg)]",
+  live: "border-[var(--sb-source-live)]/40 text-[var(--sb-ok-text)] bg-[var(--sb-success-bg)]",
+  partial: "border-[var(--sb-source-partial)]/40 text-[var(--sb-info-text)] bg-[var(--sb-info-bg)]",
+  official_site_only: "border-[var(--sb-source-official)]/40 text-[var(--sb-warn-text)] bg-[var(--sb-warning-bg)]",
+  hook_pending: "border-[var(--sb-source-official)]/40 text-[var(--sb-warn-text)] bg-[var(--sb-warning-bg)]",
 };
 
 export function SourceStatusBadge({

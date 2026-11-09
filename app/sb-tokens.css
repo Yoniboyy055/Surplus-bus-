@@ -80,6 +80,11 @@
   --sb-warn: #BC8F19;
   --sb-danger: #A93A2C;
   --sb-tag: #F3EDE6;
+  /* Text-safe status colours: >= 5:1 on bg, bg-deep, banners and status tints (WCAG AA). */
+  --sb-ok-text: #4A5A3B;
+  --sb-warn-text: #6E520C;
+  --sb-info-text: #3E5A85;
+  --sb-danger-text: #8E2F23;
   --sb-line: rgba(44, 33, 24, 0.10);
 
   --sb-primary-50: #FAF7F4;

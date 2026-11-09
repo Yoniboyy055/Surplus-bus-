@@ -48,7 +48,7 @@ export function SaveSearchButton({ q, province, scope = "sold" }: { q: string; p
             Saved. Turn on alerts in <Link href="/saved" className="underline">Saved searches</Link>.
           </>
         )}
-        {state === "error" && <span className="text-[var(--sb-danger)]">{msg}</span>}
+        {state === "error" && <span className="text-[var(--sb-danger-text)]">{msg}</span>}
       </span>
     </div>
   );

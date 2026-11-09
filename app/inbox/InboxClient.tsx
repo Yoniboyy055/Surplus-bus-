@@ -53,7 +53,7 @@ export function InboxClient({ initial }: { initial: InboxItem[] }) {
         <span className="chip" data-unread={unread}>{unread} unread</span>
         <button className="btn btn-ghost btn-sm" onClick={readAll} disabled={!unread}>Mark all read</button>
       </div>
-      {err && <p role="alert" className="text-sm text-[var(--sb-danger)]">{err}</p>}
+      {err && <p role="alert" className="text-sm text-[var(--sb-danger-text)]">{err}</p>}
       <ul className="space-y-3" aria-label="Inbox items">
         {items.map((i) => {
           const external = i.url?.startsWith("http");

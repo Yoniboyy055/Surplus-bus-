@@ -36,7 +36,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--sb-muted)]">{icon}</div>
           )}
         </div>
-        {error && <p className="text-[var(--sb-danger)] text-xs mt-2">{error}</p>}
+        {error && <p className="text-[var(--sb-danger-text)] text-xs mt-2">{error}</p>}
         {hint && !error && <p className="text-[var(--sb-muted)] text-xs mt-2">{hint}</p>}
       </div>
     );

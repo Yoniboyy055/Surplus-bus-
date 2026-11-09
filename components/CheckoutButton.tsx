@@ -26,7 +26,7 @@ export function CheckoutButton({ plan, label, variant = "primary" }: { plan: "pr
       <button type="button" onClick={go} disabled={busy} className={`btn ${variant === "primary" ? "btn-primary" : "btn-outline"}`}>
         {busy ? "Opening checkout…" : label}
       </button>
-      {err && <span role="alert" className="mt-1 text-xs text-[var(--sb-danger)]">{err}</span>}
+      {err && <span role="alert" className="mt-1 text-xs text-[var(--sb-danger-text)]">{err}</span>}
     </span>
   );
 }

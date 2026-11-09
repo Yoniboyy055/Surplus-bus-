@@ -111,7 +111,7 @@ export function SavedSearchesClient({
         )}
       </form>
 
-      <p role="status" aria-live="polite" className={`min-h-[1.25rem] text-sm ${msg?.tone === "err" ? "text-[var(--sb-danger)]" : "text-[var(--sb-ok)]"}`}>
+      <p role="status" aria-live="polite" className={`min-h-[1.25rem] text-sm ${msg?.tone === "err" ? "text-[var(--sb-danger-text)]" : "text-[var(--sb-ok-text)]"}`}>
         {msg?.text}
       </p>
 
@@ -176,7 +176,7 @@ export function SavedSearchesClient({
                   />
                   Also email me {emailAllowed ? "" : "(Pro)"}
                 </label>
-                {r.alert_email && !consent && <span className="text-xs text-[var(--sb-warn)]">Email paused: consent needed</span>}
+                {r.alert_email && !consent && <span className="text-xs text-[var(--sb-warn-text)]">Email paused: consent needed</span>}
               </div>
             </li>
           ))}

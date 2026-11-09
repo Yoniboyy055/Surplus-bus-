@@ -44,7 +44,7 @@ export function FeedFreshnessChip({ status, label }: { status?: FeedStatus; labe
   if (!status) return null;
   const tone =
     status.state === "fresh"
-      ? "!bg-[var(--sb-success-bg)] !text-[var(--sb-ok)]"
+      ? "!bg-[var(--sb-success-bg)] !text-[var(--sb-ok-text)]"
       : status.state === "never"
         ? ""
         : "!bg-[var(--sb-warning-bg)] !text-[var(--sb-ink)]";

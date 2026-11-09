@@ -78,8 +78,8 @@ export default function LandingPage() {
 
         {status === "success" ? (
           <div className="mt-8 flex flex-col items-center gap-3">
-            <CheckCircle className="text-[var(--sb-ok)]" size={32} />
-            <span className="text-lg font-semibold text-[var(--sb-ok)]">You&apos;re on the list</span>
+            <CheckCircle className="text-[var(--sb-ok-text)]" size={32} />
+            <span className="text-lg font-semibold text-[var(--sb-ok-text)]">You&apos;re on the list</span>
             <p className="max-w-md text-sm text-[var(--sb-ink-soft)]">
               Thanks — we&apos;ll email you when a Founder spot opens.
             </p>
@@ -134,7 +134,7 @@ export default function LandingPage() {
           </form>
         )}
         {status === "error" && error && (
-          <div className="mt-3 text-sm text-[var(--sb-danger)]" role="alert">
+          <div className="mt-3 text-sm text-[var(--sb-danger-text)]" role="alert">
             {error}
           </div>
         )}
