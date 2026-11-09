@@ -1,6 +1,7 @@
 /** URL search params <-> lot filters, shared by /search, /price-history and /comps. */
 import { cleanCity, cleanDay, cleanPrice, cleanProvince, type LotFilters } from "./queries";
-import { classifyTitle, cleanKind, FILTERABLE_KINDS, planSearch, type LotKind } from "./search";
+import { classifyLot, cleanKind, FILTERABLE_KINDS, planSearch, type LotKind } from "./search";
+import type { LotLike } from "./kinds";
 
 export type LotParams = {
   q: string;
@@ -9,7 +10,7 @@ export type LotParams = {
   feed: "gcsurplus_sold" | "ns_surplus" | null;
   /** Kind the user picked; "all" means they turned the default off. */
   kindParam: LotKind | "all" | null;
-  /** Kind actually applied (vehicle searches default to cars & trucks). */
+  /** Kind actually applied (vehicle searches default to cars, pickups & vans; heavy-truck searches to medium & heavy trucks). */
   kind: LotKind | null;
   kindIsDefault: boolean;
   from: string | null;
@@ -18,6 +19,8 @@ export type LotParams = {
   maxPrice: number | null;
   sort: "recent" | "price_high" | "price_low";
   page: number;
+  /** "all": include outliers (C$0-1, bulk lots, extreme prices) in the typical range. */
+  outliers: "all" | null;
 };
 
 type Raw = Record<string, string | string[] | undefined>;
@@ -28,7 +31,7 @@ export function parseLotParams(sp: Raw): LotParams {
   const kp = one(sp.kind);
   const kindParam = kp === "all" ? "all" : cleanKind(kp);
   const plan = q ? planSearch(q) : null;
-  const kind = kindParam === "all" ? null : kindParam ?? (plan?.vehicleIntent ? "vehicle" : null);
+  const kind = kindParam === "all" ? null : kindParam ?? (plan?.heavyIntent ? "heavy_truck" : plan?.vehicleIntent ? "vehicle" : null);
   const feedRaw = one(sp.feed);
   const sortRaw = one(sp.sort);
   let minPrice = cleanPrice(one(sp.min));
@@ -48,6 +51,7 @@ export function parseLotParams(sp: Raw): LotParams {
     maxPrice,
     sort: sortRaw === "price_high" || sortRaw === "price_low" ? sortRaw : "recent",
     page: Math.min(Math.max(1, Number.parseInt(one(sp.page) || "1", 10) || 1), 2000),
+    outliers: one(sp.outliers) === "all" ? "all" : null,
   };
 }
 
@@ -56,7 +60,7 @@ export function toFilters(p: LotParams, withKind = true): LotFilters {
 }
 
 /** Build a URL for `path` from params with overrides (null removes a key). Page resets unless given. */
-export function lotHref(path: string, p: LotParams, over: Partial<Record<"q" | "province" | "city" | "feed" | "kind" | "from" | "to" | "min" | "max" | "sort" | "page", string | null>> = {}): string {
+export function lotHref(path: string, p: LotParams, over: Partial<Record<"q" | "province" | "city" | "feed" | "kind" | "from" | "to" | "min" | "max" | "sort" | "page" | "outliers", string | null>> = {}): string {
   const u = new URLSearchParams();
   const base: Record<string, string | null> = {
     q: p.q || null,
@@ -70,6 +74,7 @@ export function lotHref(path: string, p: LotParams, over: Partial<Record<"q" | "
     max: p.maxPrice != null ? String(p.maxPrice) : null,
     sort: p.sort !== "recent" ? p.sort : null,
     page: null,
+    outliers: p.outliers,
   };
   for (const [k, v] of Object.entries({ ...base, ...over })) if (v) u.set(k, v);
   const s = u.toString();
@@ -78,10 +83,10 @@ export function lotHref(path: string, p: LotParams, over: Partial<Record<"q" | "
 
 export type KindFacet = { kind: LotKind; n: number };
 /** Kind counts for a match sample, largest first. */
-export function kindFacets(rows: Array<{ title: string }>): KindFacet[] {
+export function kindFacets(rows: LotLike[]): KindFacet[] {
   const c = new Map<LotKind, number>();
   for (const r of rows) {
-    const k = classifyTitle(r.title);
+    const k = classifyLot(r);
     c.set(k, (c.get(k) || 0) + 1);
   }
   return FILTERABLE_KINDS.filter((k) => c.get(k)).map((k) => ({ kind: k, n: c.get(k)! })).sort((a, b) => b.n - a.n);

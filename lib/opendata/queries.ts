@@ -6,7 +6,7 @@
  */
 import { computeFeedFreshness, type FeedFreshness, type FeedKey } from "./freshness";
 import { toIlikePattern } from "./comps";
-import { cleanTerm, kindFilters, planSearch, plannedOrFilter, type LotKind } from "./search";
+import { cleanTerm, kindLogic, planSearch, plannedOrFilter, type LotKind } from "./search";
 import { startOfTodayToronto } from "./tenderKind";
 
 export type DataState<T> =
@@ -108,21 +108,32 @@ export function cleanCity(s?: string | null): string | null {
   return v.length >= 2 ? v : null;
 }
 
+/**
+ * One PostgREST logic tree for the text search and the kind (both need OR/NOT logic, and PostgREST
+ * takes one `or` parameter): or=(and(<search>,<kind>)).
+ */
+export function lotLogic(f: Pick<LotFilters, "q" | "kind">): string | null {
+  const parts: string[] = [];
+  if (f.q?.trim()) {
+    const plan = planSearch(f.q);
+    const logic = plannedOrFilter(plan);
+    if (logic) parts.push(plan.groups.length === 1 ? `or(${logic})` : logic);
+  }
+  if (f.kind) parts.push(kindLogic(f.kind));
+  if (!parts.length) return null;
+  return parts.length === 1 ? parts[0]! : `and(${parts.join(",")})`;
+}
+
 /** Apply the shared lot filters to a PostgREST query on price_history_lots. */
 export function applyLotFilters<Q extends { or: Function; eq: Function; ilike: Function; filter: Function; not: Function; gte: Function; lte: Function }>(query: Q, f: LotFilters): Q {
   let qy: any = query;
-  if (f.q?.trim()) {
-    const logic = plannedOrFilter(planSearch(f.q));
-    if (logic) qy = qy.or(logic);
-  }
+  const logic = lotLogic(f);
+  if (logic) qy = qy.or(logic);
   const prov = cleanProvince(f.province);
   if (prov) qy = qy.eq("province", prov);
   const city = cleanCity(f.city);
   if (city) qy = qy.ilike("city", `%${city}%`);
   if (f.feed) qy = qy.eq("feed_key", f.feed);
-  if (f.kind) {
-    for (const flt of kindFilters(f.kind)) qy = flt.op === "imatch" ? qy.filter("title", "imatch", flt.pattern) : qy.not("title", "imatch", flt.pattern);
-  }
   const from = cleanDay(f.from);
   const to = cleanDay(f.to);
   if (from) qy = qy.gte("closing_date", from);
@@ -164,10 +175,11 @@ export const MATCH_SAMPLE_CAP = 5000;
  * Titles and sold amounts of every lot matching the filters (newest first, capped), for comp
  * statistics and kind facets. `total` is the full match count, which may exceed the cap.
  */
-export async function fetchMatchSample(opts: LotFilters): Promise<DataState<{ title: string; sold_amount: number | null }>> {
+export type MatchRow = { feed_key: string; external_id: string; kind: string | null; title: string; sold_amount: number | null; category: string | null };
+export async function fetchMatchSample(opts: LotFilters): Promise<DataState<MatchRow>> {
   const db = await reader();
   if (!db) return { state: "not_configured" };
-  const query = applyLotFilters(db.from("price_history_lots").select("title,sold_amount", { count: "exact" }), opts)
+  const query = applyLotFilters(db.from("price_history_lots").select("feed_key,external_id,kind,title,sold_amount,category", { count: "exact" }), opts)
     .order("closing_date", { ascending: false, nullsFirst: false })
     .limit(MATCH_SAMPLE_CAP);
   const { data, error, count } = await query;
@@ -267,4 +279,19 @@ export async function fetchCorpusStats(): Promise<{ sold: number; tenders: numbe
   ]);
   if (a.error || b.error || a.count == null || b.count == null) return null;
   return { sold: a.count, tenders: b.count };
+}
+
+/** One lot by its source key (for the "report a wrong result" page). */
+export async function fetchLot(feedKey: string, externalId: string): Promise<DataState<PriceHistoryRow>> {
+  const db = await reader();
+  if (!db) return { state: "not_configured" };
+  if (!/^(gcsurplus_sold|ns_surplus)$/.test(feedKey) || !/^[A-Za-z0-9._:-]{1,80}$/.test(externalId)) return { state: "ok", rows: [], total: 0 };
+  const { data, error } = await db
+    .from("price_history_lots")
+    .select("id,external_id,feed_key,title,sold_amount,closing_date,fiscal_year,province,city,category,kind,source_url,licence_id")
+    .eq("feed_key", feedKey)
+    .eq("external_id", externalId)
+    .limit(1);
+  if (error) return classify(error);
+  return { state: "ok", rows: data || [], total: (data || []).length };
 }

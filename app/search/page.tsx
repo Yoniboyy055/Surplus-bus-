@@ -57,7 +57,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
             <label className={lbl}>
               Kind of item
               <select name="kind" defaultValue={p.kindParam ?? ""} className={field}>
-                <option value="">{plan?.vehicleIntent ? "Auto (cars & trucks)" : "All kinds"}</option>
+                <option value="">{plan?.heavyIntent ? "Auto (medium & heavy trucks)" : plan?.vehicleIntent ? "Auto (cars, pickups & vans)" : "All kinds"}</option>
                 <option value="all">All kinds</option>
                 {FILTERABLE_KINDS.map((k) => <option key={k} value={k}>{KIND_LABEL[k]}</option>)}
               </select>

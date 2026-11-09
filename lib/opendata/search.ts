@@ -1,116 +1,12 @@
 /**
- * Search planning and lot classification for the sold-lot pages (/search, /comps, /price-history).
- *
- * The open-data files have no item category column, so "kind" comes from title heuristics that
- * were checked against the loaded GCSurplus + Nova Scotia data (Nov 9, 2026 load):
- *  - a road vehicle title starts with a model year and a make, e.g. "2015 Chevrolet Silverado 1500";
- *    the makes listed are the ones that appear in that position in the data;
- *  - parts and accessories are recognised by words such as cover, mirror, tire, cap, canopy, parts.
- * Every regex here is written to behave the same in JavaScript and in Postgres (~*), so the same
- * pattern filters rows in the database and classifies rows in tests. No lookbehind, no \b.
+ * Search planning and the "typical range" guard for the sold-lot pages (/search, /comps, /price-history).
+ * Lot kinds (cars, heavy trucks, parts, bulk lots...) live in ./kinds.ts.
  */
 
-const W0 = "(^|[^a-z0-9])"; // word start (portable)
-const W1 = "([^a-z0-9]|$)"; // word end (portable)
-const words = (list: string[]) => `${W0}(${list.join("|")})${W1}`;
+import { classifyLot, HEAVY_MAKES, PICKUP_MODELS, ROAD_MAKES, type LotKind, type LotLike } from "./kinds";
 
-/** Makes seen right after a model year in titles (road vehicles). */
-export const ROAD_MAKES = [
-  "ford", "chevrolet", "chevy", "dodge", "ram", "gmc", "nissan", "hyundai", "toyota", "jeep", "subaru", "honda",
-  "mitsubishi", "chrysler", "sterling", "volkswagen", "kia", "international", "mazda", "mercedes-benz", "mercedes",
-  "bmw", "mercury", "freightliner", "volvo", "suzuki", "audi", "buick", "kenworth", "western star", "pontiac",
-  "cadillac", "lincoln", "peterbilt", "mack", "hino", "isuzu", "tesla", "fiat", "acura", "lexus", "infiniti", "mini",
-];
-/** Makes seen after a model year that are snowmobiles, ATVs, side-by-sides, boats or outboards. */
-export const POWERSPORT_MAKES = [
-  "polaris", "arctic cat", "artic cat", "yamaha", "ski-doo", "skidoo", "bombardier", "can-am", "kawasaki", "argo",
-  "evinrude", "mercury marine", "princecraft", "lund", "harley-davidson",
-];
-/** Makes seen after a model year that are tractors and construction equipment. */
-export const EQUIPMENT_MAKES = ["john deere", "kubota", "bobcat", "case", "caterpillar", "cat", "new holland", "massey ferguson", "jcb", "komatsu", "toro", "cub cadet"];
-/** Trailer makes seen after a model year. */
-export const TRAILER_MAKES = ["manac", "haulmark", "karavan", "remeq", "tremcar", "highliner", "kanter", "penman", "pace american", "royal cargo", "triton"];
-
-/** Pickup models present in the data (titles rarely say "pickup"). */
-export const PICKUP_MODELS = [
-  "f-150", "f150", "f-250", "f250", "f-350", "f350", "silverado", "sierra", "ram 1500", "ram 2500", "ram 3500",
-  "tacoma", "tundra", "colorado", "canyon", "ranger", "frontier", "titan", "dakota", "ridgeline", "gladiator",
-];
-
-/** Words that mark a part, accessory or a non-vehicle "truck" (hand truck, pallet truck, toy). */
-export const PART_WORDS = [
-  "cover", "covers", "tonneau", "mirror", "mirrors", "tire", "tires", "tyre", "tyres", "rim", "rims", "wheel", "wheels",
-  "part", "parts", "toy", "toys", "hand truck", "hand trucks", "pallet truck", "basket truck", "dolly", "jack", "cap", "caps",
-  "canopy", "bed slide", "accessory", "accessories", "mat", "mats", "rack", "racks", "ladder", "hitch", "bumper", "seat",
-  "seats", "headlight", "headlights", "battery", "batteries", "liner", "console", "consoles", "grille",
-  "fender", "charger", "chargers", "adapter", "adapters", "bag", "bags", "sleeve", "sleeves", "dock", "docking station",
-  "cable", "cables", "mount", "case", "cases", "storage box", "tool box", "toolbox", "truck box", "cylinder", "decal",
-  "decals", "manual", "manuals", "model kit", "replica", "scrap", "engine", "transmission", "lift truck", "truck lift", "hydraulic lift", "lift kit", "kit", "cart", "drawer", "lock", "tailgate", "seating", "cargo storage", "cargo compartment", "cargo box", "cargo boxes", "pump", "suitcase", "knapsack", "briefcase", "holster", "strap",
-];
-
-const YEAR = "^(19|20)[0-9]{2}[ ]+";
-export const RE_SRC = {
-  road: `${YEAR}(${ROAD_MAKES.join("|")})${W1}`,
-  powersport: `${YEAR}(${POWERSPORT_MAKES.join("|")})${W1}`,
-  equipment: `${YEAR}(${EQUIPMENT_MAKES.join("|")})${W1}`,
-  trailer: `${YEAR}(${TRAILER_MAKES.join("|")})${W1}|${W0}trailers?${W1}`,
-  // "door" only when not "4-Door" (a body style).
-  part: `${W0}(${PART_WORDS.join("|")})s?${W1}|(^|[^a-z0-9-])doors?${W1}`,
-} as const;
-
-export type LotKind = "vehicle" | "powersport" | "equipment" | "trailer" | "part" | "other";
-export const KIND_LABEL: Record<LotKind, string> = {
-  vehicle: "Cars & trucks",
-  powersport: "ATVs, snowmobiles & boats",
-  equipment: "Tractors & heavy equipment",
-  trailer: "Trailers",
-  part: "Parts, accessories & for-parts lots",
-  other: "Other items",
-};
-export const FILTERABLE_KINDS: LotKind[] = ["vehicle", "powersport", "equipment", "trailer", "part", "other"];
-
-const RX = Object.fromEntries(Object.entries(RE_SRC).map(([k, v]) => [k, new RegExp(v, "i")])) as Record<keyof typeof RE_SRC, RegExp>;
-
-/** Kind of one lot from its title. Year+make wins unless the title names a part ("2020 Ford F-250 Center Consoles"). */
-export function classifyTitle(title: string): LotKind {
-  const t = (title || "").trim();
-  const part = RX.part.test(t);
-  if (!part) {
-    if (RX.road.test(t)) return "vehicle";
-    if (RX.powersport.test(t)) return "powersport";
-    if (RX.equipment.test(t)) return "equipment";
-  }
-  if (RX.trailer.test(t) && !part) return "trailer";
-  if (part) return "part";
-  return "other";
-}
-
-/**
- * PostgREST filters for one kind. They mirror classifyTitle() exactly, so a facet count computed
- * in JS equals the row count the database returns for that kind.
- */
-export function kindFilters(kind: LotKind): Array<{ op: "imatch" | "not.imatch"; pattern: string }> {
-  const not = (k: keyof typeof RE_SRC) => ({ op: "not.imatch" as const, pattern: RE_SRC[k] });
-  const is = (k: keyof typeof RE_SRC) => ({ op: "imatch" as const, pattern: RE_SRC[k] });
-  switch (kind) {
-    case "vehicle":
-      return [is("road"), not("part")];
-    case "powersport":
-      return [is("powersport"), not("part"), not("road")];
-    case "equipment":
-      return [is("equipment"), not("part"), not("road"), not("powersport")];
-    case "trailer":
-      return [is("trailer"), not("part"), not("road"), not("powersport"), not("equipment")];
-    case "part":
-      return [is("part")];
-    case "other":
-      return [not("road"), not("powersport"), not("equipment"), not("trailer"), not("part")];
-  }
-}
-
-export function cleanKind(k?: string | null): LotKind | null {
-  return (FILTERABLE_KINDS as string[]).includes(k || "") ? (k as LotKind) : null;
-}
+export { classifyLot, classifyTitle, cleanKind, FILTERABLE_KINDS, KIND_LABEL, kindLogic, PICKUP_MODELS, ROAD_MAKES } from "./kinds";
+export type { LotKind } from "./kinds";
 
 /** Strip PostgREST / LIKE syntax from user text. */
 export function cleanTerm(s: string): string {
@@ -165,12 +61,16 @@ const PHRASES: Array<[RegExp, string]> = [
 ];
 
 const VEHICLE_WORDS = new Set(["truck", "trucks", "pickup", "pickups", "car", "cars", "van", "vans", "suv", "sedan", "minivan", "vehicle", "vehicles", "hatchback", "coupe", "wagon", "cab"]);
+/** Words that mean a medium/heavy truck or bus (all seen in the data). */
+const HEAVY_WORDS = new Set(["dump", "bus", "buses", "plow", "bucket", "boom", "cutaway", "cube", "tractor-trailer", "semi", "f450", "f550", "f650", "f750", "4500", "5500", "6500", "7500", "kodiak", "topkick", "acterra", "cascadia", "prostar", "durastar"]);
 
 export type SearchPlan = {
   /** Each group must match (AND); any variant within a group may match (OR). */
   groups: string[][];
   /** The query looks like it is about road vehicles. */
   vehicleIntent: boolean;
+  /** ...and specifically medium/heavy trucks or buses ("dump truck", "F-550", "Freightliner"). */
+  heavyIntent: boolean;
   /** Synonyms added beyond spelling variants, for an honest "also matching" note. */
   expandedWith: string[];
   cleaned: string;
@@ -184,6 +84,7 @@ export function planSearch(raw: string): SearchPlan {
   const groups: string[][] = [];
   const expanded: string[] = [];
   let vehicleIntent = false;
+  let heavyIntent = false;
   for (const t of toks) {
     const variants = new Set<string>(tokenVariants(t));
     const syn = SYNONYMS[t];
@@ -191,10 +92,12 @@ export function planSearch(raw: string): SearchPlan {
       if (!variants.has(v) && !tokenVariants(t).includes(v) && !/^pick/.test(v) && v !== t) expanded.push(v);
       variants.add(v);
     }
+    if (HEAVY_WORDS.has(t) || HEAVY_MAKES.includes(t)) heavyIntent = vehicleIntent = true;
     if (VEHICLE_WORDS.has(t) || ROAD_MAKES.includes(t) || PICKUP_MODELS.includes(t) || PICKUP_MODELS.includes(t.replace(/^([a-z])([0-9])/, "$1-$2"))) vehicleIntent = true;
     groups.push([...variants]);
   }
-  return { groups, vehicleIntent, expandedWith: [...new Set(expanded)], cleaned };
+  if (/(^| )(western star|blue bird|school bus|fire truck|tow truck)( |$)/.test(s)) heavyIntent = vehicleIntent = true;
+  return { groups, vehicleIntent, heavyIntent, expandedWith: [...new Set(expanded)], cleaned };
 }
 
 /** PostgREST logic tree: and(or(title.ilike."%a%",title.ilike."%b%"),or(...)). */
@@ -225,11 +128,11 @@ export type Homogeneity = {
   reason: "ok" | "too_few" | "mixed_kinds" | "wide_spread";
 };
 
-export function assessHomogeneity(rows: Array<{ title: string; sold_amount: number | null }>): Homogeneity {
+export function assessHomogeneity(rows: Array<LotLike & { sold_amount: number | null }>): Homogeneity {
   const xs = rows.filter((r) => typeof r.sold_amount === "number" && Number.isFinite(r.sold_amount) && r.sold_amount > 0);
   const kinds: Partial<Record<LotKind, number>> = {};
   for (const r of xs) {
-    const k = classifyTitle(r.title);
+    const k = classifyLot(r);
     kinds[k] = (kinds[k] || 0) + 1;
   }
   const n = xs.length;

@@ -1,0 +1,9 @@
+feed_key,external_id,kind,reason
+gcsurplus_sold,gcs-R5OT0021340,part,"Starts with a model year, but the lot is a front bumper with tow hooks, not a truck"
+gcsurplus_sold,gcs-R3ED0015908,electronics,"A monitor sold with its wall mount; the mount is not the thing sold"
+gcsurplus_sold,gcs-R4HA0017285,electronics,"A TV/monitor sold with its wall mount"
+gcsurplus_sold,gcs-R4MO0015226,electronics,"A monitor sold with its wall mount"
+gcsurplus_sold,gcs-R3OT0014064,electronics,"An LCD TV/monitor sold with its wall mount"
+gcsurplus_sold,gcs-R2WI0013531,equipment,"Trailer-mounted 10 kW diesel generator: priced as a generator, not a bare trailer"
+gcsurplus_sold,gcs-R2WI0013532,equipment,"Trailer-mounted 10 kW diesel generator: priced as a generator, not a bare trailer"
+ns_surplus,fba4b60b0445baced241a50f0d916493,hide_from_comps,"Negative awarded amount (C$-7,235.93) in the source file"
