@@ -71,7 +71,7 @@
   --sb-surface-raised: #FFFFFF;
   --sb-ink: #2C2118;
   --sb-ink-soft: #6A5646;
-  --sb-muted: #847260;
+  --sb-muted: #705E4C; /* was #847260 (4.08:1 on bg, below WCAG AA) */
   --sb-action: #845924;
   --sb-action-hover: #60411A;
   --sb-action-text: #FFFFFF;
