@@ -129,7 +129,8 @@ export default async function CompsPage({ searchParams }: { searchParams: { q?: 
 
       <div className="card overflow-x-auto">
         <p className="mb-2 text-sm text-[var(--sb-ink-soft)]">Most recent matching sales</p>
-        <table className="w-full text-sm">
+        <div className="-mx-2 overflow-x-auto px-2">
+          <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b border-[var(--sb-line)] text-left text-xs uppercase tracking-wider text-[var(--sb-ink-soft)]">
               <th className="px-2 py-2.5 font-semibold">Lot</th>
@@ -149,6 +150,7 @@ export default async function CompsPage({ searchParams }: { searchParams: { q?: 
             ))}
           </tbody>
         </table>
+          </div>
         <p className="mt-3 text-sm">
           <Link href={`/price-history?q=${encodeURIComponent(q)}${province ? `&province=${province}` : ""}`} className="underline text-[var(--sb-accent-700)]">
             See all {rows.total.toLocaleString("en-CA")} matching lots

@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { MOCK, CRON_SECRET, shot, signIn, trackConsole, noHorizontalOverflow, axeSeriousOrCritical, assertNoStaffPii } from "./helpers";
 
-test.describe.configure({ mode: "serial" });
+test.describe.configure({ mode: "default" });
 
 test.beforeEach(async ({ context }) => {
   await signIn(context, "member");
@@ -131,7 +131,7 @@ test("no staff contact details anywhere in the database", async () => {
   expect(scan.hits, "synthetic staff values found in DB").toEqual([]);
 });
 
-for (const p of ["/dashboard", "/saved", "/inbox", "/settings", "/pricing"]) {
+for (const p of ["/dashboard", "/saved", "/inbox", "/settings", "/pricing", "/billing/success"]) {
   test(`a11y (signed in): no serious/critical axe violations on ${p}`, async ({ page }) => {
     await page.goto(p);
     await page.waitForLoadState("networkidle");

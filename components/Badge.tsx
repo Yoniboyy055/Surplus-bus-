@@ -10,10 +10,10 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ variant = 'default', size = 'md', icon, children, className = '', ...props }, ref) => {
     const variantStyles = {
-      success: 'bg-accent-success/20 text-accent-success',
-      error: 'bg-accent-danger/20 text-accent-danger',
-      warning: 'bg-accent-warning/20 text-accent-warning',
-      info: 'bg-accent-info/20 text-accent-info',
+      success: 'bg-[var(--sb-success-bg)] text-[var(--sb-ok-text)]',
+      error: 'bg-[var(--sb-danger-bg)] text-[var(--sb-danger-text)]',
+      warning: 'bg-[var(--sb-warning-bg)] text-[var(--sb-warn-text)]',
+      info: 'bg-[var(--sb-info-bg)] text-[var(--sb-info-text)]',
       default: 'bg-[var(--sb-primary-100)] text-[var(--sb-ink)] border border-[var(--sb-line)]',
     };
 

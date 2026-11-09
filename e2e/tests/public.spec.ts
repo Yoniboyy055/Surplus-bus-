@@ -156,7 +156,7 @@ test.describe("Waitlist, unsubscribe, gates, legal, SEO", () => {
   });
 });
 
-const A11Y_PAGES = ["/", "/search", "/comps?q=pickup%20truck", "/price-history", "/tenders", "/watchlist", "/landing", "/pricing", "/legal/privacy", "/legal/attributions", "/auth"];
+const A11Y_PAGES = ["/", "/search", "/comps?q=pickup%20truck", "/comps?q=zzzz-no-match", "/price-history", "/tenders", "/watchlist", "/sources", "/landing", "/pricing", "/faq", "/product", "/legal/terms", "/legal/privacy", "/legal/anti-spam", "/legal/attributions", "/auth", "/unsubscribe?done=1&kind=marketing", "/unsubscribe?token=abc&kind=alerts", "/billing/cancel"];
 for (const p of A11Y_PAGES) {
   test(`a11y (signed out): no serious/critical axe violations on ${p}`, async ({ page }) => {
     await page.goto(p);

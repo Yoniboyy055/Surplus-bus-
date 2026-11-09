@@ -22,10 +22,11 @@ const config: Config = {
           "100": "#2C2118",
           "50": "#2C2118",
         },
+        // Text-safe on the light background (AA): legacy cyan text classes map to clay accents.
         cyan: {
           "500": "#845924",
-          "400": "#AF7327",
-          "300": "#D28D36",
+          "400": "#744133",
+          "300": "#744133",
         },
         clay: {
           bg: "#F8F0E4",
@@ -47,10 +48,11 @@ const config: Config = {
         accent: {
           primary: "#845924",
           secondary: "#99503D",
-          success: "#6C7E57",
-          danger: "#A93A2C",
-          warning: "#BC8F19",
-          info: "#5B7AA8",
+          // Darkened for text contrast (>=5:1 on bg and on their own /20 tints).
+          success: "#4A5A3B",
+          danger: "#8E2F23",
+          warning: "#6E520C",
+          info: "#3E5A85",
         },
       },
       spacing: {

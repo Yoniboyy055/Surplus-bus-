@@ -29,10 +29,10 @@ export const Toast: React.FC<ToastProps> = ({
   if (!isVisible) return null;
 
   const typeStyles = {
-    success: 'bg-accent-success/20 text-accent-success border-accent-success/50',
-    error: 'bg-accent-danger/20 text-accent-danger border-accent-danger/50',
-    info: 'bg-accent-info/20 text-accent-info border-accent-info/50',
-    warning: 'bg-accent-warning/20 text-accent-warning border-accent-warning/50',
+    success: 'bg-[var(--sb-success-bg)] text-[var(--sb-ok-text)] border-[rgba(108,126,87,0.35)]',
+    error: 'bg-[var(--sb-danger-bg)] text-[var(--sb-danger-text)] border-[rgba(169,58,44,0.35)]',
+    info: 'bg-[var(--sb-info-bg)] text-[var(--sb-info-text)] border-[rgba(91,122,168,0.35)]',
+    warning: 'bg-[var(--sb-warning-bg)] text-[var(--sb-warn-text)] border-[rgba(188,143,25,0.35)]',
   };
 
   const typeIcons = {

@@ -94,7 +94,8 @@ export default async function PriceHistoryPage({
           <p className="mb-3 text-sm text-[var(--sb-ink-soft)]" data-total={res.total}>
             {res.total.toLocaleString("en-CA")} sold or awarded lots{q ? ` matching “${q}”` : ""}
           </p>
-          <table className="w-full text-sm">
+          <div className="-mx-2 overflow-x-auto px-2">
+          <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-[var(--sb-line)] text-left text-xs uppercase tracking-wider text-[var(--sb-ink-soft)]">
                 <th className="px-2 py-2.5 font-semibold">Closed</th>
@@ -121,6 +122,7 @@ export default async function PriceHistoryPage({
               ))}
             </tbody>
           </table>
+          </div>
           <nav className="mt-4 flex items-center justify-between text-sm" aria-label="Pages">
             {page > 1 ? <Link href={qs(page - 1)} className="btn btn-outline btn-sm no-underline">Previous</Link> : <span />}
             <span className="text-[var(--sb-ink-soft)]">Page {page} of {Math.max(1, Math.ceil(res.total / PAGE))}</span>

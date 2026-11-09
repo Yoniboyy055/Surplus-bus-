@@ -56,7 +56,7 @@ export function BrandMark({
     );
 
   return (
-    <Link href={href} className="inline-flex items-center no-underline hover:opacity-90">
+    <Link href={href} aria-label="Surplus Bus home" className="inline-flex items-center no-underline hover:opacity-90">
       {content}
     </Link>
   );
