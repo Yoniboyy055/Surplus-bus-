@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { parseCsv, moneyToNumber } from "./csv";
 import { OGL_NOVA_SCOTIA } from "./attribution";
-import { OPEN_DATA_URLS } from "./urls";
+import { nsFilteredDataUrl } from "./urls";
 
 /**
  * Personal-data treatment (PR #28 review): the source columns
@@ -58,7 +58,7 @@ export function parseNsPublicTenderCsv(csvText: string): NsSurplusHistoryRow[] {
       contract_price_raw: priceRaw,
       province: "NS",
       source: "ns_surplus_open_data",
-      source_url: OPEN_DATA_URLS.nsPublicTenderPage,
+      source_url: nsFilteredDataUrl("public_tender", file || null),
       licence_id: OGL_NOVA_SCOTIA.id,
       status: "awarded",
     });
@@ -87,7 +87,7 @@ export function parseNsRealPropertyCsv(csvText: string): NsSurplusHistoryRow[] {
       contract_price_raw: priceRaw,
       province: "NS",
       source: "ns_surplus_open_data",
-      source_url: OPEN_DATA_URLS.nsRealPropertyPage,
+      source_url: nsFilteredDataUrl("real_property", file || null),
       licence_id: OGL_NOVA_SCOTIA.id,
       status: "awarded",
     });

@@ -2,7 +2,7 @@ import { cleanLotText } from "./redact";
 import { createHash } from "crypto";
 import { parseCsv, moneyToNumber, provinceCode } from "./csv";
 import { OGL_CANADA } from "./attribution";
-import { OPEN_DATA_URLS } from "./urls";
+import { gcsurplusSoldResourcePageUrl } from "./urls";
 
 /** Sold-lot price history row (never ranked as open opportunity). */
 export type GcSurplusSoldRow = {
@@ -21,8 +21,6 @@ export type GcSurplusSoldRow = {
   status: "sold";
   /** Personal contact fields intentionally omitted from public model. */
 };
-
-const DATASET = OPEN_DATA_URLS.gcsurplusSoldDataset;
 
 function stableId(parts: string[]): string {
   return createHash("sha256").update(parts.join("|")).digest("hex").slice(0, 32);
@@ -98,7 +96,7 @@ export function parseGcSurplusSoldCsv(csvText: string): GcSurplusSoldRow[] {
         city,
         category: items ? firstLine(items, 120) : null,
         source: "gcsurplus_sold",
-        source_url: DATASET,
+        source_url: gcsurplusSoldResourcePageUrl(closing),
         licence_id: OGL_CANADA.id,
         status: "sold",
       },

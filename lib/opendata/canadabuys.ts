@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import type { ParsedOpportunity } from "@/lib/agents/parsers/types";
 import { parseCsv, provinceCode } from "./csv";
 import { OGL_CANADA } from "./attribution";
-import { OPEN_DATA_URLS } from "./urls";
+import { OPEN_DATA_URLS, canadabuysNoticePageUrl } from "./urls";
 
 export type CanadaBuysTenderRow = ParsedOpportunity & {
   reference_number: string;
@@ -53,9 +53,12 @@ export function parseCanadaBuysOpenTendersCsv(csvText: string): CanadaBuysTender
     const amend = (row["amendmentNumber-numeroModification"] || "").trim();
     const statusRaw = row["tenderStatus-appelOffresStatut-eng"] || "";
     const status = mapStatus(statusRaw);
-    const url =
-      (row["noticeURL-URLavis-eng"] || row["noticeURL-URLavis-fra"] || "").trim() ||
-      OPEN_DATA_URLS.canadabuysDataset;
+    // Prefer the CanadaBuys notice page from the reference number. The CSV
+    // noticeURL often points at MERX (third-party); we do not send users there.
+    const url = ref
+      ? canadabuysNoticePageUrl(ref)
+      : (row["noticeURL-URLavis-eng"] || row["noticeURL-URLavis-fra"] || "").trim() ||
+        OPEN_DATA_URLS.canadabuysDataset;
     const closing = (row["tenderClosingDate-appelOffresDateCloture"] || "").trim() || null;
     const pub = (row["publicationDate-datePublication"] || "").trim() || null;
     const entity = (row["contractingEntityName-nomEntitContractante-eng"] || "").trim() || null;
