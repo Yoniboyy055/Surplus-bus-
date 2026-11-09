@@ -3,8 +3,11 @@ import Link from "next/link";
 import { LicenceAttribution } from "@/components/LicenceAttribution";
 import { DataStateNotice, FeedFreshnessChip } from "@/components/DataStateNotice";
 import { OGL_CANADA, OGL_NOVA_SCOTIA } from "@/lib/opendata/attribution";
-import { cleanProvince, fetchFeedStatus, fetchPriceHistory, fetchSoldAmounts } from "@/lib/opendata/queries";
+import { fetchFeedStatus, fetchMatchSample, fetchPriceHistory } from "@/lib/opendata/queries";
 import { BAND_MIN_N, computeCompStats, formatCad } from "@/lib/opendata/comps";
+import { assessHomogeneity, classifyTitle, KIND_LABEL, planSearch, RANGE_MAX_SPREAD } from "@/lib/opendata/search";
+import { kindFacets, lotHref, parseLotParams, toFilters } from "@/lib/opendata/lotParams";
+import { KindFacets } from "@/components/KindFacets";
 import { SaveSearchButton } from "./SaveSearchButton";
 
 export const dynamic = "force-dynamic";
@@ -14,10 +17,9 @@ export const metadata = {
   description: "What similar Canadian public surplus has actually sold for, from open government data.",
 };
 
-export default async function CompsPage({ searchParams: searchParamsP }: { searchParams: Promise<{ q?: string; province?: string }> }) {
-  const searchParams = await searchParamsP;
-  const q = (searchParams.q || "").trim().slice(0, 80);
-  const province = cleanProvince(searchParams.province);
+export default async function CompsPage({ searchParams: searchParamsP }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const params = parseLotParams(await searchParamsP);
+  const { q, province } = params;
 
   if (!q) {
     return (
@@ -32,14 +34,15 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
     );
   }
 
-  const [amounts, rows, status] = await Promise.all([
-    fetchSoldAmounts({ q, province }),
-    fetchPriceHistory({ q, province, limit: 12 }),
+  const plan = planSearch(q);
+  const [sample, rows, status] = await Promise.all([
+    fetchMatchSample(toFilters(params, false)),
+    fetchPriceHistory({ ...toFilters(params), limit: 12 }),
     fetchFeedStatus(["gcsurplus_sold", "ns_surplus"]),
   ]);
 
-  if (amounts.state !== "ok" || rows.state !== "ok") {
-    const s = amounts.state !== "ok" ? amounts.state : rows.state !== "ok" ? rows.state : "error";
+  if (sample.state !== "ok" || rows.state !== "ok") {
+    const s = sample.state !== "ok" ? sample.state : rows.state !== "ok" ? rows.state : "error";
     return (
       <div className="mx-auto max-w-3xl space-y-4 px-4 py-8">
         <h1 className="sb-title text-[26px]">{q} · sold comps</h1>
@@ -48,7 +51,13 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
     );
   }
 
-  const stats = computeCompStats(amounts.rows.map((r) => r.sold_amount));
+  // Same kind rules as the database filter (lib/opendata/search.ts), applied to the match sample.
+  const kindRows = params.kind ? sample.rows.filter((r) => classifyTitle(r.title) === params.kind) : sample.rows;
+  const stats = computeCompStats(kindRows.map((r) => r.sold_amount));
+  const homo = assessHomogeneity(kindRows);
+  const facets = kindFacets(sample.rows);
+  const capped = sample.total > sample.rows.length;
+  const showBand = Boolean(stats?.showBand && homo.ok);
   const stale = status.state === "ok" && Object.values(status.feeds).some((f) => f.state === "stale" || f.state === "failing");
 
   if (!stats) {
@@ -60,10 +69,16 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
         </div>
         <h1 className="sb-title mb-2 text-[26px]">No sold comps for “{q}”</h1>
         <p className="mb-5 text-sm text-[var(--sb-ink-soft)]">
-          Try a broader word, or check spelling. We only show real closed lots from open government data.
+          {params.kind && sample.rows.length
+            ? `None of the ${sample.rows.length.toLocaleString("en-CA")} matches look like ${KIND_LABEL[params.kind].toLowerCase()}. Try All kinds.`
+            : "Try a broader word, or check spelling. We only show real closed lots from open government data."}
         </p>
         <div className="flex justify-center gap-2">
-          <Link href="/search" className="btn btn-outline no-underline text-[var(--sb-ink)]">Edit search</Link>
+          {params.kind && sample.rows.length ? (
+            <Link href={lotHref("/comps", params, { kind: "all" })} className="btn btn-outline no-underline text-[var(--sb-ink)]">Show all kinds</Link>
+          ) : (
+            <Link href={lotHref("/search", params)} className="btn btn-outline no-underline text-[var(--sb-ink)]">Edit search</Link>
+          )}
           <SaveSearchButton q={q} province={province} />
         </div>
       </div>
@@ -90,19 +105,28 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
         <SaveSearchButton q={q} province={province} />
       </div>
 
+      {plan.expandedWith.length > 0 && (
+        <p className="text-sm text-[var(--sb-ink-soft)]" data-testid="expanded-note">
+          Also matching related names in the data: {plan.expandedWith.slice(0, 8).join(", ")}
+          {plan.expandedWith.length > 8 ? ` and ${plan.expandedWith.length - 8} more` : ""}.
+        </p>
+      )}
+      <KindFacets path="/comps" params={params} facets={facets} total={sample.total} capped={capped} />
+
       <div className="grid items-center gap-5 md:grid-cols-[1.1fr_1fr]">
         <div className="relative hidden overflow-hidden rounded-[30px] bg-[var(--sb-surface)] shadow-raised md:block">
           <Image src="/images/price_range_tags.jpg" alt="Clay price tags, AI-generated illustration (not a real lot)" width={1200} height={900} className="h-auto w-full" />
           <span className="absolute right-3 top-3 rounded-full bg-[var(--sb-ink)] px-2.5 py-1 text-[10px] font-bold tracking-wider text-[var(--sb-bg)]">AI illustration</span>
         </div>
-        <div className="card" data-n={stats.n}>
+        <div className="card" data-n={stats.n} data-range={showBand ? "shown" : homo.reason}>
           <div className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-[var(--sb-accent-700)]">
-            {stats.showBand ? "Typical sold range · not a guarantee" : "Too few sales for a range"}
+            {showBand ? "Typical sold range · not a guarantee" : !stats.showBand ? "Too few sales for a range" : "No single typical range"}
           </div>
-          {stats.showBand ? (
+          {showBand ? (
             <>
               <p className="mb-4 text-sm text-[var(--sb-ink-soft)]">
-                Middle half (p25–p75) of {stats.n} similar closed lots. Historical context only — not an appraisal and
+                Middle half (p25–p75) of {stats.n.toLocaleString("en-CA")} similar closed lots
+                {params.kind ? ` (${KIND_LABEL[params.kind].toLowerCase()})` : ""}. Historical context only — not an appraisal and
                 not a bid recommendation.
               </p>
               <div className="guidance-band motion-band" aria-hidden>
@@ -115,10 +139,31 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
                 <span>p75 <strong className="sb-mono text-[var(--sb-ink)]">{formatCad(stats.p75)}</strong></span>
               </div>
             </>
-          ) : (
+          ) : !stats.showBand ? (
             <p className="text-sm text-[var(--sb-ink-soft)]">
               Only {stats.n} matching sale{stats.n === 1 ? "" : "s"} (we need {BAND_MIN_N} for a range). The individual
               sales are listed below.
+            </p>
+          ) : homo.reason === "mixed_kinds" ? (
+            <div className="space-y-2 text-sm text-[var(--sb-ink-soft)]" data-testid="narrow-note">
+              <p>
+                These matches mix different kinds of items
+                {homo.dominant ? `: only ${Math.round(homo.share * 100)}% look like ${KIND_LABEL[homo.dominant].toLowerCase()}` : ""}. One
+                price range would mislead, so narrow the search first.
+              </p>
+              {homo.dominant && !params.kind && (
+                <p>
+                  <Link href={lotHref("/comps", params, { kind: homo.dominant })} className="underline text-[var(--sb-accent-700)]">
+                    Show only {KIND_LABEL[homo.dominant].toLowerCase()} ({(homo.kinds[homo.dominant] || 0).toLocaleString("en-CA")})
+                  </Link>
+                  {" "}or add a make, model or size to your search.
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-[var(--sb-ink-soft)]" data-testid="narrow-note">
+              Prices for these matches vary too widely (the upper quarter starts at over {RANGE_MAX_SPREAD}× the lower quarter)
+              for one typical range. Add a make, model or size to narrow the search.
             </p>
           )}
           <div className="mt-4 flex flex-wrap gap-2.5">
@@ -153,7 +198,7 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
         </table>
           </div>
         <p className="mt-3 text-sm">
-          <Link href={`/price-history?q=${encodeURIComponent(q)}${province ? `&province=${province}` : ""}`} className="underline text-[var(--sb-accent-700)]">
+          <Link href={lotHref("/search", params)} className="underline text-[var(--sb-accent-700)]">
             See all {rows.total.toLocaleString("en-CA")} matching lots
           </Link>
         </p>
