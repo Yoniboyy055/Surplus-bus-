@@ -155,7 +155,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         <LicenceAttribution licence={OGL_CANADA} />
         <LicenceAttribution licence={OGL_NOVA_SCOTIA} />
         <p className="text-xs text-[var(--sb-ink-soft)]">
-          Each row links to the dataset it came from. Contact details in source files are removed. See <Link href="/legal/attributions" className="underline">attributions</Link>.
+          Each row opens the closest official source we can link (period file, filtered NS table, or CanadaBuys notice) and shows the sale account or file number so you can find that row. Contact details in source files are removed. See <Link href="/legal/attributions" className="underline">attributions</Link>.
         </p>
       </footer>
     </div>
