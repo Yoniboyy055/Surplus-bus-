@@ -142,10 +142,20 @@ async function main() {
   const banned = /custodian|sales_person|email|phone|postal|awarded_to|paid_party|awardee|payer|contact/i;
   const badCols = cols.filter((c: any) => banned.test(c.column_name));
   check(badCols.length === 0, "no personal/contact columns in open-data tables", badCols.map((c: any) => c.column_name).join(","));
-  const pii = (await db.query(`select count(*)::int n from (
-     select title||' '||coalesce(description,'')||' '||coalesce(city,'') t from public.price_history_lots
+  const piiRows = (await db.query(`select t from (
+     select title||' '||coalesce(description,'')||' '||coalesce(city,'')||' '||coalesce(category,'') t from public.price_history_lots
      union all select title||' '||coalesce(description,'')||' '||coalesce(issuing_entity,'') from public.tender_notices) x
-     where t ~* '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}' or t ~ '\\(?[0-9]{3}\\)?[ .-][0-9]{3}[ .-][0-9]{4}'`)).rows[0].n;
+     where t ~* '[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}' or t ~ '\\(?[0-9]{3}\\)?[ .-][0-9]{3}[ .-][0-9]{4}'`)).rows as { t: string }[];
+  // Digit groups right after "Part number:", "NSN", "Model", "Serial" are product identifiers, not phones.
+  const partCtx = /(part\s*(number|no\.?|#)|p\/n|nsn|model|serial|s\/n)\s*:?\s*[A-Z]?\s*$/i;
+  const pii = piiRows.filter(({ t }) => {
+    if (/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(t)) return true;
+    const re = /\(?[0-9]{3}\)?[ .-][0-9]{3}[ .-][0-9]{4}/g;
+    let m;
+    while ((m = re.exec(t))) if (!partCtx.test(t.slice(Math.max(0, m.index - 40), m.index))) return true;
+    return false;
+  }).length;
+  if (piiRows.length !== pii) console.log(`  ${piiRows.length - pii} digit match(es) were product part numbers, not phones`);
   check(pii === 0, "no email addresses or phone numbers stored in any open-data row", `${pii} rows`);
   if (pii) {
     const ex = (await db.query(`select src, fld, substring(v from greatest(1, coalesce(nullif(position('@' in v),0), 1)-50) for 110) snip from (
@@ -160,6 +170,30 @@ async function main() {
     for (const e of ex) by[`${e.src}.${e.fld}`] = (by[`${e.src}.${e.fld}`] || 0) + 1;
     console.log("PII offenders by field:", JSON.stringify(by));
     for (const e of ex.slice(0, 6)) console.log("  e.g.", e.src, e.fld, JSON.stringify(e.snip).replace(/[A-Za-z0-9._%+-]+@/g, "***@"));
+  }
+  {
+    // Staff names/emails/phones present in the raw GCSurplus file must not exist anywhere in the DB.
+    const { parseCsv } = await import("../../lib/opendata/csv");
+    let rawText = readFileSync(path.join(FIX, "gcsurplus_sold_sample.csv"), "utf8");
+    if (live) {
+      const { gcSurplusZipCandidates } = await import("../../lib/opendata/ingest");
+      const { extractFirstCsvFromZip } = await import("../../lib/opendata/zip");
+      for (const u of gcSurplusZipCandidates(new Date())) {
+        const res = await fetch(u);
+        if (res.ok) { rawText = extractFirstCsvFromZip(new Uint8Array(await res.arrayBuffer())).text; break; }
+      }
+    }
+    const { rows: rawRows } = parseCsv(rawText);
+    const staff = new Set<string>();
+    for (const r of rawRows) for (const c of ["CUSTODIAN_PERSON_NM", "CUSTODIAN_PERSON_PHN", "CUSTODIAN_EMAIL", "SALES_PERSON_NM", "SALES_EMAIL_ADDRS_ID", "SALES_PERSON_PHN"]) {
+      const v = ((r as Record<string, string>)[c] || "").trim();
+      if (v.length >= 5) staff.add(v);
+    }
+    const dump = JSON.stringify((await db.query(`select title, description, city, category from public.price_history_lots`)).rows).toLowerCase();
+    // Names shorter than 2 words could collide with ordinary words; check emails, phones and full names.
+    const leaked = [...staff].filter((v) => (v.includes("@") || /\d{3}.?\d{4}/.test(v) || v.trim().includes(" ")) && dump.includes(v.toLowerCase()));
+    if (leaked.length) console.log("  leaked examples (masked):", leaked.slice(0, 5).map((v) => v.slice(0, 3) + "…"));
+    check(staff.size > 0 && leaked.length === 0, "GCSurplus staff names/emails/phones from the raw file are absent from the DB", `${staff.size} raw values checked, ${leaked.length} found`);
   }
   const lic = (await db.query(`select count(*)::int n from public.price_history_lots where licence_id is null or source_url is null`)).rows[0].n;
   check(lic === 0, "every stored row carries licence_id + source_url (attribution)");

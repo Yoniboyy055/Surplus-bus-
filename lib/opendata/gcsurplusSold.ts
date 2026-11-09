@@ -1,4 +1,4 @@
-import { redactContactDetails } from "./redact";
+import { cleanLotText } from "./redact";
 import { createHash } from "crypto";
 import { parseCsv, moneyToNumber, provinceCode } from "./csv";
 import { OGL_CANADA } from "./attribution";
@@ -66,12 +66,14 @@ export function parseGcSurplusSoldCsv(csvText: string): GcSurplusSoldRow[] {
   type Pending = { row: GcSurplusSoldRow; contract: string | null; saleKey: string };
   const pending: Pending[] = [];
   for (const row of rows) {
-    const desc = redactContactDetails(collapseDoubledText((row.LOT_DESC || "").trim())) || "";
+    // Redact BEFORE truncation so a cut can never leave a partial email/phone.
+    const desc = cleanLotText(collapseDoubledText((row.LOT_DESC || "").trim())) || "";
     const sold = moneyToNumber(row.SOLD_AMT);
     const closing = (row.CLOSING_DT || "").trim() || null;
     const city = (row.ASSET_LOC_CITY || "").trim() || null;
     const prov = provinceCode(row.ASSET_LOC_PROV);
-    const items = (row.LOT_ITEMS || "").trim();
+    // LOT_ITEMS often ends "For further information, please contact <staff> at <phone/email>".
+    const items = cleanLotText((row.LOT_ITEMS || "").trim()) || "";
     if (!desc && sold == null) continue;
     const title = firstLine(desc || items || "GCSurplus sold lot");
     const contract = (row.SALE_CNTRCT_REG_ID || "").trim() || null;

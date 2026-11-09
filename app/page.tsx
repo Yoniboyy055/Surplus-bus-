@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { PlanCards } from "@/components/PlanCards";
 import { fetchCorpusStats } from "@/lib/opendata/queries";
+import { GCSURPLUS_SOLD_RECORDS_2023_2025 as FIG } from "@/lib/opendata/verifiedFigures";
+import { OGL_CANADA } from "@/lib/opendata/attribution";
 import { PAID_PLAN_IDS, PLANS, stripePriceId } from "@/lib/billing/plans";
 import { stripeConfigured } from "@/lib/billing/stripe";
 
@@ -58,17 +60,15 @@ export default async function HomePage() {
         </form>
 
         <div className="mt-5 flex flex-wrap justify-center gap-2.5">
+          <a href={FIG.datasetUrl} target="_blank" rel="noopener noreferrer" className="chip no-underline" data-stat="gcsurplus-records">
+            {FIG.text}
+          </a>
           {stats && (
-            <>
-              <span className="chip" data-stat="sold">
-                <strong>{stats.sold.toLocaleString("en-CA")}</strong>&nbsp;sold lots indexed
-              </span>
-              <span className="chip" data-stat="tenders">
-                <strong>{stats.tenders.toLocaleString("en-CA")}</strong>&nbsp;open tenders
-              </span>
-            </>
+            <span className="chip" data-stat="tenders">
+              <strong>{stats.tenders.toLocaleString("en-CA")}</strong>&nbsp;open federal tenders today
+            </span>
           )}
-          <span className="chip">OGL–Canada</span>
+          <a href={OGL_CANADA.url} target="_blank" rel="noopener noreferrer" className="chip no-underline">Open Government Licence – Canada</a>
         </div>
       </section>
 

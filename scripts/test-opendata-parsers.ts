@@ -11,6 +11,7 @@ import { scoreOpportunityV2 } from "../lib/intelligence/scoring";
 import { ingestOpenDataFeeds, gcSurplusRowCap, dedupeByExternalId } from "../lib/opendata/ingest";
 import { extractFirstCsvFromZip } from "../lib/opendata/zip";
 import { redactContactDetails } from "../lib/opendata/redact";
+import { parseCsv } from "../lib/opendata/csv";
 import { computeCompStats, toIlikePattern } from "../lib/opendata/comps";
 import { computeFeedFreshness } from "../lib/opendata/freshness";
 import { zipSync, strToU8 } from "fflate";
@@ -195,6 +196,9 @@ async function main() {
   });
 
   await test("GCSurplus identity: same contract, different amounts stay separate", () => {
+    const tail = parseGcSurplusSoldCsv(["SOLD_AMT,LOT_DESC,LOT_ITEMS,CLOSING_DT","10,Printer,\"Quantity: 1(unit(s)) : - For further information, please contact Ali Belabbas at 514-496-6122 or at ali.belabbas@nrc-cnrc.gc.ca\",2025-08-01"].join("\n"));
+    const tailOut = JSON.stringify(tail);
+    assert(!/Belabbas|496-6122|nrc-cnrc/.test(tailOut), `LOT_ITEMS contact leaked: ${tailOut}`);
     const hdr = "SOLD_AMT,LOT_DESC,MIN_BID_AMT,CLOSING_DT,LOT_ITEMS,ASSET_LOC_CITY,ASSET_LOC_PROV,SALE_CNTRCT_REG_ID";
     const csv = [hdr, "100,Lot A,0,2025-01-01,x,Ottawa,ON,K1", "250,Lot B,0,2025-01-01,x,Ottawa,ON,K1"].join("\n");
     const rows = parseGcSurplusSoldCsv(csv);
@@ -243,6 +247,31 @@ async function main() {
     assert(computeFeedFreshness(ok, "canadabuys", new Date("2026-11-13T12:00:00Z")).state === "stale", "stale");
     const failing = [...ok, { feed_key: "canadabuys", status: "error", retrieved_at: "2026-11-09T10:00:00Z" }];
     assert(computeFeedFreshness(failing, "canadabuys", now).state === "failing", "failing");
+  });
+
+  await test("GCSurplus staff names/emails/phones in the raw file never reach parsed rows", () => {
+    const raw = load("gcsurplus_sold_sample.csv");
+    const { rows } = parseCsv(raw);
+    const staffCols = ["CUSTODIAN_PERSON_NM", "CUSTODIAN_PERSON_PHN", "CUSTODIAN_EMAIL", "SALES_PERSON_NM", "SALES_EMAIL_ADDRS_ID", "SALES_PERSON_PHN"];
+    for (const c of staffCols) assert(c in (rows[0] || {}), `fixture should contain ${c} (proves the test is meaningful)`);
+    const secrets = new Set<string>();
+    for (const r of rows) for (const c of staffCols) {
+      const v = (r[c] || "").trim();
+      if (v.length >= 5) secrets.add(v);
+    }
+    // Fixture contacts are pre-redacted, so also inject realistic synthetic staff data.
+    const tail = parseGcSurplusSoldCsv(["SOLD_AMT,LOT_DESC,LOT_ITEMS,CLOSING_DT","10,Printer,\"Quantity: 1(unit(s)) : - For further information, please contact Ali Belabbas at 514-496-6122 or at ali.belabbas@nrc-cnrc.gc.ca\",2025-08-01"].join("\n"));
+    const tailOut = JSON.stringify(tail);
+    assert(!/Belabbas|496-6122|nrc-cnrc/.test(tailOut), `LOT_ITEMS contact leaked: ${tailOut}`);
+    const hdr = "SOLD_AMT,LOT_DESC,MIN_BID_AMT,CLOSING_DT,LOT_ITEMS,LOT_CMNTS,ASSET_LOC_CITY,ASSET_LOC_PROV,CUSTODIAN_PERSON_NM,CUSTODIAN_PERSON_PHN,CUSTODIAN_EMAIL,SALES_PERSON_NM,SALES_EMAIL_ADDRS_ID,SALES_PERSON_PHN,SALE_CNTRCT_REG_ID";
+    const synth = [hdr, '500,"Truck - contact Zelda Quintero at zelda.quintero@tpsgc-pwgsc.gc.ca or 613-555-0199",0,2025-08-01,x,"Custodian Contact: Zelda Quintero 613-555-0199",Ottawa,ON,Zelda Quintero,613-555-0199,zelda.quintero@tpsgc-pwgsc.gc.ca,Yuri Okonkwo,yuri.okonkwo@tpsgc-pwgsc.gc.ca,819-555-0123,K9ZZ000001'].join("\n");
+    const synthOut = JSON.stringify(parseGcSurplusSoldCsv(synth));
+    for (const v of ["zelda.quintero@tpsgc-pwgsc.gc.ca", "613-555-0199", "Yuri Okonkwo", "yuri.okonkwo", "819-555-0123"]) {
+      assert(!synthOut.includes(v), `synthetic staff value leaked: ${v}`);
+    }
+    assert(synthOut.includes("Truck"), "lot kept");
+    const out = JSON.stringify(parseGcSurplusSoldCsv(raw));
+    for (const v of secrets) assert(!out.includes(v), `staff value leaked: ${v.slice(0, 4)}…`);
   });
 
   await test("dedupeByExternalId collapses in-batch duplicates (no upsert self-conflict)", () => {

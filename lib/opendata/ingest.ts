@@ -107,12 +107,17 @@ export function gcSurplusZipCandidates(now: Date, halves = 4): string[] {
   return out;
 }
 
-async function fetchGcSurplusCsvText(): Promise<{ text: string; sourceUrl: string }> {
-  // Prefer latest ENG zip; fall back to previous half-year if needed.
-  // Newest half-year first, so a newly published file is picked up automatically.
-  const candidates = gcSurplusZipCandidates(new Date());
+/**
+ * Download up to `maxFiles` published half-year ZIPs, newest first. Unpublished
+ * (404) half-years are skipped. Default 1 (latest) for the daily cron; a
+ * backfill sets OPENDATA_GCSURPLUS_FILES=6 to cover 2023–2025.
+ */
+async function fetchGcSurplusCsvTexts(maxFiles: number): Promise<{ text: string; sourceUrl: string }[]> {
+  const candidates = gcSurplusZipCandidates(new Date(), maxFiles + 3);
+  const out: { text: string; sourceUrl: string }[] = [];
   let lastErr: Error | null = null;
   for (const url of candidates) {
+    if (out.length >= maxFiles) break;
     try {
       const res = await fetch(url, {
         headers: {
@@ -125,16 +130,20 @@ async function fetchGcSurplusCsvText(): Promise<{ text: string; sourceUrl: strin
       const buf = new Uint8Array(await res.arrayBuffer());
       // Pure-JS unzip (fflate, MIT): no OS `unzip` binary and no temp files.
       const { name, text, bytes } = extractFirstCsvFromZip(buf);
-      console.log(
-        `[opendata-ingest] gcsurplus_sold: unzipped ${name} (${bytes} bytes) from ${url}`
-      );
-      return { text, sourceUrl: url };
+      console.log(`[opendata-ingest] gcsurplus_sold: unzipped ${name} (${bytes} bytes) from ${url}`);
+      out.push({ text, sourceUrl: url });
     } catch (e) {
       lastErr = e instanceof Error ? e : new Error(String(e));
       console.warn(`[opendata-ingest] gcsurplus_sold: ${url} failed: ${lastErr.message}`);
     }
   }
-  throw lastErr || new Error("GCSurplus zip fetch failed");
+  if (!out.length) throw lastErr || new Error("GCSurplus zip fetch failed");
+  return out;
+}
+
+export function gcSurplusFileCount(): number {
+  const n = Number.parseInt(process.env.OPENDATA_GCSURPLUS_FILES || "1", 10);
+  return Number.isFinite(n) && n >= 1 && n <= 12 ? n : 1;
 }
 
 export async function ingestOpenDataFeeds(opts?: {
@@ -170,10 +179,10 @@ export async function ingestOpenDataFeeds(opts?: {
     if (feed === "gcsurplus_sold") {
       const source_url = OPEN_DATA_URLS.gcsurplusSoldDataset;
       try {
-        const text =
-          opts?.fixtures?.gcsurplusSoldCsv ??
-          (await fetchGcSurplusCsvText()).text;
-        const parsed = parseGcSurplusSoldCsv(text);
+        const texts = opts?.fixtures?.gcsurplusSoldCsv != null
+          ? [opts.fixtures.gcsurplusSoldCsv]
+          : (await fetchGcSurplusCsvTexts(gcSurplusFileCount())).map((f) => f.text);
+        const parsed = texts.flatMap((t) => parseGcSurplusSoldCsv(t));
         assertParsedRows("gcsurplus_sold", parsed.length);
         const cap = gcSurplusRowCap();
         const rows = cap != null ? parsed.slice(0, cap) : parsed;

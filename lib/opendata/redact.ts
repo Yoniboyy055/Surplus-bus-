@@ -9,6 +9,11 @@ const PHONE = /(?:\+?1[ .-]?)?\(?\b\d{3}\)?[ .-]\d{3}[ .-]\d{4}\b(?:\s*(?:ext\.?
 const LABELLED_NAME =
   /\b(Contact(?:ing)?(?:\s+Authority)?|Contact\s+name|Name|Contracting\s+(?:Officer|Authority)|Procurement\s+(?:Officer|Specialist|Lead)|Supply\s+Specialist|Buyer|Attention|Attn)\s*:\s*([A-Z][a-zA-Z'’.-]*(?:\s+[A-Z][a-zA-Z'’.-]*){1,3})/g;
 
+const CONTACT_PHRASE =
+  /\b((?:please\s+)?(?:contact|call|e-?mail|reach|veuillez\s+communiquer\s+avec|communiquez\s+avec|contactez))\s+([A-Z][a-zA-Z'’.-]*(?:\s+[A-Z][a-zA-Z'’.-]*){1,3})/gi;
+/** "For further information, please contact …" boilerplate tails add nothing for comps. */
+const INFO_TAIL = /\s*-?\s*(?:for (?:further|more) information|pour (?:plus|de plus amples) (?:d'|de )?(?:information|renseignements))[\s\S]*$/i;
+
 export const REDACTED_CONTACT = "[contact details on the official notice]";
 
 export function decodeBasicEntities(text: string): string {
@@ -27,8 +32,19 @@ export function redactContactDetails(text: string | null | undefined): string | 
   t = t.replace(EMAIL, REDACTED_CONTACT);
   t = t.replace(PHONE, REDACTED_CONTACT);
   t = t.replace(LABELLED_NAME, (_m, label: string) => `${label}: ${REDACTED_CONTACT}`);
+  t = t.replace(CONTACT_PHRASE, (m, verb: string, name: string) =>
+    // Only treat as a person when the "name" is capitalised words (case-sensitive check)
+    /^[A-Z][a-zA-Z'’.-]*(\s+[A-Z][a-zA-Z'’.-]*)+$/.test(name) ? `${verb} ${REDACTED_CONTACT}` : m
+  );
   // Collapse repeats like "[x] [x]"
   const esc = REDACTED_CONTACT.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   t = t.replace(new RegExp(`(${esc})([\\s,;/]*${esc})+`, "g"), REDACTED_CONTACT);
   return t.replace(/\s+/g, " ").trim();
+}
+
+/** Remove "for more information, contact …" tails, then redact what remains. */
+export function cleanLotText(text: string | null | undefined): string | null {
+  const r = redactContactDetails(text);
+  if (r == null) return null;
+  return r.replace(INFO_TAIL, "").trim() || null;
 }
