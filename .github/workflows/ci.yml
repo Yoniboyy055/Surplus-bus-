@@ -31,6 +31,13 @@ jobs:
           npm run -s after | tee after.txt
           grep -q "SUMMARY: \([0-9]*\)/\1 expectations met" after.txt
           npm run -s idempotency | grep -E "SUMMARY"
+      - name: Pending migrations dry run (056 kind overrides, 057 lot reports; not applied to live)
+        working-directory: scripts/db-dryrun
+        run: |
+          npm run -s pending | tee pending.txt
+          grep -q "SUMMARY: \([0-9]*\)/\1 expectations met" pending.txt
+          npm run -s pending:idempotency | tee pending-idem.txt
+          grep -q "SUMMARY: \([0-9]*\)/\1 expectations met" pending-idem.txt
       - name: Ingest e2e (fixtures)
         run: npx tsx scripts/db-dryrun/e2e-ingest.ts | tee ingest.txt && grep -q "SUMMARY: ALL PASS" ingest.txt
       - name: Search filters behave the same in Postgres and JS

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { shot, trackConsole, noHorizontalOverflow, axeSeriousOrCritical, assertNoStaffPii } from "./helpers";
+import { shot, trackConsole, noHorizontalOverflow, axeSeriousOrCritical, assertNoStaffPii, MOCK } from "./helpers";
 
 // Seed: fixtures/open-data/search_relevance_sample.json (real GCSurplus titles and prices, OGL–Canada).
 const PART_TITLES = /Truck Canopy|Pallet Truck|Truck Box|Truck Cap|Tool Box|Console|Bumper/;
@@ -12,7 +12,7 @@ test.describe("Search relevance (/comps)", () => {
   test("truck defaults to cars & trucks: no parts, typical range shown", async ({ page }) => {
     const errors = trackConsole(page);
     await page.goto("/comps?q=truck");
-    await expect(page.locator('[data-testid="kind-facets"] [aria-current="true"]')).toContainText("Cars & trucks");
+    await expect(page.locator('[data-testid="kind-facets"] [aria-current="true"]')).toContainText("Cars, pickups & vans");
     await expect(page.locator("[data-range]")).toHaveAttribute("data-range", "shown");
     const lots = await page.locator("tbody tr td:first-child").allInnerTexts();
     expect(lots.length).toBeGreaterThan(5);
@@ -27,7 +27,7 @@ test.describe("Search relevance (/comps)", () => {
     await page.goto("/comps?q=truck&kind=all");
     await expect(page.locator("[data-range]")).toHaveAttribute("data-range", "mixed_kinds");
     await expect(page.getByTestId("narrow-note")).toContainText("mix different kinds");
-    await page.getByRole("link", { name: /Show only cars & trucks/ }).click();
+    await page.getByRole("link", { name: /Show only cars, pickups & vans/ }).click();
     await expect(page).toHaveURL(/kind=vehicle/);
     await expect(page.locator("[data-range]")).toHaveAttribute("data-range", "shown");
   });
@@ -53,9 +53,113 @@ test.describe("Search relevance (/comps)", () => {
       await expect(page.locator("[data-range]")).toHaveAttribute("data-range", "mixed_kinds");
       await expect(page.getByText("Typical sold range")).toHaveCount(0);
     }
-    await page.getByRole("link", { name: /Show only other items/ }).click();
-    await expect(page.locator("[data-range]")).toHaveAttribute("data-range", "shown");
-    await shot(page, "31_comps_laptop_narrowed");
+  });
+});
+
+// Seed also includes fixtures/open-data/kind_labels.json (hand-labelled odd items) and the rows in data/kind_overrides.csv.
+const LAB_GEN = /Signal Generator|Function Generator|Pulse Generator|Waveform|Nitrogen|Zero Air|Tone Generator|Hydrogen/i;
+const LAPTOP_EXTRAS = /\bbags?\b|\bcases?\b|charger|sleeve|backpack|mount|messenger/i;
+
+test.describe("Odd items (/comps)", () => {
+  test("generator: power generators and lab signal generators are separate kinds", async ({ page }) => {
+    await page.goto("/comps?q=generator");
+    const facets = page.getByTestId("kind-facets");
+    await expect(facets).toContainText("Tractors, machinery & generators");
+    await expect(facets).toContainText("Computers, electronics & lab gear");
+    await page.goto("/comps?q=generator&kind=equipment");
+    const titles = await page.locator("tbody tr td:first-child").allInnerTexts();
+    expect(titles.length).toBeGreaterThan(5);
+    for (const t of titles) expect(t).not.toMatch(LAB_GEN);
+    await shot(page, "40_comps_generator_power");
+    await page.goto("/comps?q=generator&kind=electronics");
+    expect((await page.locator("tbody tr td:first-child").allInnerTexts()).some((t) => LAB_GEN.test(t))).toBe(true);
+  });
+
+  test("laptop: computers without bags, cases and chargers", async ({ page }) => {
+    await page.goto("/comps?q=laptop&kind=electronics");
+    const titles = await page.locator("tbody tr td:first-child").allInnerTexts();
+    expect(titles.length).toBeGreaterThan(5);
+    for (const t of titles) expect(t).not.toMatch(LAPTOP_EXTRAS);
+    await shot(page, "41_comps_laptop_computers");
+  });
+
+  test("dump truck defaults to medium & heavy trucks; pickups stay out", async ({ page }) => {
+    await page.goto("/comps?q=dump%20truck");
+    await expect(page.locator('[data-testid="kind-facets"] [aria-current="true"]')).toContainText("Medium & heavy trucks");
+    await page.goto("/comps?q=truck");
+    for (const t of await page.locator("tbody tr td:first-child").allInnerTexts()) expect(t).not.toMatch(/Dump Truck|F-[4-7]50|Western Star|Freightliner/i);
+  });
+
+  test("outliers are left out of the range, counted, and one tap shows them all", async ({ page }) => {
+    await page.goto("/comps?q=laptop");
+    const note = page.getByTestId("outlier-note");
+    await expect(note).toHaveAttribute("data-mode", "trimmed");
+    const excluded = Number(await note.getAttribute("data-excluded"));
+    expect(excluded).toBeGreaterThan(0);
+    await expect(note).toContainText(/Leaves out \d+ of \d+ sales/);
+    await expect(note).toContainText(/bulk or multi-item lots/);
+    const nTrimmed = await compsN(page);
+    await shot(page, "42_comps_laptop_outliers_trimmed");
+    await page.getByTestId("outliers-toggle").click();
+    await expect(page).toHaveURL(/outliers=all/);
+    await expect(page.getByTestId("outlier-note")).toHaveAttribute("data-mode", "all");
+    expect(await compsN(page)).toBe(nTrimmed + excluded);
+    await shot(page, "43_comps_laptop_outliers_all");
+    await page.getByTestId("outliers-toggle").click();
+    await expect(page).not.toHaveURL(/outliers=all/);
+  });
+});
+
+test.describe("Report a wrong result", () => {
+  test("link on result rows -> short form -> stored without personal data", async ({ page }) => {
+    const errors = trackConsole(page);
+    await page.goto("/search?q=truck");
+    const link = page.getByTestId("report-link").first();
+    await expect(link).toBeVisible();
+    await link.click();
+    await expect(page).toHaveURL(/\/report\?feed=gcsurplus_sold&id=/);
+    const id = new URL(page.url()).searchParams.get("id")!;
+    await expect(page.getByTestId("report-current-kind")).toBeVisible();
+    await page.getByLabel(/Anything else/).fill("call me at 613-555-0199");
+    await page.getByRole("radio").first().check();
+    await page.getByRole("button", { name: "Send report" }).click();
+    await expect(page.getByTestId("report-error")).toContainText(/leave out email addresses and phone numbers/i);
+    await page.getByLabel(/Anything else/).fill("This is a bumper, not a truck.");
+    await page.getByRole("radio").first().check();
+    const select = page.getByLabel(/Where does it belong/);
+    if (await select.isVisible()) await select.selectOption("part");
+    await shot(page, "44_report_form");
+    await page.getByRole("button", { name: "Send report" }).click();
+    await expect(page.getByTestId("report-done")).toBeVisible();
+    await shot(page, "45_report_done");
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const rows = await (await fetch(`${MOCK}/rest/v1/lot_reports?external_id=eq.${encodeURIComponent(id)}&select=*`, { headers: { apikey: key, Authorization: `Bearer ${key}` } })).json();
+    expect(rows.length).toBeGreaterThanOrEqual(1);
+    expect(Object.keys(rows[0]).sort()).toEqual(["created_at", "external_id", "feed_key", "id", "note", "reason", "status", "suggested_kind"]);
+    expect(JSON.stringify(rows)).not.toMatch(/613-555|@/);
+    // The refused note (contact details) is an expected 400; nothing else may fail.
+    expect(errors.filter((e) => !/status of 400/.test(e)), errors.join("\n")).toEqual([]);
+  });
+
+  test("route refuses cross-site posts, bad input and floods", async ({ request, baseURL }) => {
+    const body = { feed_key: "gcsurplus_sold", external_id: "gcs-R5OT0021340", reason: "odd_price" };
+    expect((await request.post("/api/lot-reports", { data: body, headers: { origin: "https://evil.example", "x-forwarded-for": "203.0.113.7" } })).status()).toBe(403);
+    expect((await request.post("/api/lot-reports", { data: { ...body, external_id: "x),or(1" }, headers: { origin: baseURL!, "x-forwarded-for": "203.0.113.8" } })).status()).toBe(400);
+    expect((await request.post("/api/lot-reports", { data: { ...body, external_id: "gcs-NOPE0000000" }, headers: { origin: baseURL!, "x-forwarded-for": "203.0.113.9" } })).status()).toBe(404);
+    const codes: number[] = [];
+    for (let i = 0; i < 8; i++) codes.push((await request.post("/api/lot-reports", { data: body, headers: { origin: baseURL!, "x-forwarded-for": "203.0.113.77" } })).status());
+    expect(codes).toContain(429);
+  });
+
+  test("hand override shows on the report page (bumper listed as a part)", async ({ page }) => {
+    await page.goto("/report?feed=gcsurplus_sold&id=gcs-R5OT0021340");
+    await expect(page.getByTestId("report-current-kind")).toContainText("Parts, accessories");
+  });
+
+  test("a11y: /report has no serious/critical axe violations", async ({ page }) => {
+    await page.goto("/report?feed=gcsurplus_sold&id=gcs-R5OT0021340");
+    await page.waitForLoadState("networkidle");
+    expect(await axeSeriousOrCritical(page)).toEqual([]);
   });
 });
 
@@ -67,8 +171,9 @@ test.describe("/search results page", () => {
     const rows = page.locator("table tbody tr");
     expect(await rows.count()).toBeGreaterThan(0);
     for (const t of await page.locator("tbody tr td:nth-child(2)").allInnerTexts()) expect(t).not.toMatch(PART_TITLES);
-    const hrefs = await page.locator("tbody tr td:last-child a").evaluateAll((as) => as.map((a) => a.getAttribute("href")));
+    const hrefs = await page.locator('tbody tr td:last-child a:not([data-testid="report-link"])').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
     expect(hrefs.length).toBe(await rows.count());
+    expect(await page.getByTestId("report-link").count()).toBe(await rows.count());
     for (const h of hrefs) expect(h).toMatch(/^https:\/\/(open\.canada\.ca|data\.novascotia\.ca)\//);
     await expect(page.getByText(/Open Government Licence/i).first()).toBeVisible();
     assertNoStaffPii(await page.content(), "/search");
@@ -137,7 +242,7 @@ test.describe("Header", () => {
   });
 });
 
-for (const p of ["/search?q=truck", "/comps?q=generator", "/comps?q=truck", "/price-history?q=truck"]) {
+for (const p of ["/search?q=truck", "/comps?q=generator", "/comps?q=truck", "/comps?q=laptop&outliers=all", "/price-history?q=truck"]) {
   test(`a11y (signed out): no serious/critical axe violations on ${p}`, async ({ page }) => {
     await page.goto(p);
     await page.waitForLoadState("networkidle");

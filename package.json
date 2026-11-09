@@ -20,7 +20,10 @@
     "check:crons": "node scripts/check-crons.mjs",
     "test:analytics": "npx tsx scripts/test-analytics.ts",
     "test:search": "npx tsx scripts/test-search.ts",
-    "test": "npm run test:opendata && npm run test:security && npm run test:analytics && npm run test:search && npm run check:crons"
+    "check:overrides": "npx tsx scripts/build-kind-overrides.ts --check",
+    "overrides:build": "npx tsx scripts/build-kind-overrides.ts",
+    "kinds:accuracy": "npx tsx scripts/kind-eval/accuracy.ts",
+    "test": "npm run test:opendata && npm run test:security && npm run test:analytics && npm run test:search && npm run check:overrides && npm run check:crons"
   },
   "repository": {
     "type": "git",

@@ -2,7 +2,7 @@
  * Local stand-in for Supabase (GoTrue + PostgREST subset) over PGlite, for e2e tests only.
  *
  * The database is the schema-only reconstruction of LIVE plus the fix migrations
- * (051, 052, 053, 055), so real RLS policies, grants and triggers decide every request:
+ * (051, 052, 053, 055, and the not-yet-applied 056/057), so real RLS policies, grants and triggers decide every request:
  * anon / authenticated / service_role are real Postgres roles and auth.uid() comes
  * from the request JWT. Seed data comes from running the real ingest code on the
  * repo fixtures plus synthetic GCSurplus staff contact details (to prove they never
@@ -249,7 +249,7 @@ async function readBody(req: http.IncomingMessage): Promise<any> {
 
 export async function buildDb(): Promise<Db> {
   const db: Db = await liveDb({ quiet: true });
-  for (const f of ["20261109150000_051_security_hardening.sql", "20261109150100_052_open_data_feeds.sql", "20261109150200_053_saved_searches_inbox.sql", "20261109150400_055_analytics_events.sql"]) {
+  for (const f of ["20261109150000_051_security_hardening.sql", "20261109150100_052_open_data_feeds.sql", "20261109150200_053_saved_searches_inbox.sql", "20261109150400_055_analytics_events.sql", "20261109150500_056_lot_kind_overrides.sql", "20261109150600_057_lot_reports.sql"]) {
     await db.exec(readFileSync(path.join(MIG, f), "utf8"));
   }
   for (const u of Object.values(USERS)) await db.query(`insert into auth.users(id,email) values ($1,$2)`, [u.id, u.email]);
@@ -308,6 +308,17 @@ export async function buildDb(): Promise<Db> {
        values ($1,'gcsurplus_sold',$2,$3,$4,$5,$6,'gcsurplus_sold','sold','https://open.canada.ca/data/en/dataset/1a09c5c1-3554-4b70-9e53-6322a72ec7d4','ogl-canada')
        on conflict (feed_key, external_id) do nothing`,
       [r.external_id, r.title, r.sold_amount, r.closing_date, r.city, r.province]
+    );
+  }
+  // Hand-labelled odd items (lab vs power generators, laptop bags, boats vs boat trailers, lots, for-parts ...)
+  // plus the rows named in data/kind_overrides.csv. Real titles (OGL–Canada / OGL–Nova Scotia).
+  const lab = JSON.parse(readFileSync(path.join(FIX, "kind_labels.json"), "utf8")) as { rows: Array<Record<string, any>>; extra_rows: Array<Record<string, any>> };
+  for (const r of [...lab.rows, ...lab.extra_rows]) {
+    await db.query(
+      `insert into public.price_history_lots(external_id,feed_key,title,sold_amount,closing_date,city,province,category,kind,status,source_url,licence_id)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,'sold',$10,$11)
+       on conflict (feed_key, external_id) do nothing`,
+      [r.external_id, r.feed_key, r.title, r.sold_amount, r.closing_date, r.city, r.province, r.category, r.kind, r.source_url, r.licence_id]
     );
   }
   // Optional: load a local copy of the live open-data load (the ingest batch SQL) for screenshots
