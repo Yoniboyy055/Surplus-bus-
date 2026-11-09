@@ -5,6 +5,9 @@ import { parseNsPublicTenderCsv, parseNsRealPropertyCsv } from "./nsSurplus";
 import { OGL_CANADA, OGL_NOVA_SCOTIA } from "./attribution";
 import { OPEN_DATA_URLS } from "./urls";
 import { extractFirstCsvFromZip } from "./zip";
+import type { createServiceRoleClient } from "@/lib/supabase/serviceRole";
+
+type ServiceRoleClient = ReturnType<typeof createServiceRoleClient>;
 import { scoreOpportunityV2 } from "@/lib/intelligence/scoring";
 
 export type IngestFeedResult = {
@@ -35,7 +38,7 @@ export function gcSurplusRowCap(): number | null {
 }
 
 async function recordRun(
-  supabase: { from: (t: string) => any } | null,
+  supabase: ServiceRoleClient | null,
   row: Record<string, unknown>
 ): Promise<void> {
   if (!supabase) return;
@@ -112,7 +115,7 @@ export async function ingestOpenDataFeeds(opts?: {
   const dryRun = opts?.dryRun === true || !hasServiceRole();
   const results: IngestFeedResult[] = [];
 
-  let supabase: ReturnType<typeof import("@/lib/supabase/serviceRole").createServiceRoleClient> | null = null;
+  let supabase: ServiceRoleClient | null = null;
   if (!dryRun) {
     const { createServiceRoleClient } = await import("@/lib/supabase/serviceRole");
     supabase = createServiceRoleClient();
