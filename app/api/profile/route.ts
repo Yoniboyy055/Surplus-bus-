@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
+import { profilePatch } from "@/lib/account/schemas";
 
 export async function GET() {
   const { supabase, user, error } = await requireUser();
@@ -11,7 +12,7 @@ export async function GET() {
     .eq("id", user.id)
     .single();
 
-  if (queryError) return NextResponse.json({ error: queryError.message }, { status: 404 });
+  if (queryError) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   return NextResponse.json({ profile: data });
 }
 
@@ -19,8 +20,9 @@ export async function PATCH(request: Request) {
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;
 
-  const body = await request.json();
-  const { full_name, phone } = body;
+  const parsed = profilePatch.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+  const { full_name, phone } = parsed.data;
 
   const { data, error: updateError } = await supabase
     .from("profiles")
@@ -29,6 +31,9 @@ export async function PATCH(request: Request) {
     .select("id,email,full_name,phone,role")
     .single();
 
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 400 });
+  if (updateError) {
+    console.error("[profile] update failed:", updateError.message);
+    return NextResponse.json({ error: "Couldn't save your profile." }, { status: 400 });
+  }
   return NextResponse.json({ profile: data });
 }

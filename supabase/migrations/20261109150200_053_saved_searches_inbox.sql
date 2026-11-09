@@ -4,10 +4,11 @@
 -- Inbox rows are written only by the server (alerts cron, service role).
 -- Users may read their rows, mark them read (read_at only) and delete them.
 -- Additive only; no existing table is changed except user_preferences gets
--- an alert email consent record (CASL).
+-- alert-email and marketing-email consent records (CASL).
 -- Rollback: DROP TABLE public.inbox_items, public.saved_searches;
 --           ALTER TABLE public.user_preferences DROP COLUMN alert_email_consent_at,
---             DROP COLUMN alert_email_consent_text;
+--             DROP COLUMN alert_email_consent_text, DROP COLUMN marketing_consent_at,
+--             DROP COLUMN marketing_consent_text;
 -- =============================================================================
 BEGIN;
 
@@ -52,7 +53,9 @@ CREATE INDEX IF NOT EXISTS idx_inbox_items_profile_created ON public.inbox_items
 
 ALTER TABLE public.user_preferences
   ADD COLUMN IF NOT EXISTS alert_email_consent_at timestamptz,
-  ADD COLUMN IF NOT EXISTS alert_email_consent_text text;
+  ADD COLUMN IF NOT EXISTS alert_email_consent_text text,
+  ADD COLUMN IF NOT EXISTS marketing_consent_at timestamptz,
+  ADD COLUMN IF NOT EXISTS marketing_consent_text text;
 
 ALTER TABLE public.saved_searches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inbox_items ENABLE ROW LEVEL SECURITY;

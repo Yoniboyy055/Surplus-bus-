@@ -59,11 +59,13 @@ export async function POST(req: NextRequest) {
 
   if (cErr || !campaign) return json(500, { error: "campaign_create_failed", details: cErr?.message });
 
-  // Recipients: marketing_opt_in=true, with email and unsub_token
+  // Recipients: marketing_opt_in=true with a recorded express consent (CASL), email and unsub_token.
+  // Legacy opt-ins without marketing_consent_at (pre-053) are not mailed.
   const { data: prefRows, error: rErr } = await admin
     .from("user_preferences")
     .select("profile_id, unsub_token")
-    .eq("marketing_opt_in", true);
+    .eq("marketing_opt_in", true)
+    .not("marketing_consent_at", "is", null);
 
   if (rErr) return json(500, { error: "recipient_query_failed", details: rErr.message });
 
