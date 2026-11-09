@@ -1,11 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import { createServiceRoleClient } from '@/lib/supabase/serviceRole';
-// No need for Node URL import in Next.js API route
 
 export const dynamic = 'force-dynamic';
 
+/** Recon always runs in sandbox mode. Recorded per row; never mutates process.env. */
+const RECON_SANDBOX_MODE = true;
+
+/**
+ * Fail-closed CRON_SECRET check (same contract as /api/agents/run and
+ * /api/cron/opendata-ingest), using a constant-time compare.
+ */
+function isAuthorizedCron(req: NextRequest): boolean {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) return false;
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) return false;
+  const provided = Buffer.from(authHeader.slice(7), 'utf8');
+  const expected = Buffer.from(cronSecret, 'utf8');
+  return provided.length === expected.length && timingSafeEqual(provided, expected);
+}
+
+/**
+ * Source recon (phase A).
+ * GET /api/agents/recon
+ * Auth: Authorization: Bearer CRON_SECRET
+ */
 export async function GET(req: NextRequest) {
-  process.env.SANDBOX_MODE = 'true';
+  if (!isAuthorizedCron(req)) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
   const supabase = createServiceRoleClient();
   const { data: sources, error } = await supabase
     .from('sources')
@@ -54,7 +79,7 @@ export async function GET(req: NextRequest) {
     await supabase.from('source_recon_log').insert({
       source_id: source.id,
       phase: 'A_recon',
-      sandbox_mode: true,
+      sandbox_mode: RECON_SANDBOX_MODE,
       discovered_host_url: reconUrl,
       vendor_family: null,
       outcome,
