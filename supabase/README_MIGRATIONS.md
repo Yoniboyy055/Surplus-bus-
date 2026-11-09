@@ -10,8 +10,11 @@ project (`nycsuizssbpaqyhxxxup`) migration history exactly:
 | `20261109150100_052_open_data_feeds.sql` | Was `supabase/sql/046_open_data_feeds.sql` | Not applied — needs approval |
 | `20261109150200_053_saved_searches_inbox.sql` | New | Not applied — needs approval |
 | `20261109150300_054_beta_signups_server_only.sql` | New | Apply **only after** the branch is deployed |
+| `20261109150400_055_analytics_events.sql` | New (no-PII product analytics, server-only insert) | Not applied — needs approval; harmless while `ANALYTICS_EVENTS_ENABLED` is unset |
 
-Order to apply: 051 → 052 → 053 → (deploy branch) → 054.
+Order to apply: 051 → 052 → 053 → 055 → (deploy branch) → 054.
+(055 has a later timestamp than 054 but does not depend on it; `supabase db push`
+would apply it after 054, which is also safe.)
 
 ## Name collisions
 Live already records a `046` (`20260315195410_046_fix_phase_c_allow_multi_selection`)

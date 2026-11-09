@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { marketingConsent, MARKETING_CONSENT_TEXT } from "@/lib/account/schemas";
+import { track } from "@/lib/analytics/track";
 
 /** Opt in (POST, records CASL express consent) or out (DELETE) of product-update emails. */
 export async function POST(request: NextRequest) {
@@ -20,6 +21,7 @@ export async function POST(request: NextRequest) {
     console.error("[marketing] consent save failed:", e.message);
     return NextResponse.json({ error: "Couldn't save your choice." }, { status: 500 });
   }
+  await track("marketing_email_pref_changed", { enabled: true }, { userId: user.id });
   return NextResponse.json({ ok: true, consent_at: now });
 }
 
@@ -31,5 +33,6 @@ export async function DELETE() {
     .update({ marketing_opt_in: false, marketing_consent_at: null, marketing_consent_text: null, updated_at: new Date().toISOString() })
     .eq("profile_id", user.id);
   if (e) return NextResponse.json({ error: "Couldn't save your choice." }, { status: 500 });
+  await track("marketing_email_pref_changed", { enabled: false }, { userId: user.id });
   return NextResponse.json({ ok: true });
 }

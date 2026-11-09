@@ -5,6 +5,7 @@ import { PLANS, stripePriceId } from "@/lib/billing/plans";
 import { stripeConfigured, stripePost } from "@/lib/billing/stripe";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { siteUrl } from "@/lib/email/unsubscribe";
+import { track } from "@/lib/analytics/track";
 
 const body = z.object({ plan: z.enum(["pro_monthly", "pro_annual"]) });
 
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
       success_url: `${siteUrl()}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl()}/billing/cancel`,
     });
+    await track("checkout_started", { plan_key: plan.id }, { userId: user.id });
     return NextResponse.json({ url: session.url });
   } catch (e) {
     console.error("[billing] checkout failed:", e instanceof Error ? e.message : e);

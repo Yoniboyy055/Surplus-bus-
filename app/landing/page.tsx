@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CheckCircle, Link2, ListFilter, Shield } from "lucide-react";
+import { WAITLIST_CONSENT_TEXT } from "@/lib/account/schemas";
 
-const CONSENT_TEXT =
-  "I agree to receive emails from YK+ Systems about Surplus Bus. I can unsubscribe anytime.";
+const CONSENT_TEXT = WAITLIST_CONSENT_TEXT;
 
 const FEATURES = [
   {

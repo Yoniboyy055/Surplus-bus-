@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/AppShell";
+import { Analytics } from "@vercel/analytics/react";
 import { siteUrl } from "@/lib/email/unsubscribe";
 import "./globals.css";
 
@@ -78,6 +79,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AppShell user={user} profile={profile}>
           {children}
         </AppShell>
+        {/* Vercel Web Analytics: off unless NEXT_PUBLIC_VERCEL_WEB_ANALYTICS=1 (owner approval). Cookieless; script is same-origin. */}
+        {process.env.NEXT_PUBLIC_VERCEL_WEB_ANALYTICS === "1" && <Analytics />}
       </body>
     </html>
   );

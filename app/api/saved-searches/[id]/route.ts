@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth/requireUser";
 import { savedSearchPatch } from "@/lib/alerts/schemas";
 import { getUserLimits } from "@/lib/billing/entitlements";
+import { track } from "@/lib/analytics/track";
 
 const COLS = "id,name,query,scope,province,min_price,max_price,alert_frequency,alert_email,last_checked_at,last_alerted_at,created_at";
 const uuid = z.string().uuid();
@@ -37,6 +38,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     .select(COLS);
   if (e) return NextResponse.json({ error: "Couldn't update." }, { status: 500 });
   if (!data?.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await track("alert_rule_updated", { rule_id: params.id }, { userId: user.id });
   return NextResponse.json({ saved_search: data[0] });
 }
 
@@ -52,5 +54,6 @@ export async function DELETE(_request: NextRequest, { params }: { params: { id: 
     .select("id");
   if (e) return NextResponse.json({ error: "Couldn't delete." }, { status: 500 });
   if (!data?.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await track("alert_rule_deleted", { rule_id: params.id }, { userId: user.id });
   return NextResponse.json({ ok: true });
 }

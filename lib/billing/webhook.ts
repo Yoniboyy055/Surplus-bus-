@@ -1,4 +1,5 @@
 import { PLANS, planFromPriceId } from "./plans";
+import { track } from "@/lib/analytics/track";
 
 type Db = { from: (t: string) => any };
 
@@ -21,6 +22,12 @@ export async function applyStripeEvent(db: Db, event: { id: string; type: string
       { onConflict: "profile_id" }
     );
     if (error) throw new Error(error.message);
+    const planId = o.metadata?.plan_id as string | undefined;
+    await track(
+      "subscription_started",
+      { plan_key: planId ?? "pro", billing_interval: planId === "pro_annual" ? "year" : "month" },
+      { userId: profileId, db }
+    );
     return { handled: true };
   }
   if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {

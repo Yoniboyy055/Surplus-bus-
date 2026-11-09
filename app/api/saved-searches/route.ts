@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/requireUser";
 import { savedSearchCreate } from "@/lib/alerts/schemas";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { getUserLimits } from "@/lib/billing/entitlements";
+import { track } from "@/lib/analytics/track";
 
 const COLS = "id,name,query,scope,province,min_price,max_price,alert_frequency,alert_email,last_checked_at,last_alerted_at,created_at";
 
@@ -39,5 +40,10 @@ export async function POST(request: NextRequest) {
     console.error("[saved-searches] insert failed:", e.message);
     return NextResponse.json({ error: "Couldn't save. Try again." }, { status: 500 });
   }
+  await track(
+    "alert_rule_created",
+    { rule_id: data?.id, has_category: false, has_region: !!parsed.data.province, has_price_range: parsed.data.min_price != null || parsed.data.max_price != null },
+    { userId: user.id }
+  );
   return NextResponse.json({ saved_search: data }, { status: 201 });
 }

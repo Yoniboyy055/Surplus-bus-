@@ -1,0 +1,237 @@
+{
+  "product": "Surplus Bus",
+  "version": "1.0-draft",
+  "updated": "2026-11-09",
+  "timezone": "America/Toronto",
+  "pii_policy": "No email, name, phone, IP, or free-text PII in properties. Opaque ids only.",
+  "deferred": [
+    "email_alert_sent",
+    "email_digest_sent",
+    "email_open",
+    "email_click"
+  ],
+  "north_star_event": "official_listing_clicked",
+  "events": [
+    {
+      "event_name": "page_viewed",
+      "trigger": "Marketing or app route becomes visible",
+      "properties": [
+        "path",
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_content",
+        "referrer_host"
+      ],
+      "source": "client",
+      "notes": "Optional if Vercel automatic pageviews cover marketing; pathname only, no PII"
+    },
+    {
+      "event_name": "cta_clicked",
+      "trigger": "Primary marketing CTA click (waitlist / pricing / how-it-works)",
+      "properties": [
+        "cta_id",
+        "path",
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "utm_content"
+      ],
+      "source": "client",
+      "notes": ""
+    },
+    {
+      "event_name": "waitlist_joined",
+      "trigger": "Waitlist form accepted after required consent",
+      "properties": [
+        "consent_version",
+        "has_utm"
+      ],
+      "source": "server",
+      "notes": "Never include email in properties; store email only in waitlist table"
+    },
+    {
+      "event_name": "signup_completed",
+      "trigger": "Auth account created",
+      "properties": [
+        "method",
+        "from_waitlist"
+      ],
+      "source": "server",
+      "notes": "method values: email | oauth_provider_key"
+    },
+    {
+      "event_name": "onboarding_completed",
+      "trigger": "User finishes or skips onboarding",
+      "properties": [
+        "steps_completed",
+        "provinces_count",
+        "categories_count",
+        "has_value_range"
+      ],
+      "source": "server",
+      "notes": ""
+    },
+    {
+      "event_name": "feed_viewed",
+      "trigger": "Ranked feed page loaded",
+      "properties": [
+        "result_count",
+        "filter_province_count",
+        "filter_category_count"
+      ],
+      "source": "server_or_client",
+      "notes": ""
+    },
+    {
+      "event_name": "opportunity_viewed",
+      "trigger": "Opportunity detail opened",
+      "properties": [
+        "opportunity_id",
+        "source_key",
+        "source_status",
+        "rank_position"
+      ],
+      "source": "server",
+      "notes": "source_status: live | partial | official_site_only | closed"
+    },
+    {
+      "event_name": "score_reasons_expanded",
+      "trigger": "User opens why-this-ranked breakdown",
+      "properties": [
+        "opportunity_id"
+      ],
+      "source": "client",
+      "notes": ""
+    },
+    {
+      "event_name": "official_listing_clicked",
+      "trigger": "User clicks View official listing / Open official site",
+      "properties": [
+        "opportunity_id",
+        "source_key",
+        "source_status",
+        "surface"
+      ],
+      "source": "server",
+      "notes": "NORTH-STAR event. surface: feed_card | detail | inbox | saved | sources"
+    },
+    {
+      "event_name": "opportunity_saved",
+      "trigger": "User saves a listing",
+      "properties": [
+        "opportunity_id",
+        "source_key"
+      ],
+      "source": "server",
+      "notes": ""
+    },
+    {
+      "event_name": "opportunity_unsaved",
+      "trigger": "User removes a save",
+      "properties": [
+        "opportunity_id"
+      ],
+      "source": "server",
+      "notes": ""
+    },
+    {
+      "event_name": "alert_rule_created",
+      "trigger": "New alert rule saved (saved search)",
+      "properties": [
+        "rule_id",
+        "has_category",
+        "has_region",
+        "has_price_range"
+      ],
+      "source": "server",
+      "notes": "Funnel stage 3; bools only \u2014 no free-text region in props"
+    },
+    {
+      "event_name": "alert_rule_updated",
+      "trigger": "Alert rule edited",
+      "properties": [
+        "rule_id"
+      ],
+      "source": "server",
+      "notes": ""
+    },
+    {
+      "event_name": "alert_rule_deleted",
+      "trigger": "Alert rule deleted",
+      "properties": [
+        "rule_id"
+      ],
+      "source": "server",
+      "notes": ""
+    },
+    {
+      "event_name": "inbox_opened",
+      "trigger": "In-app inbox viewed",
+      "properties": [
+        "unread_count"
+      ],
+      "source": "server_or_client",
+      "notes": "v1 alerts are in-app only"
+    },
+    {
+      "event_name": "inbox_item_opened",
+      "trigger": "User opens an inbox match",
+      "properties": [
+        "delivery_id",
+        "opportunity_id",
+        "rule_id"
+      ],
+      "source": "server",
+      "notes": ""
+    },
+    {
+      "event_name": "source_status_viewed",
+      "trigger": "Sources status page viewed",
+      "properties": [
+        "live_count",
+        "partial_count",
+        "link_out_count"
+      ],
+      "source": "server_or_client",
+      "notes": ""
+    },
+    {
+      "event_name": "pricing_viewed",
+      "trigger": "/pricing viewed",
+      "properties": [
+        "path"
+      ],
+      "source": "client",
+      "notes": ""
+    },
+    {
+      "event_name": "checkout_started",
+      "trigger": "User starts checkout when pricing exists",
+      "properties": [
+        "plan_key"
+      ],
+      "source": "server",
+      "notes": "Deferred until PRICE TBD; no dollar amounts in props"
+    },
+    {
+      "event_name": "subscription_started",
+      "trigger": "First paid entitlement active",
+      "properties": [
+        "plan_key",
+        "billing_interval"
+      ],
+      "source": "server",
+      "notes": "Deferred until PRICE TBD"
+    },
+    {
+      "event_name": "marketing_email_pref_changed",
+      "trigger": "Marketing emails toggle changed in settings",
+      "properties": [
+        "enabled"
+      ],
+      "source": "server",
+      "notes": "Default off per YkCX; not an email-send event"
+    }
+  ]
+}
