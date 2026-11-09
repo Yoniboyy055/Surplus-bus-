@@ -16,6 +16,8 @@ import { computeCompStats, toIlikePattern } from "../lib/opendata/comps";
 import { computeFeedFreshness } from "../lib/opendata/freshness";
 import { zipSync, strToU8 } from "fflate";
 import { classifyNotice, startOfTodayToronto } from "../lib/opendata/tenderKind";
+import { resolveLotSourceLink, resolveTenderSourceLink, gcsurplusSaleAccount } from "../lib/opendata/sourceLinks";
+import { gcsurplusSoldResourcePageUrl, canadabuysNoticePageUrl, nsFilteredDataUrl } from "../lib/opendata/urls";
 
 const root = path.join(process.cwd(), "fixtures", "open-data");
 
@@ -309,6 +311,52 @@ async function main() {
     assert(results.length === 3, "three feeds");
     assert(results.every((r) => r.rows_parsed > 0), "parsed");
     assert(results.every((r) => r.status === "skipped"), "skipped without service role");
+  });
+
+
+  await test("source deep-links: GCSurplus period file, CanadaBuys notice, NS filtered rows", () => {
+    const gcs = parseGcSurplusSoldCsv(load("gcsurplus_sold_sample.csv"));
+    assert(gcs.every((r) => r.source_url.includes("/resource/")), "parser stores period resource URL");
+    const sample = gcs.find((r) => r.closing_date === "2025-03-05");
+    assert(sample, "2025-03-05 row");
+    assert(
+      sample.source_url ===
+        "https://open.canada.ca/data/en/dataset/1a09c5c1-3554-4b70-9e53-6322a72ec7d4/resource/f8d7daf0-40a0-457e-afe9-be791ab9fa3d",
+      sample.source_url
+    );
+    const link = resolveLotSourceLink({
+      feed_key: "gcsurplus_sold",
+      external_id: "gcs-R4VA0018239",
+      closing_date: "2025-04-02",
+    });
+    assert(link.kind === "gcsurplus_period_file", link.kind);
+    assert(link.label === "Open source file", link.label);
+    assert(link.findBy === "R4VA0018239", String(link.findBy));
+    assert(link.href.includes("/resource/f8d7daf0-40a0-457e-afe9-be791ab9fa3d"), link.href);
+    assert(gcsurplusSaleAccount("gcs-R4VA0018239-abc") === "R4VA0018239", "sale account from variant id");
+    assert(gcsurplusSoldResourcePageUrl("2099-01-01") === "https://open.canada.ca/data/en/dataset/1a09c5c1-3554-4b70-9e53-6322a72ec7d4", "unknown period falls back");
+
+    const cb = parseCanadaBuysOpenTendersCsv(load("canadabuys_open_tenders_sample.csv"));
+    assert(cb.every((r) => r.source_url.startsWith("https://canadabuys.canada.ca/en/tender-opportunities/tender-notice/")), "no MERX");
+    assert(cb[0]!.source_url === canadabuysNoticePageUrl(cb[0]!.reference_number), "slug from ref");
+    const tLink = resolveTenderSourceLink({ reference_number: "MX-443841357513" });
+    assert(tLink.href === "https://canadabuys.canada.ca/en/tender-opportunities/tender-notice/mx-443841357513", tLink.href);
+    assert(tLink.label === "View on CanadaBuys", tLink.label);
+
+    const ns = parseNsPublicTenderCsv(load("ns_surplus_tender_sample.csv"));
+    assert(ns[0]!.file_number, "file number");
+    assert(ns[0]!.source_url === nsFilteredDataUrl("public_tender", ns[0]!.file_number), ns[0]!.source_url);
+    const nsLink = resolveLotSourceLink({
+      feed_key: "ns_surplus",
+      external_id: "x",
+      file_number: "AGR09-001",
+      category: "public_tender",
+    });
+    assert(nsLink.kind === "ns_filtered_rows", nsLink.kind);
+    assert(nsLink.href.includes("q=AGR09-001"), nsLink.href);
+    assert(nsLink.label === "Find in NS open data", nsLink.label);
+    const real = parseNsRealPropertyCsv(load("ns_surplus_real_property_sample.csv"));
+    assert(real[0]!.source_url.includes("Surplus-Crown-Property-Disposal-Real-Property"), real[0]!.source_url);
   });
 
   if (failed) {

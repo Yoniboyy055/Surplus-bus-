@@ -171,10 +171,17 @@ test.describe("/search results page", () => {
     const rows = page.locator("table tbody tr");
     expect(await rows.count()).toBeGreaterThan(0);
     for (const t of await page.locator("tbody tr td:nth-child(2)").allInnerTexts()) expect(t).not.toMatch(PART_TITLES);
-    const hrefs = await page.locator('tbody tr td:last-child a:not([data-testid="report-link"])').evaluateAll((as) => as.map((a) => a.getAttribute("href")));
-    expect(hrefs.length).toBe(await rows.count());
+    const links = page.getByTestId("source-link");
+    expect(await links.count()).toBe(await rows.count());
     expect(await page.getByTestId("report-link").count()).toBe(await rows.count());
+    const hrefs = await links.evaluateAll((as) => as.map((a) => a.getAttribute("href")));
     for (const h of hrefs) expect(h).toMatch(/^https:\/\/(open\.canada\.ca|data\.novascotia\.ca)\//);
+    // Prefer period resource pages for GCSurplus when a closing date is known.
+    const kinds = await links.evaluateAll((as) => as.map((a) => a.getAttribute("data-source-kind")));
+    expect(kinds.some((k) => k === "gcsurplus_period_file" || k === "ns_filtered_rows" || k === "gcsurplus_dataset" || k === "ns_dataset")).toBe(true);
+    for (const label of await links.allInnerTexts()) {
+      expect(label).toMatch(/Open source file|GCSurplus open data|Find in NS open data|NS open data/);
+    }
     await expect(page.getByText(/Open Government Licence/i).first()).toBeVisible();
     assertNoStaffPii(await page.content(), "/search");
     await shot(page, "32_search_truck");

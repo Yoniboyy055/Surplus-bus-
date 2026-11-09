@@ -60,6 +60,12 @@ test.describe("Open-data pages (real tables via mock Supabase)", () => {
     await expect(page.getByText(/Open Government Licence/i).first()).toBeVisible();
     assertNoStaffPii(await page.content(), "/tenders");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Tender notices open on CanadaBuys");
+    const sourceLinks = page.getByTestId("source-link");
+    expect(await sourceLinks.count()).toBeGreaterThan(0);
+    for (const h of await sourceLinks.evaluateAll((as) => as.map((a) => a.getAttribute("href")))) {
+      expect(h).toMatch(/^https:\/\/canadabuys\.canada\.ca\/en\/tender-opportunities\/tender-notice\//);
+    }
+    await expect(sourceLinks.first()).toHaveText(/View on CanadaBuys/);
     // "Open" on CanadaBuys but closed before today: hidden and counted
     await expect(page.getByText("E2E past closing notice")).toHaveCount(0);
     await expect(page.locator("[data-hidden-past]")).toContainText("closed before today");
