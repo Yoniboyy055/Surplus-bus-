@@ -266,7 +266,9 @@ async function main() {
     const hdr = "SOLD_AMT,LOT_DESC,MIN_BID_AMT,CLOSING_DT,LOT_ITEMS,LOT_CMNTS,ASSET_LOC_CITY,ASSET_LOC_PROV,CUSTODIAN_PERSON_NM,CUSTODIAN_PERSON_PHN,CUSTODIAN_EMAIL,SALES_PERSON_NM,SALES_EMAIL_ADDRS_ID,SALES_PERSON_PHN,SALE_CNTRCT_REG_ID";
     const synth = [hdr, '500,"Truck - contact Zelda Quintero at zelda.quintero@tpsgc-pwgsc.gc.ca or 613-555-0199",0,2025-08-01,x,"Custodian Contact: Zelda Quintero 613-555-0199",Ottawa,ON,Zelda Quintero,613-555-0199,zelda.quintero@tpsgc-pwgsc.gc.ca,Yuri Okonkwo,yuri.okonkwo@tpsgc-pwgsc.gc.ca,819-555-0123,K9ZZ000001'].join("\n");
     const synthOut = JSON.stringify(parseGcSurplusSoldCsv(synth));
-    for (const v of ["zelda.quintero@tpsgc-pwgsc.gc.ca", "613-555-0199", "Yuri Okonkwo", "yuri.okonkwo", "819-555-0123"]) {
+    // "Zelda Quintero" sits in LOT_DESC as "contact Zelda Quintero at <email>": found by the e2e
+    // mock's whole-DB scan (the name survived because the case-insensitive phrase captured "at").
+    for (const v of ["Zelda Quintero", "zelda.quintero@tpsgc-pwgsc.gc.ca", "613-555-0199", "Yuri Okonkwo", "yuri.okonkwo", "819-555-0123"]) {
       assert(!synthOut.includes(v), `synthetic staff value leaked: ${v}`);
     }
     assert(synthOut.includes("Truck"), "lot kept");

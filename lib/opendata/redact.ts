@@ -32,13 +32,19 @@ export function redactContactDetails(text: string | null | undefined): string | 
   t = t.replace(EMAIL, REDACTED_CONTACT);
   t = t.replace(PHONE, REDACTED_CONTACT);
   t = t.replace(LABELLED_NAME, (_m, label: string) => `${label}: ${REDACTED_CONTACT}`);
-  t = t.replace(CONTACT_PHRASE, (m, verb: string, name: string) =>
-    // Only treat as a person when the "name" is capitalised words (case-sensitive check)
-    /^[A-Z][a-zA-Z'’.-]*(\s+[A-Z][a-zA-Z'’.-]*)+$/.test(name) ? `${verb} ${REDACTED_CONTACT}` : m
-  );
+  t = t.replace(CONTACT_PHRASE, (m, verb: string, name: string) => {
+    // The pattern is case-insensitive, so "Zelda Quintero at" can be captured. Treat only the
+    // leading Capitalised words as the person (case-sensitive) and keep the rest of the text.
+    const words = name.split(/\s+/);
+    let k = 0;
+    while (k < words.length && /^[A-Z][a-zA-Z'’.-]*$/.test(words[k]!)) k++;
+    if (k < 2) return m;
+    const rest = words.slice(k).join(" ");
+    return `${verb} ${REDACTED_CONTACT}${rest ? " " + rest : ""}`;
+  });
   // Collapse repeats like "[x] [x]"
   const esc = REDACTED_CONTACT.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  t = t.replace(new RegExp(`(${esc})([\\s,;/]*${esc})+`, "g"), REDACTED_CONTACT);
+  t = t.replace(new RegExp(`(${esc})([\\s,;/]*(?:(?:at|or|and|ou|à)\\s+)?${esc})+`, "gi"), REDACTED_CONTACT);
   return t.replace(/\s+/g, " ").trim();
 }
 
