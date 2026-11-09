@@ -21,14 +21,14 @@ export default async function HomePage() {
         <div className="relative mx-auto mb-7 max-w-[920px] overflow-hidden rounded-[32px] shadow-raised bg-[var(--sb-surface)]">
           <Image
             src="/images/hero_surplus_still_life.jpg"
-            alt="ILLUSTRATIVE soft 3D surplus still life"
+            alt="Soft 3D still life of surplus goods, AI-generated illustration"
             width={1840}
             height={920}
             className="h-auto w-full"
             priority
           />
           <span className="absolute right-3 top-3 rounded-full bg-[var(--sb-ink)] px-2.5 py-1 text-[10px] font-bold tracking-wider text-[var(--sb-bg)]">
-            ILLUSTRATIVE
+            AI illustration
           </span>
         </div>
 

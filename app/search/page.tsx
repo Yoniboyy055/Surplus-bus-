@@ -5,10 +5,10 @@ import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const CATEGORIES = [
-  { id: "vehicles-pickup", label: "Vehicles · pickup / light truck", note: "ILLUSTRATIVE row" },
-  { id: "heavy-trucks", label: "Heavy equipment · trucks", note: "ILLUSTRATIVE row" },
-  { id: "electronics", label: "Electronics · IT equipment", note: "ILLUSTRATIVE row" },
-  { id: "office", label: "Office furniture · chairs", note: "ILLUSTRATIVE row" },
+  { id: "vehicles-pickup", label: "Vehicles · pickup / light truck", note: "See what similar lots sold for" },
+  { id: "heavy-trucks", label: "Heavy equipment · trucks", note: "See what similar lots sold for" },
+  { id: "electronics", label: "Electronics · IT equipment", note: "See what similar lots sold for" },
+  { id: "office", label: "Office furniture · chairs", note: "See what similar lots sold for" },
 ];
 
 export default function SearchPage() {

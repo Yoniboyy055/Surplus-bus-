@@ -54,7 +54,8 @@ export default async function CompsPage({ searchParams }: { searchParams: { q?: 
     return (
       <div className="mx-auto max-w-lg px-4 py-10 text-center" data-state="empty">
         <div className="relative mx-auto mb-5 h-[200px] w-[280px] overflow-hidden rounded-[20px] shadow-raised">
-          <Image src="/images/empty_crate.jpg" alt="" fill className="object-cover" />
+          <Image src="/images/empty_crate.jpg" alt="Empty wooden crate, AI-generated illustration" fill className="object-cover" />
+          <span className="absolute right-2 top-2 rounded-full bg-[var(--sb-ink)] px-2 py-1 text-[10px] font-bold tracking-wider text-[var(--sb-bg)]">AI illustration</span>
         </div>
         <h1 className="sb-title mb-2 text-[26px]">No sold comps for “{q}”</h1>
         <p className="mb-5 text-sm text-[var(--sb-ink-soft)]">
@@ -90,7 +91,8 @@ export default async function CompsPage({ searchParams }: { searchParams: { q?: 
 
       <div className="grid items-center gap-5 md:grid-cols-[1.1fr_1fr]">
         <div className="relative hidden overflow-hidden rounded-[30px] bg-[var(--sb-surface)] shadow-raised md:block">
-          <Image src="/images/price_range_tags.jpg" alt="" width={1200} height={900} className="h-auto w-full" />
+          <Image src="/images/price_range_tags.jpg" alt="Clay price tags, AI-generated illustration (not a real lot)" width={1200} height={900} className="h-auto w-full" />
+          <span className="absolute right-3 top-3 rounded-full bg-[var(--sb-ink)] px-2.5 py-1 text-[10px] font-bold tracking-wider text-[var(--sb-bg)]">AI illustration</span>
         </div>
         <div className="card" data-n={stats.n}>
           <div className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-[var(--sb-accent-700)]">

@@ -22,7 +22,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   onAction,
   className = "",
   imageSrc = "/images/empty_crate.jpg",
-  imageAlt = "ILLUSTRATIVE empty crate",
+  imageAlt = "Empty wooden crate, AI-generated illustration",
 }) => {
   return (
     <div className={`flex flex-col items-center justify-center text-center max-w-[520px] mx-auto py-10 px-4 ${className}`}>
@@ -30,7 +30,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <div className="relative w-[280px] h-[200px] mb-5 rounded-[20px] overflow-hidden shadow-raised">
           <Image src={imageSrc} alt={imageAlt} fill className="object-cover" />
           <span className="absolute top-2 right-2 rounded-full bg-[var(--sb-ink)] text-[var(--sb-bg)] text-[10px] font-bold tracking-wider px-2 py-1">
-            ILLUSTRATIVE
+            AI illustration
           </span>
         </div>
       ) : Icon ? (
