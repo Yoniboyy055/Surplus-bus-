@@ -19,7 +19,7 @@ export default defineConfig({
       cwd: "..",
       url: "http://127.0.0.1:54399/__test/session",
       timeout: 120_000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: process.env.E2E_REUSE === "1",
       stdout: "pipe",
     },
     {
@@ -27,7 +27,7 @@ export default defineConfig({
       cwd: "..",
       url: `http://localhost:${PORT}/api/ping`,
       timeout: 120_000,
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: process.env.E2E_REUSE === "1",
     },
   ],
 });
