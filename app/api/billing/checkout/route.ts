@@ -10,7 +10,7 @@ const body = z.object({ plan: z.enum(["pro_monthly", "pro_annual"]) });
 
 /** Creates a Stripe Checkout Session (subscription) for the signed-in user. */
 export async function POST(request: NextRequest) {
-  const limited = checkRateLimit(request, "billing-checkout", 10, 60_000);
+  const limited = await checkRateLimit(request, "billing-checkout", 10, 60_000);
   if (limited) return limited;
   const { user, error } = await requireUser();
   if (error || !user) return error!;

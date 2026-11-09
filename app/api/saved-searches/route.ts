@@ -15,7 +15,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const limited = checkRateLimit(request, "saved-searches", 30, 60_000);
+  const limited = await checkRateLimit(request, "saved-searches", 30, 60_000);
   if (limited) return limited;
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;

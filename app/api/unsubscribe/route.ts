@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const limited = checkRateLimit(req, "unsubscribe", 30, 60_000);
+  const limited = await checkRateLimit(req, "unsubscribe", 30, 60_000);
   if (limited) return limited;
 
   const url = new URL(req.url);

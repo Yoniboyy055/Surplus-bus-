@@ -7,7 +7,7 @@ const CONSENT_FALLBACK =
   "Yes, YK+ Systems may email me when Surplus Bus beta access opens, plus occasional Surplus Bus product updates. I can unsubscribe anytime.";
 
 export async function POST(request: NextRequest) {
-  const limited = checkRateLimit(request, "beta-signups", 8, 60_000);
+  const limited = await checkRateLimit(request, "beta-signups", 8, 60_000);
   if (limited) return limited;
 
   let body: {

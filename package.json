@@ -1,7 +1,7 @@
 {
   "name": "surplus-bus",
   "version": "1.0.0",
-  "description": "Surplus Bus — Canadian public surplus listings information service (not a broker).",
+  "description": "Surplus Bus \u2014 Canadian public surplus listings information service (not a broker).",
   "main": "index.js",
   "directories": {
     "doc": "docs"
@@ -14,7 +14,10 @@
     "audit:scope": "node scripts/audit-scope.js",
     "audit:routes": "node scripts/audit-routes.js",
     "validate:source-records": "npx tsx scripts/validate-source-records-upsert.ts",
-    "test:opendata": "npx tsx scripts/test-opendata-parsers.ts"
+    "test:opendata": "npx tsx scripts/test-opendata-parsers.ts",
+    "typecheck": "tsc --noEmit --incremental false",
+    "test:security": "npx tsx scripts/test-rate-limit.ts",
+    "check:crons": "node scripts/check-crons.mjs"
   },
   "repository": {
     "type": "git",

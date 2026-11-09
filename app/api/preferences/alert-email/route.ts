@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 import { alertEmailConsent, ALERT_EMAIL_CONSENT_TEXT } from "@/lib/alerts/schemas";
 
 /** Record (POST) or withdraw (DELETE) express consent for alert emails (CASL). */
@@ -17,6 +18,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;
+  const limited = await checkRateLimit(request, "alert-email-post", 20, 60_000, user.id);
+  if (limited) return limited;
   const parsed = alertEmailConsent.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Tick the box to agree." }, { status: 400 });
   const now = new Date().toISOString();

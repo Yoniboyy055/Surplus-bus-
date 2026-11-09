@@ -5,7 +5,7 @@ import { stripeConfigured } from "@/lib/billing/stripe";
 
 /** Public plan metadata, read from lib/billing/plans.ts (same source as the UI). */
 export async function GET(request: NextRequest) {
-  const limited = checkRateLimit(request, "subscription-get", 60, 60_000);
+  const limited = await checkRateLimit(request, "subscription-get", 60, 60_000);
   if (limited) return limited;
   const plans = Object.values(PLANS).map((p) => ({
     id: p.id,

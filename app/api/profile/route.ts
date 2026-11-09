@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 import { profilePatch } from "@/lib/account/schemas";
 
 export async function GET() {
@@ -19,6 +20,8 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;
+  const limited = await checkRateLimit(request, "profile-patch", 20, 60_000, user.id);
+  if (limited) return limited;
 
   const parsed = profilePatch.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });

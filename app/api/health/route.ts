@@ -15,7 +15,7 @@ const isPermissionError = (error: SupabaseErrorLike) => {
 };
 
 export async function GET(request: NextRequest) {
-  const limited = checkRateLimit(request, "health", 120, 60_000);
+  const limited = await checkRateLimit(request, "health", 120, 60_000);
   if (limited) return limited;
 
   if (!isSupabaseConfigured) {

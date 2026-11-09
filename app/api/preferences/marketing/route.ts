@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
+import { checkRateLimit } from "@/lib/security/rateLimit";
 import { marketingConsent, MARKETING_CONSENT_TEXT } from "@/lib/account/schemas";
 
 /** Opt in (POST, records CASL express consent) or out (DELETE) of product-update emails. */
 export async function POST(request: NextRequest) {
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;
+  const limited = await checkRateLimit(request, "marketing-post", 20, 60_000, user.id);
+  if (limited) return limited;
   if (!marketingConsent.safeParse(await request.json().catch(() => null)).success)
     return NextResponse.json({ error: "Tick the box to agree." }, { status: 400 });
   const now = new Date().toISOString();
