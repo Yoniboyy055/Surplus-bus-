@@ -44,9 +44,10 @@ CREATE TABLE IF NOT EXISTS public.inbox_items (
   read_at timestamptz,
   emailed_at timestamptz
 );
+-- Non-partial so the alerts job can upsert with on_conflict (NULLs stay distinct
+-- for system rows without a source).
 CREATE UNIQUE INDEX IF NOT EXISTS uq_inbox_items_dedupe
-  ON public.inbox_items (profile_id, saved_search_id, source_table, source_id)
-  WHERE source_id IS NOT NULL;
+  ON public.inbox_items (profile_id, saved_search_id, source_table, source_id);
 CREATE INDEX IF NOT EXISTS idx_inbox_items_profile_created ON public.inbox_items (profile_id, created_at DESC);
 
 ALTER TABLE public.user_preferences
