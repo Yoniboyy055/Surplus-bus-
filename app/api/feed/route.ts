@@ -24,7 +24,8 @@ export async function GET() {
   logApiEnd("/api/feed", requestId, start, fetchError ? 400 : 200);
 
   if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 400 });
+    console.error("[feed]", fetchError.message);
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
   }
 
   return NextResponse.json({

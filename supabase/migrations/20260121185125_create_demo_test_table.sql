@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS demo_test (id SERIAL PRIMARY KEY, name TEXT, description TEXT, created_at TIMESTAMPTZ DEFAULT NOW());

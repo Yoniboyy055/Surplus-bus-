@@ -77,17 +77,15 @@ AS $$
 $$;
 
 -- Function: public.process_exclusive_expiries
-CREATE OR REPLACE FUNCTION public.process_exclusive_expiries()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
+-- (2026-11-09) Was a CREATE OR REPLACE stub returning trigger. The real function
+-- (003) returns void, so the stub failed with "cannot change return type" and
+-- aborted this whole file on replay. Only pin search_path; never replace the body.
+DO $$
 BEGIN
-    -- Function body assumed to exist
-    RETURN NEW;
-END;
-$$;
+  IF to_regprocedure('public.process_exclusive_expiries()') IS NOT NULL THEN
+    ALTER FUNCTION public.process_exclusive_expiries() SET search_path = public;
+  END IF;
+END $$;
 
 -- NOTE: Triggers (trg_deals_audit_status, trg_deals_set_exclusive_window,
 -- trg_offers_mark_viewed, trg_deals_closed_paid_awards) are fixed by updating

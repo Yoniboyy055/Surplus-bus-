@@ -1,11 +1,57 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { AppShell } from "@/components/AppShell";
+import { Analytics } from "@vercel/analytics/react";
+import { siteUrl } from "@/lib/email/unsubscribe";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Surplus Bus",
-  description: "Public-surplus intelligence platform for alerts and analytics.",
+  title: {
+    default: "Surplus Bus",
+    template: "%s — Surplus Bus",
+  },
+  description:
+    "Know the sold range before you bid. Sold-price guidance from Canadian government surplus open data.",
+  applicationName: "Surplus Bus",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  manifest: "/site.webmanifest",
+  metadataBase: new URL(siteUrl()),
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Surplus Bus",
+    locale: "en_CA",
+    title: "Surplus Bus — know the sold range before you bid",
+    description:
+      "Sold-price guidance from Canadian government surplus open data. Information service — not a broker.",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "Surplus Bus — know the sold range before you bid. Clay price tags, AI-generated illustration",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Surplus Bus — know the sold range before you bid",
+    description: "Sold-price guidance from Canadian government surplus open data.",
+    images: ["/og.png"],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#F8F0E4",
+  colorScheme: "light",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -16,23 +62,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   if (supabase) {
     const { data } = await supabase.auth.getUser();
     user = data.user;
-    
+
     if (user) {
-       const { data: profileData } = await supabase
+      const { data: profileData } = await supabase
         .from("profiles")
         .select("id, role")
         .eq("id", user.id)
         .single();
-       profile = profileData;
+      profile = profileData;
     }
   }
 
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-quantum-950 text-quantum-50 antialiased">
-         <AppShell user={user} profile={profile}>
-            {children}
-         </AppShell>
+    <html lang="en">
+      <body className="min-h-screen bg-[var(--sb-bg)] text-[var(--sb-ink)] antialiased font-sans">
+        <AppShell user={user} profile={profile}>
+          {children}
+        </AppShell>
+        {/* Vercel Web Analytics: off unless NEXT_PUBLIC_VERCEL_WEB_ANALYTICS=1 (owner approval). Cookieless; script is same-origin. */}
+        {process.env.NEXT_PUBLIC_VERCEL_WEB_ANALYTICS === "1" && <Analytics />}
       </body>
     </html>
   );

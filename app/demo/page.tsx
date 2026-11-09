@@ -1,4 +1,4 @@
-import { DemoDashboardClient } from "./DemoDashboardClient";
+import DemoDashboardClient from "./DemoDashboardClient";
 
 export default function DemoPage() {
   return <DemoDashboardClient />;

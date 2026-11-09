@@ -2,47 +2,33 @@ import { Badge } from "./Badge";
 
 interface StatusPillProps {
   status: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: "sm" | "md" | "lg";
   className?: string;
-  masked?: boolean;
 }
 
-export const StatusPill = ({ status, size = 'md', className = '', masked = false }: StatusPillProps) => {
-  // Map internal status enums to friendly text and colors
-  // If masked is true, we hide sensitive non-terminal statuses
-  
+/** Opportunity / listing status only. Deal-pipeline statuses were removed. */
+export const StatusPill = ({ status, size = "md", className = "" }: StatusPillProps) => {
   const getStatusConfig = (s: string) => {
-    // 7️⃣ Referrer Privacy: Mask all non-terminal statuses
-    if (masked) {
-      const terminalStatuses = ['CLOSED_PAID', 'LOST', 'WITHDRAWN'];
-      if (!terminalStatuses.includes(s)) {
-        return { label: 'Active Deal', variant: 'warning' as const };
-      }
-    }
-
-    switch (s) {
-      case 'NEW_SUBMISSION':
-        return { label: 'New', variant: 'info' as const };
-      case 'NEEDS_CLARIFICATION':
-        return { label: 'Needs Info', variant: 'warning' as const };
-      case 'QUALIFIED':
-        return { label: 'Qualified', variant: 'default' as const }; // Purple-ish
-      case 'MATCHING':
-        return { label: 'Matching', variant: 'info' as const }; // Cyan-ish
-      case 'BUYER_COMMITTED':
-        return { label: 'Buyer Committed', variant: 'success' as const };
-      case 'WON_PENDING_CLOSE':
-        return { label: 'Closing', variant: 'success' as const };
-      case 'CLOSED_PAID':
-        return { label: 'Closed & Paid', variant: 'success' as const };
-      case 'REJECTED':
-      case 'LOST':
-      case 'WITHDRAWN':
-        return { label: s.replace('_', ' '), variant: 'error' as const };
-      case 'EXCLUSIVE_WINDOW_ACTIVE':
-         return { label: 'Exclusive', variant: 'warning' as const };
+    const key = (s || "").toLowerCase();
+    switch (key) {
+      case "open":
+      case "active":
+      case "new":
+        return { label: key === "new" ? "New" : "Open", variant: "success" as const };
+      case "updated":
+        return { label: "Updated", variant: "info" as const };
+      case "closing_soon":
+      case "closing-soon":
+        return { label: "Closing soon", variant: "warning" as const };
+      case "closed":
+      case "awarded":
+      case "expired":
+      case "sold":
+      case "unsold":
+      case "withdrawn":
+        return { label: key.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase()), variant: "default" as const };
       default:
-        return { label: s.replace(/_/g, ' '), variant: 'default' as const };
+        return { label: s.replace(/_/g, " "), variant: "default" as const };
     }
   };
 

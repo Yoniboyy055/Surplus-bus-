@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth?error=callback_failed", url.origin));
   }
 
-  console.log("[Auth] Session exchanged for user:", result.data.user.id);
+  console.log("[Auth] Session exchanged");
 
   try {
     await ensureProfile(supabase, result.data.user);

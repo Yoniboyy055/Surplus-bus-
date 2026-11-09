@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { isSupabaseConfigured } from "@/lib/env";
+import { isSupabaseConfigured } from "@/lib/env.public";
 import { sanitizeRedirectPath } from "@/lib/auth/sanitizeRedirect";
 import { createClient } from "@/lib/supabase/client";
 
@@ -54,7 +54,7 @@ export default function AuthClient() {
       <button
         onClick={handleGoogleSignIn}
         disabled={!supabaseReady || status === "loading"}
-        className="w-full flex items-center justify-center gap-3 font-semibold rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed bg-white text-quantum-950 hover:bg-quantum-100 border border-quantum-700 px-4 py-3 text-base"
+        className="btn btn-outline w-full justify-center gap-3 !bg-[var(--sb-surface-raised)] text-[var(--sb-ink)] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {status === "loading" ? (
           <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -72,11 +72,11 @@ export default function AuthClient() {
         <span>{status === "loading" ? "Signing in…" : "Continue with Google"}</span>
       </button>
       {status === "error" && message && (
-        <div className="rounded border border-red-500/30 bg-red-500/10 text-red-400 text-xs px-3 py-2 text-center">{message}</div>
+        <div role="alert" className="banner danger !mb-0 text-center text-xs">{message}</div>
       )}
       {errorParam && (
-        <div className="rounded border border-red-500/30 bg-red-500/10 text-red-400 text-xs px-3 py-2 text-center">
-          {errorMap[errorParam] || errorParam.replace(/_/g, " ")}
+        <div role="alert" className="banner danger !mb-0 text-center text-xs">
+          {errorMap[errorParam] || "Sign-in didn't complete. Please try again."}
         </div>
       )}
     </div>

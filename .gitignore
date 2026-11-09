@@ -5,3 +5,9 @@ out
 .env.*.local
 .vercel
 .env*.local
+
+# e2e artefacts
+e2e/test-results/
+e2e/playwright-report/
+e2e/results.json
+e2e/screenshots/

@@ -1,0 +1,32 @@
+import { isAuthorizedCron } from "@/lib/security/cronAuth";
+import { NextRequest, NextResponse } from "next/server";
+import { ingestOpenDataFeeds } from "@/lib/opendata/ingest";
+import { logApiStart, logApiEnd } from "@/lib/observability";
+
+/**
+ * Daily open-data ingest (OGL–Canada / OGL–NS only).
+ * Auth: Authorization: Bearer CRON_SECRET (Vercel cron).
+ * Skips DB writes when SUPABASE_SERVICE_ROLE_KEY is missing (reports skipped).
+ * Never scrapes HTML (CanadaBuys robots Disallow:/).
+ */
+export async function GET(request: NextRequest) {
+  if (!isAuthorizedCron(request)) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const { requestId, start } = logApiStart("/api/cron/opendata-ingest", null, {});
+  try {
+    const results = await ingestOpenDataFeeds();
+    const status = results.some((r) => r.status === "error") ? 207 : 200;
+    logApiEnd("/api/cron/opendata-ingest", requestId, start, status);
+    return NextResponse.json({
+      ok: !results.some((r) => r.status === "error"),
+      results,
+      note: "Requires migration 20261109150100_052_open_data_feeds. Attribution required in UI.",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    logApiEnd("/api/cron/opendata-ingest", requestId, start, 500);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "retrieved_at": "2026-11-03",
+  "timezone": "America/Toronto",
+  "note": "Small real samples for unit tests. Personal contact fields redacted in GCSurplus fixture.",
+  "source_url": "https://donnees-data.tpsgc-pwgsc.gc.ca/bi1/gcsurplus/gcsurplus-2025-01-01--2025-06-30-eng.zip",
+  "dataset": "https://open.canada.ca/data/en/dataset/1a09c5c1-3554-4b70-9e53-6322a72ec7d4",
+  "licence": "Open Government Licence \u2013 Canada",
+  "licence_url": "https://open.canada.ca/en/open-government-licence-canada",
+  "rows": 12,
+  "redactions": [
+    "CUSTODIAN_EMAIL",
+    "CUSTODIAN_PERSON_NM",
+    "CUSTODIAN_PERSON_PHN",
+    "SALES_EMAIL_ADDRS_ID",
+    "SALES_PERSON_NM",
+    "SALES_PERSON_PHN"
+  ]
+}

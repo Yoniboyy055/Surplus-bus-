@@ -1,16 +1,15 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { createClient } from "@supabase/supabase-js"; // Direct import for admin client
+import { createClient } from "@supabase/supabase-js";
 import { isOwnerEmail } from "./ownerEmail";
 
 type Profile = {
   id: string;
-  role: "operator" | "referrer" | "buyer";
+  role: "operator" | "member";
 };
 
 export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
-  console.log(`[ensureProfile] user.id=${user.id} user.email=${user.email}`);
+  
 
-  // 1. Try to read existing profile with the user's client (RLS applied)
   const { data: existing, error: selectError } = await userClient
     .from("profiles")
     .select("id, role")
@@ -21,36 +20,27 @@ export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
     console.error("[ensureProfile] SELECT error:", JSON.stringify(selectError));
   }
 
-  // If we found it, verify role upgrade for owner
   if (existing) {
-    if (isOwnerEmail(user.email) && existing.role !== 'operator') {
-       console.log(`ensureProfile: Upgrading ${user.email} to operator`);
-       // Use admin client for upgrade to bypass any "self_update" restrictions on role
-       const adminClient = getAdminClient();
-       const { data: updated, error: updateError } = await adminClient
-         .from("profiles")
-         .update({ role: 'operator' })
-         .eq("id", user.id)
-         .select("id, role")
-         .single();
-       
-       if (updateError) {
-         console.error("ensureProfile: Upgrade failed", updateError);
-         // Fallback to existing, but log error
-         return { profile: existing as Profile, created: false };
-       }
-       return { profile: updated as Profile, created: false };
+    if (isOwnerEmail(user.email) && existing.role !== "operator") {
+      console.log("ensureProfile: owner account upgraded to operator");
+      const adminClient = getAdminClient();
+      const { data: updated, error: updateError } = await adminClient
+        .from("profiles")
+        .update({ role: "operator" })
+        .eq("id", user.id)
+        .select("id, role")
+        .single();
+
+      if (updateError) {
+        console.error("ensureProfile: Upgrade failed", updateError);
+        return { profile: existing as Profile, created: false };
+      }
+      return { profile: updated as Profile, created: false };
     }
     return { profile: existing as Profile, created: false };
   }
 
-  // 2. Insert if not found
-  // We use the ADMIN client here to bypass RLS policies that might restrict:
-  // - Inserting 'operator' role (often blocked for normal users)
-  // - Inserting 'referrer' if default policies are too strict
-  // - Race conditions (admin client is authoritative)
-  
-  const role = isOwnerEmail(user.email) ? "operator" : "referrer";
+  const role = isOwnerEmail(user.email) ? "operator" : "member";
 
   const insertPayload = {
     id: user.id,
@@ -82,21 +72,20 @@ export const ensureProfile = async (userClient: SupabaseClient, user: User) => {
   return { profile: inserted as Profile, created: true };
 };
 
-// Helper to get a service role client on the server
 function getAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  
+
   if (!url || !key) {
     throw new Error(
       "SUPABASE_SERVICE_ROLE_KEY is required for profile bootstrap. Set it in Vercel → Settings → Environment Variables."
     );
   }
-  
+
   return createClient(url, key, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   });
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   interactive?: boolean;
@@ -10,23 +10,26 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ interactive = false, hover = true, icon, title, subtitle, children, className = '', ...props }, ref) => {
-    const baseStyles = 'bg-quantum-800 border border-quantum-700 rounded-lg p-4 shadow-card transition-all duration-200';
-    const interactiveStyles = interactive ? 'cursor-pointer hover:border-cyan-500/50 hover:shadow-card-hover' : '';
-    const hoverStyles = hover && !interactive ? 'hover:shadow-card-hover' : '';
+  (
+    { interactive = false, hover = true, icon, title, subtitle, children, className = "", ...props },
+    ref
+  ) => {
+    const base =
+      "bg-[var(--sb-surface)] border border-[var(--sb-line)] rounded-[var(--sb-radius)] p-[22px] shadow-soft transition-shadow duration-200";
+    const interactiveStyles = interactive
+      ? "cursor-pointer hover:shadow-raised"
+      : hover
+        ? "hover:shadow-raised"
+        : "";
 
     return (
-      <div
-        ref={ref}
-        className={`${baseStyles} ${interactiveStyles} ${hoverStyles} ${className}`}
-        {...props}
-      >
+      <div ref={ref} className={`${base} ${interactiveStyles} ${className}`} {...props}>
         {(icon || title) && (
           <div className="flex items-start gap-3 mb-4">
-            {icon && <div className="text-cyan-500 text-2xl">{icon}</div>}
+            {icon && <div className="text-[var(--sb-action)] text-2xl">{icon}</div>}
             <div>
-              {title && <h3 className="text-lg font-semibold text-quantum-50">{title}</h3>}
-              {subtitle && <p className="text-sm text-quantum-500">{subtitle}</p>}
+              {title && <h3 className="sb-title text-lg text-[var(--sb-ink)]">{title}</h3>}
+              {subtitle && <p className="text-sm text-[var(--sb-muted)]">{subtitle}</p>}
             </div>
           </div>
         )}
@@ -36,4 +39,4 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   }
 );
 
-Card.displayName = 'Card';
+Card.displayName = "Card";

@@ -1,3 +1,4 @@
+import { savedOpportunity, readJson } from "@/lib/account/legacyAlertSchemas";
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/requireUser";
 
@@ -18,12 +19,11 @@ export async function POST(request: Request) {
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;
 
-  const body = await request.json();
-  const { opportunity_id } = body;
-
-  if (!opportunity_id) {
-    return NextResponse.json({ error: "opportunity_id required" }, { status: 400 });
+  const parsed = savedOpportunity.safeParse(await readJson(request));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "opportunity_id (uuid) required" }, { status: 400 });
   }
+  const { opportunity_id } = parsed.data;
 
   const { data, error: insertError } = await supabase
     .from("saved_opportunities")
@@ -31,7 +31,13 @@ export async function POST(request: Request) {
     .select("*")
     .single();
 
-  if (insertError) return NextResponse.json({ error: insertError.message }, { status: 400 });
+  if (insertError) {
+
+    console.error("[saved]", insertError.message);
+
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
+
+  }
   return NextResponse.json({ saved: data }, { status: 201 });
 }
 
@@ -52,6 +58,12 @@ export async function DELETE(request: Request) {
     .eq("profile_id", user.id)
     .eq("opportunity_id", opportunity_id);
 
-  if (deleteError) return NextResponse.json({ error: deleteError.message }, { status: 400 });
+  if (deleteError) {
+
+    console.error("[saved]", deleteError.message);
+
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
+
+  }
   return new NextResponse(null, { status: 204 });
 }

@@ -1,149 +1,153 @@
 "use client";
 
-
 import Link from "next/link";
 import { useState } from "react";
-import { CheckCircle, BarChart3, Bell, Target } from "lucide-react";
+import { CheckCircle, Link2, ListFilter, Shield } from "lucide-react";
+import { WAITLIST_CONSENT_TEXT } from "@/lib/account/schemas";
 
-const STATS = [
-  { label: "Beta waitlist", value: "340+" },
-  { label: "Opportunities indexed", value: "12k+" },
-  { label: "Alert precision rate", value: "94%" },
-];
+const CONSENT_TEXT = WAITLIST_CONSENT_TEXT;
 
 const FEATURES = [
   {
-    icon: <Bell className="text-cyan-400" size={28} />,
-    title: "Targeted alert rules",
-    desc: "Set up custom rules for category, region, and value. Get notified instantly when a match is found.",
+    icon: <Shield className="text-[var(--sb-action)]" size={28} />,
+    title: "Public sources only",
+    desc: "Official government surplus and open-data sold packs. We name sources and licence them.",
   },
   {
-    icon: <BarChart3 className="text-cyan-400" size={28} />,
-    title: "Trend analytics",
-    desc: "See opportunity trends, demand signals, and value estimates to inform your strategy.",
+    icon: <ListFilter className="text-[var(--sb-action)]" size={28} />,
+    title: "Guidance band, not a guess",
+    desc: "See p25–p75 from similar closed lots when n ≥ 20 — then open the official listing.",
   },
   {
-    icon: <Target className="text-cyan-400" size={28} />,
-    title: "Ranked intelligence",
-    desc: "Opportunities are scored and ranked so you focus on what matters most.",
+    icon: <Link2 className="text-[var(--sb-action)]" size={28} />,
+    title: "You act on the official site",
+    desc: "We link out. We don't place bids or run a deal desk.",
   },
 ];
 
 export default function LandingPage() {
   const [email, setEmail] = useState("");
+  const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setStatus("loading");
     setError("");
+    if (!consent) {
+      setError("Tick the consent box to join the waitlist.");
+      setStatus("error");
+      return;
+    }
+    setStatus("loading");
     try {
       const res = await fetch("/api/beta-signups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          marketing_consent: true,
+          consent_text: CONSENT_TEXT,
+        }),
       });
       if (res.ok) {
         setStatus("success");
       } else {
-        const data = await res.json();
-        setError(data.error || "Could not join beta. Try again.");
+        const data = await res.json().catch(() => ({}));
+        const msg = data.error || "We couldn't join you just now. Please try again in a minute.";
+        setError(msg);
         setStatus("error");
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError("We couldn't join you just now. Please try again in a minute.");
       setStatus("error");
     }
   }
 
   return (
-    <div className="min-h-screen bg-quantum-950 text-quantum-50 flex flex-col">
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-5 max-w-7xl mx-auto w-full">
-        <div className="flex items-center gap-4">
-          <span className="font-bold text-xl tracking-tight text-cyan-400">SurplusBus</span>
-        </div>
-        <div className="flex gap-6 items-center text-quantum-300 text-sm">
-          <Link href="/product" className="hover:text-cyan-400">Product</Link>
-          <Link href="/pricing" className="hover:text-cyan-400">Pricing</Link>
-          <Link href="/faq" className="hover:text-cyan-400">FAQ</Link>
-          <Link href="/auth" className="ml-6 px-4 py-2 rounded bg-cyan-500 text-quantum-950 font-semibold hover:bg-cyan-400 transition">Sign in</Link>
-        </div>
-      </nav>
+    <div className="flex flex-col">
+      <section className="mx-auto flex w-full max-w-3xl flex-col items-center px-4 py-14 text-center">
+        <span className="chip mb-4">Founder waitlist · CASL consent</span>
+        <h1 className="sb-display max-w-[18ch] text-[clamp(32px,5vw,48px)] text-[var(--sb-ink)]">
+          Know the sold range before you bid
+        </h1>
+        <p className="mt-4 max-w-2xl text-lg text-[var(--sb-ink-soft)]">
+          Surplus Bus indexes closed Canadian government surplus lots and shows a guidance band from
+          real sold prices. Information only — we never bid, broker, or take a cut.
+        </p>
 
-      {/* Hero */}
-      <section className="flex flex-col items-center justify-center flex-1 py-16 px-4 bg-quantum-950">
-        <div className="max-w-3xl w-full text-center space-y-6">
-          <span className="inline-block px-3 py-1 rounded-full border border-cyan-500 bg-cyan-500/10 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-2">Public Beta — Limited Access</span>
-          <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-quantum-50">
-            Public-sector opportunities, <span className="text-cyan-400">before your competitors</span>
-          </h1>
-          <p className="text-quantum-300 text-lg max-w-2xl mx-auto">
-            Get instant alerts and analytics for public surplus, tenders, and auctions. Set up custom rules and see trends before anyone else.
-          </p>
-          {/* Email form */}
-          {status === "success" ? (
-            <div className="flex flex-col items-center justify-center py-6 gap-3">
-              <CheckCircle className="text-green-400 mb-2" size={32} />
-              <span className="text-green-400 font-medium mb-2">
-                You&apos;re on the list! We&apos;ll send your access details soon. In the meantime, explore what Surplus Bus can do.
-              </span>
-              <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                <Link href="/pricing" className="px-4 py-2 rounded bg-cyan-600 text-white font-semibold hover:bg-cyan-500 transition text-center">See pricing</Link>
-                <Link href="/product" className="px-4 py-2 rounded bg-quantum-900 text-cyan-400 font-semibold border border-cyan-700 hover:bg-cyan-950 transition text-center">Learn more</Link>
-              </div>
+        {status === "success" ? (
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <CheckCircle className="text-[var(--sb-ok-text)]" size={32} />
+            <span className="text-lg font-semibold text-[var(--sb-ok-text)]">You&apos;re on the list</span>
+            <p className="max-w-md text-sm text-[var(--sb-ink-soft)]">
+              Thanks — we&apos;ll email you when a Founder spot opens.
+            </p>
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
+              <Link href="/search" className="btn btn-primary no-underline">
+                Try a search
+              </Link>
+              <Link href="/pricing" className="btn btn-ghost no-underline text-[var(--sb-ink)]">
+                See pricing
+              </Link>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 items-center justify-center max-w-md mx-auto mt-4 w-full">
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="card mt-8 w-full max-w-md space-y-3 text-left">
+            <label className="block text-sm text-[var(--sb-ink-soft)]" htmlFor="waitlist-email">
+              Work email
+            </label>
+            <input
+              id="waitlist-email"
+              type="email"
+              required
+              className="w-full"
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={status === "loading"}
+            />
+            <label className="flex items-start gap-3 text-sm text-[var(--sb-ink-soft)]">
               <input
-                type="email"
+                type="checkbox"
+                className="mt-1 h-4 w-4"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
                 required
-                className="flex-1 px-4 py-3 rounded border border-quantum-700 bg-quantum-900 text-quantum-50 placeholder:text-quantum-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                placeholder="Work email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                disabled={status === "loading"}
               />
-              <button
-                type="submit"
-                className="px-6 py-3 rounded bg-cyan-500 text-quantum-950 font-semibold hover:bg-cyan-400 transition disabled:opacity-60"
-                disabled={status === "loading"}
-              >
-                {status === "loading" ? "Joining…" : "Join Beta"}
-              </button>
-            </form>
-          )}
-          {status === "error" && error && (
-            <div className="text-red-400 text-sm mt-2">{error}</div>
-          )}
-        </div>
+              <span>{CONSENT_TEXT}</span>
+            </label>
+            <button type="submit" className="btn btn-primary w-full" disabled={status === "loading"}>
+              {status === "loading" ? "Joining…" : "Join waitlist"}
+            </button>
+            <p className="text-[11px] leading-relaxed text-[var(--sb-muted)]">
+              See our{" "}
+              <Link href="/legal/privacy" className="underline">
+                Privacy Policy
+              </Link>{" "}
+              and{" "}
+              <Link href="/legal/anti-spam" className="underline">
+                Anti-spam policy
+              </Link>
+              . Surplus Bus by YK+ Systems · Ontario, Canada.
+            </p>
+          </form>
+        )}
+        {status === "error" && error && (
+          <div className="mt-3 text-sm text-[var(--sb-danger-text)]" role="alert">
+            {error}
+          </div>
+        )}
       </section>
 
-      {/* Stats bar */}
-      <section className="w-full bg-quantum-900 border-y border-quantum-700 py-4">
-        <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          {STATS.map((stat, i) => (
-            <div key={stat.label} className="flex items-center gap-2 text-cyan-300 font-semibold text-base">
-              <span>{stat.value}</span>
-              <span className="text-quantum-400 font-normal text-xs">{stat.label}</span>
-              {i < STATS.length - 1 && <span className="hidden sm:inline-block mx-4 h-5 w-px bg-quantum-700" />}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Features grid */}
-      <section className="max-w-5xl mx-auto py-16 px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {FEATURES.map((f, i) => (
-            <div key={i} className="rounded-xl border border-cyan-500/20 bg-quantum-900 p-7 flex flex-col items-center text-center gap-4 shadow-sm">
-              <div>{f.icon}</div>
-              <h3 className="font-semibold text-lg text-cyan-300">{f.title}</h3>
-              <p className="text-quantum-400 text-sm">{f.desc}</p>
-            </div>
-          ))}
-        </div>
+      <section className="mx-auto grid w-full max-w-5xl gap-4 px-4 pb-16 md:grid-cols-3">
+        {FEATURES.map((f) => (
+          <div key={f.title} className="card flex flex-col items-center gap-3 text-center">
+            <div>{f.icon}</div>
+            <h3 className="sb-title text-lg text-[var(--sb-ink)]">{f.title}</h3>
+            <p className="text-sm text-[var(--sb-muted)]">{f.desc}</p>
+          </div>
+        ))}
       </section>
     </div>
   );

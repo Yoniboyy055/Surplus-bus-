@@ -1,14 +1,18 @@
+import { isAuthorizedCron } from "@/lib/security/cronAuth";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/serviceRole";
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isAuthorizedCron(request)) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const supabase = createClient();
-  if (!supabase) {
+  // Cron has no user session: use the service role (content_posts is not
+  // client-writable). Fail closed when not configured.
+  let supabase: ReturnType<typeof createServiceRoleClient>;
+  try {
+    supabase = createServiceRoleClient();
+  } catch {
     return NextResponse.json({ error: "supabase_not_configured" }, { status: 500 });
   }
 
@@ -83,7 +87,8 @@ export async function GET(request: NextRequest) {
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[agents/news]", error.message);
+    return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 
   return NextResponse.json({

@@ -1,3 +1,4 @@
+import { alertRuleCreate, readJson } from "@/lib/account/legacyAlertSchemas";
 import { z } from "zod";
 
 export async function DELETE(request: Request) {
@@ -21,7 +22,8 @@ export async function DELETE(request: Request) {
     .select();
 
   if (delError) {
-    return NextResponse.json({ error: delError.message }, { status: 400 });
+    console.error("[alerts]", delError.message);
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
   }
   if (!data || data.length === 0) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -48,12 +50,11 @@ export async function POST(request: Request) {
   const { supabase, user, error } = await requireUser();
   if (error || !supabase || !user) return error!;
 
-  const body = await request.json();
-  const { category, min_price, max_price, region, channel } = body;
-
-  if (!category || !channel) {
-    return NextResponse.json({ error: "category and channel are required" }, { status: 400 });
+  const parsed = alertRuleCreate.safeParse(await readJson(request));
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
   }
+  const { category, min_price, max_price, region, channel } = parsed.data;
 
   const payload = {
     profile_id: user.id,
@@ -66,6 +67,12 @@ export async function POST(request: Request) {
   };
   const { data, error: insertError } = await supabase.from("alert_rules").insert(payload).select("*").single();
 
-  if (insertError) return NextResponse.json({ error: insertError.message }, { status: 400 });
+  if (insertError) {
+
+    console.error("[alerts]", insertError.message);
+
+    return NextResponse.json({ error: "request_failed" }, { status: 400 });
+
+  }
   return NextResponse.json({ alert: data }, { status: 201 });
 }

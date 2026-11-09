@@ -1,0 +1,17 @@
+{
+  "name": "surplus-bus-db-dryrun",
+  "private": true,
+  "type": "module",
+  "description": "PGlite dry-run of forward migrations on a schema-only reconstruction of live (no data).",
+  "scripts": {
+    "before": "node live_exploits.mjs",
+    "after": "node live_exploits.mjs ../../supabase/migrations/20261109150000_051_security_hardening.sql ../../supabase/migrations/20261109150100_052_open_data_feeds.sql ../../supabase/migrations/20261109150200_053_saved_searches_inbox.sql ../../supabase/migrations/20261109150400_055_analytics_events.sql",
+    "idempotency": "node live_exploits.mjs ../../supabase/migrations/20261109150000_051_security_hardening.sql ../../supabase/migrations/20261109150100_052_open_data_feeds.sql ../../supabase/migrations/20261109150200_053_saved_searches_inbox.sql ../../supabase/migrations/20261109150400_055_analytics_events.sql ../../supabase/migrations/20261109150000_051_security_hardening.sql ../../supabase/migrations/20261109150100_052_open_data_feeds.sql ../../supabase/migrations/20261109150200_053_saved_searches_inbox.sql ../../supabase/migrations/20261109150400_055_analytics_events.sql",
+    "ingest:e2e": "cd ../.. && npx tsx scripts/db-dryrun/e2e-ingest.ts",
+    "ingest:e2e:live": "cd ../.. && npx tsx scripts/db-dryrun/e2e-ingest.ts --live",
+    "after:054": "node live_exploits.mjs ../../supabase/migrations/20261109150000_051_security_hardening.sql ../../supabase/migrations/20261109150100_052_open_data_feeds.sql ../../supabase/migrations/20261109150200_053_saved_searches_inbox.sql ../../supabase/migrations/20261109150400_055_analytics_events.sql ../../supabase/migrations/20261109150300_054_beta_signups_server_only.sql"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.15"
+  }
+}

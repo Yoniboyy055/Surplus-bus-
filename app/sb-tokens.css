@@ -1,0 +1,238 @@
+/* Surplus Bus v4.1 — Combo C locked
+   Display: Bricolage Grotesque · Text: Schibsted Grotesk · Mono: JetBrains Mono
+   Palette: Clay & Honey · 3D Soft Realism
+   Aliases keep older --sb-* names working during the restyle.
+*/
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/fonts/BricolageGrotesque[opsz,wdth,wght].ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Schibsted Grotesk";
+  src: url("/fonts/SchibstedGrotesk[wght].ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Schibsted Grotesk";
+  src: url("/fonts/SchibstedGrotesk-Italic[wght].ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono[wght].ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Italic[wght].ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  --sb-font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --sb-font-text: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --sb-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --sb-font-sans: var(--sb-font-text);
+
+  --sb-bricolage-opsz-display: 96;
+  --sb-bricolage-opsz-title: 36;
+  --sb-bricolage-wdth: 100;
+  --sb-bricolage-wght-display: 650;
+  --sb-bricolage-wght-title: 600;
+
+  --sb-text-xs: 0.75rem;
+  --sb-text-sm: 0.875rem;
+  --sb-text-md: 1rem;
+  --sb-text-lg: 1.125rem;
+  --sb-text-xl: 1.375rem;
+  --sb-text-2xl: 1.75rem;
+  --sb-text-3xl: 2.25rem;
+  --sb-text-4xl: 3rem;
+  --sb-leading-tight: 1.12;
+  --sb-leading-snug: 1.25;
+  --sb-leading-normal: 1.45;
+  --sb-tracking-tight: -0.02em;
+  --sb-tracking-label: 0.08em;
+
+  --sb-bg: #F8F0E4;
+  --sb-bg-deep: #EBDDC8;
+  --sb-surface: #FFFCF7;
+  --sb-surface-raised: #FFFFFF;
+  --sb-ink: #2C2118;
+  --sb-ink-soft: #6A5646;
+  --sb-muted: #705E4C; /* was #847260 (4.08:1 on bg, below WCAG AA) */
+  --sb-action: #845924;
+  --sb-action-hover: #60411A;
+  --sb-action-text: #FFFFFF;
+  --sb-accent: #99503D;
+  --sb-ok: #6C7E57;
+  --sb-warn: #BC8F19;
+  --sb-danger: #A93A2C;
+  --sb-tag: #F3EDE6;
+  /* Text-safe status colours: >= 5:1 on bg, bg-deep, banners and status tints (WCAG AA). */
+  --sb-ok-text: #4A5A3B;
+  --sb-warn-text: #6E520C;
+  --sb-info-text: #3E5A85;
+  --sb-danger-text: #8E2F23;
+  --sb-line: rgba(44, 33, 24, 0.10);
+
+  --sb-primary-50: #FAF7F4;
+  --sb-primary-100: #F3EDE6;
+  --sb-primary-200: #E8DCCE;
+  --sb-primary-300: #E8C69A;
+  --sb-primary-400: #DDAA68;
+  --sb-primary-500: #D28D36;
+  --sb-primary-600: #AF7327;
+  --sb-primary-700: #845924;
+  --sb-primary-800: #60411A;
+  --sb-primary-900: #402B11;
+
+  --sb-accent-50: #F9F6F5;
+  --sb-accent-100: #F1EAE8;
+  --sb-accent-200: #E4D6D2;
+  --sb-accent-300: #DCB2A7;
+  --sb-accent-400: #CA8C7B;
+  --sb-accent-500: #B9664F;
+  --sb-accent-600: #99503D;
+  --sb-accent-700: #744133;
+  --sb-accent-800: #542F25;
+  --sb-accent-900: #381F19;
+
+  /* Compatibility aliases (pre-v4.1 names) */
+  --sb-bg-elevated: var(--sb-bg-deep);
+  --sb-bg-sunken: var(--sb-bg-deep);
+  --sb-bg-overlay: rgba(44, 33, 24, 0.45);
+  --sb-surface-hover: var(--sb-surface-raised);
+  --sb-surface-active: var(--sb-primary-100);
+  --sb-border: var(--sb-line);
+  --sb-border-subtle: rgba(44, 33, 24, 0.06);
+  --sb-text: var(--sb-ink);
+  --sb-text-secondary: var(--sb-ink-soft);
+  --sb-text-muted: var(--sb-muted);
+  --sb-text-inverse: var(--sb-action-text);
+  --sb-text-disabled: #705E4C; /* was #A89888 (2.7:1); used for meta text, not just disabled controls */
+  --sb-accent-hover: var(--sb-accent-700);
+  --sb-accent-pressed: var(--sb-accent-800);
+  --sb-accent-subtle: rgba(153, 80, 61, 0.10);
+  --sb-accent-border: rgba(153, 80, 61, 0.28);
+  --sb-success: var(--sb-ok);
+  --sb-success-bg: rgba(108, 126, 87, 0.14);
+  --sb-warning: var(--sb-warn);
+  --sb-warning-bg: rgba(188, 143, 25, 0.14);
+  --sb-danger-bg: rgba(169, 58, 44, 0.14);
+  --sb-info: #5B7AA8;
+  --sb-info-bg: rgba(91, 122, 168, 0.14);
+
+  --sb-space-1: 4px;
+  --sb-space-2: 8px;
+  --sb-space-3: 12px;
+  --sb-space-4: 16px;
+  --sb-space-5: 24px;
+  --sb-space-6: 32px;
+  --sb-space-7: 48px;
+  --sb-space-8: 64px;
+  --sb-space-9: 96px;
+
+  --sb-radius: 26px;
+  --sb-radius-xs: 10px;
+  --sb-radius-sm: 16px;
+  --sb-radius-md: 26px;
+  --sb-radius-lg: 26px;
+  --sb-radius-xl: 32px;
+  --sb-radius-full: 9999px;
+  --sb-radius-pill: 999px;
+
+  --sb-shadow: 0 24px 50px rgba(44, 33, 24, 0.12), 0 6px 16px rgba(44, 33, 24, 0.07);
+  --sb-shadow-soft: 0 10px 26px rgba(44, 33, 24, 0.09);
+  --sb-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  --sb-shadow-sm: var(--sb-shadow-soft);
+  --sb-shadow-md: var(--sb-shadow);
+  --sb-shadow-lg: 0 32px 64px rgba(44, 33, 24, 0.16);
+  --sb-shadow-glow: 0 0 0 1px rgba(132, 89, 36, 0.25), 0 10px 28px rgba(132, 89, 36, 0.12);
+
+  --sb-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --sb-ease-out: var(--sb-ease);
+  --sb-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --sb-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --sb-dur-press: 120ms;
+  --sb-dur-fast: 150ms;
+  --sb-dur: 320ms;
+  --sb-dur-base: 200ms;
+  --sb-dur-slow: 800ms;
+  --sb-dur-sheet: 360ms;
+  --sb-motion: 1;
+
+  --sb-sidebar: 72px;
+  --sb-header-h: 64px;
+  --sb-max-content: 1100px;
+
+  --sb-source-live: var(--sb-ok);
+  --sb-source-partial: #5B7AA8;
+  --sb-source-sample: var(--sb-warn);
+  --sb-source-official: var(--sb-warn);
+  --sb-closed-fg: var(--sb-muted);
+  --sb-closed-bg: var(--sb-primary-100);
+  --sb-closed-border: var(--sb-line);
+}
+
+.sb-display {
+  font-family: var(--sb-font-display);
+  font-variation-settings:
+    "opsz" var(--sb-bricolage-opsz-display),
+    "wdth" var(--sb-bricolage-wdth),
+    "wght" var(--sb-bricolage-wght-display);
+  letter-spacing: var(--sb-tracking-tight);
+  line-height: var(--sb-leading-tight);
+}
+.sb-title {
+  font-family: var(--sb-font-display);
+  font-variation-settings:
+    "opsz" var(--sb-bricolage-opsz-title),
+    "wdth" var(--sb-bricolage-wdth),
+    "wght" var(--sb-bricolage-wght-title);
+}
+.sb-mono {
+  font-family: var(--sb-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sb-motion: 0;
+    --sb-dur-press: 0ms;
+    --sb-dur-fast: 0ms;
+    --sb-dur: 0ms;
+    --sb-dur-base: 0ms;
+    --sb-dur-slow: 0ms;
+    --sb-dur-sheet: 0ms;
+  }
+  .motion-count,
+  .motion-draw,
+  .motion-panel,
+  .motion-band,
+  .sb-motion-slide {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --sb-bg-overlay: #2C2118;
+  }
+  .sb-glass {
+    backdrop-filter: none !important;
+    background: var(--sb-surface) !important;
+  }
+}
