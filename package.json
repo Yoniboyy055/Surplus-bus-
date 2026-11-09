@@ -19,7 +19,8 @@
     "test:security": "npx tsx scripts/test-rate-limit.ts && npx tsx scripts/test-input-hardening.ts",
     "check:crons": "node scripts/check-crons.mjs",
     "test:analytics": "npx tsx scripts/test-analytics.ts",
-    "test": "npm run test:opendata && npm run test:security && npm run test:analytics && npm run check:crons"
+    "test:search": "npx tsx scripts/test-search.ts",
+    "test": "npm run test:opendata && npm run test:security && npm run test:analytics && npm run test:search && npm run check:crons"
   },
   "repository": {
     "type": "git",

@@ -5,6 +5,7 @@
  * Nothing is reported as delivered unless the send call succeeded.
  */
 import { toIlikePattern } from "@/lib/opendata/comps";
+import { kindFilters, planSearch, plannedOrFilter } from "@/lib/opendata/search";
 import { startOfTodayToronto } from "@/lib/opendata/tenderKind";
 
 export type SavedSearch = {
@@ -98,8 +99,12 @@ export async function runSavedSearchAlerts(opts: {
       let q = db
         .from("price_history_lots")
         .select("id,title,sold_amount,closing_date,province,city,source_url")
-        .ilike("title", pattern)
         .gt("first_seen_at", since);
+      // Same matching as /comps: spelling variants, and vehicles only for vehicle searches.
+      const plan = planSearch(s.query);
+      const logic = plannedOrFilter(plan);
+      q = logic ? q.or(logic) : q.ilike("title", pattern);
+      if (plan.vehicleIntent) for (const f of kindFilters("vehicle")) q = f.op === "imatch" ? q.filter("title", "imatch", f.pattern) : q.not("title", "imatch", f.pattern);
       if (s.province) q = q.eq("province", s.province);
       if (s.min_price != null) q = q.gte("sold_amount", s.min_price);
       if (s.max_price != null) q = q.lte("sold_amount", s.max_price);

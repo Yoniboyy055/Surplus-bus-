@@ -1,0 +1,837 @@
+{
+ "_source": "GCSurplus 'What has sold' open data (Government of Canada), loaded Nov 9, 2026. Contains information licensed under the Open Government Licence – Canada. Real titles and prices, selected for search-relevance tests; contact details were already removed by the ingest.",
+ "rows": [
+  {
+   "external_id": "gcs-R5ED0016900",
+   "title": "2015 Chevrolet Silverado 1500 Work Truck Crew Cab 4WD",
+   "sold_amount": 6900,
+   "closing_date": "2025-07-09",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017118",
+   "title": "2014 Chevrolet Silverado 2500HD Work Truck Crew Cab 4WD",
+   "sold_amount": 29600,
+   "closing_date": "2025-07-23",
+   "city": "Ralston",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017172",
+   "title": "2014 Chevrolet Silverado 2500HD Work Truck Crew Cab Long Box 2WD",
+   "sold_amount": 14800,
+   "closing_date": "2025-07-31",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017225",
+   "title": "2013 Chevrolet Silverado 2500HD Work Truck Crew Cab 4WD",
+   "sold_amount": 26900,
+   "closing_date": "2025-07-25",
+   "city": "Ralston",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017713",
+   "title": "2011 Chevrolet Silverado 2500HD Work Truck Ext. Cab 4WD",
+   "sold_amount": 4550,
+   "closing_date": "2025-09-12",
+   "city": "FORT SMITH",
+   "province": "NT"
+  },
+  {
+   "external_id": "gcs-R5ED0017916",
+   "title": "2014 Chevrolet Silverado 1500 Work Truck 4WD",
+   "sold_amount": 1325,
+   "closing_date": "2025-10-08",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018025",
+   "title": "2017 Chevrolet Colorado Work Truck Crew Cab 4WD Long Box",
+   "sold_amount": 20800,
+   "closing_date": "2025-10-01",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018313",
+   "title": "2015 Chevrolet Silverado 1500 Work Truck Long Box 2WD",
+   "sold_amount": 800,
+   "closing_date": "2025-10-22",
+   "city": "Jasper",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018526",
+   "title": "1997 Ford F47 SD Flatdeck Truck with Crane",
+   "sold_amount": 16300,
+   "closing_date": "2025-11-10",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018595",
+   "title": "2010 Chevrolet Silverado 1500 Work Truck Long Box 2WD",
+   "sold_amount": 10400,
+   "closing_date": "2025-11-11",
+   "city": "Waterton Park",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018662",
+   "title": "2001 Western Star Dump Truck",
+   "sold_amount": 45100,
+   "closing_date": "2025-11-13",
+   "city": "COLD LAKE",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018770",
+   "title": "2001 Western Star 4964SX Truck Tractor",
+   "sold_amount": 21100,
+   "closing_date": "2025-11-12",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018957",
+   "title": "2014 Chevrolet Silverado 1500 Work Truck Crew Cab 4WD",
+   "sold_amount": 6000,
+   "closing_date": "2025-11-28",
+   "city": "Paulatuk",
+   "province": "NT"
+  },
+  {
+   "external_id": "gcs-R5ED0019438",
+   "title": "2011 Chevrolet Silverado 1500 Work Truck 2WD",
+   "sold_amount": 14300,
+   "closing_date": "2025-12-30",
+   "city": "Waterton Park",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017068",
+   "title": "2011 Ford F-150 XLT SuperCab 8\" Bed 4WD",
+   "sold_amount": 17600,
+   "closing_date": "2025-07-15",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017560",
+   "title": "2016 Ford F-150 XLT SuperCrew 6.5-ft. Bed 4WD",
+   "sold_amount": 17800,
+   "closing_date": "2025-09-03",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017561",
+   "title": "2016 Ford F-150 XLT SuperCrew 6.5' Bed 4WD",
+   "sold_amount": 17200,
+   "closing_date": "2025-09-05",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017670",
+   "title": "2010 Ford F-150 XLT SuperCrew 6.5-ft. Bed 4WD",
+   "sold_amount": 15100,
+   "closing_date": "2025-09-09",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017715",
+   "title": "2000 Ford F-150 XL SuperCab Long Bed 4WD",
+   "sold_amount": 810,
+   "closing_date": "2025-09-12",
+   "city": "FORT SMITH",
+   "province": "NT"
+  },
+  {
+   "external_id": "gcs-R5ED0017807",
+   "title": "2011 Ford F-150 SuperCrew 6.5-ft. Bed 4WD",
+   "sold_amount": 11400,
+   "closing_date": "2025-09-22",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017921",
+   "title": "2010 Ford F-150 XLT",
+   "sold_amount": 13000,
+   "closing_date": "2025-09-29",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018072",
+   "title": "2012 Ford F-150 XLT SuperCrew 6.5-ft. Bed 4WD",
+   "sold_amount": 5400,
+   "closing_date": "2025-09-30",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0016824",
+   "title": "2016 RAM 1500 Tradesman Quad Cab 4WD",
+   "sold_amount": 10000,
+   "closing_date": "2025-07-02",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0016945",
+   "title": "2009 Chevrolet Silverado 3500HD",
+   "sold_amount": 35900,
+   "closing_date": "2025-07-10",
+   "city": "Yellowknife",
+   "province": "NT"
+  },
+  {
+   "external_id": "gcs-R5ED0016965",
+   "title": "2014 RAM 1500 2WD",
+   "sold_amount": 11300,
+   "closing_date": "2025-07-16",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017439",
+   "title": "2017 RAM 1500 SLT Crew Cab SWB 4WD",
+   "sold_amount": 15800,
+   "closing_date": "2025-08-19",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0016795",
+   "title": "BT LHM230 Hand Pallet Truck",
+   "sold_amount": 50,
+   "closing_date": "2025-07-01",
+   "city": "Ralston",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0016972",
+   "title": "Arrow Truck Canopy",
+   "sold_amount": 114.5,
+   "closing_date": "2025-07-10",
+   "city": "Lake Louise",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0016991",
+   "title": "Jungheinrich Hand Pallet Truck",
+   "sold_amount": 15,
+   "closing_date": "2025-07-11",
+   "city": "Ralston",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017089",
+   "title": "Arrow Blue Truck Canopy",
+   "sold_amount": 76,
+   "closing_date": "2025-07-21",
+   "city": "GRANDE CACHE",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017549",
+   "title": "Presto M166 Hydraulic Lift Truck",
+   "sold_amount": 405,
+   "closing_date": "2025-08-26",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017596",
+   "title": "Truck Vault SeatVault Drawer",
+   "sold_amount": 51,
+   "closing_date": "2025-09-02",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018089",
+   "title": "Truck Tool Box",
+   "sold_amount": 154,
+   "closing_date": "2025-09-30",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018208",
+   "title": "Better Built Truck Bed Storage Box",
+   "sold_amount": 52,
+   "closing_date": "2025-10-15",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018788",
+   "title": "Uline H-2722 All Terrain Pallet Truck",
+   "sold_amount": 540,
+   "closing_date": "2025-11-26",
+   "city": "Denwood",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0019246",
+   "title": "Centre Console Split Bench Seats from 2025 Ford Truck",
+   "sold_amount": 625,
+   "closing_date": "2025-12-18",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0019413",
+   "title": "Small Metal Truck Box",
+   "sold_amount": 31,
+   "closing_date": "2025-12-30",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0016840",
+   "title": "Centre Console for 2023 Ford F150",
+   "sold_amount": 80,
+   "closing_date": "2025-07-09",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0016877",
+   "title": "2024 Ford F150 Console Bench Seat",
+   "sold_amount": 100,
+   "closing_date": "2025-07-10",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0016790",
+   "title": "Parker Hydrogen Generator",
+   "sold_amount": 810,
+   "closing_date": "2025-07-01",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0016922",
+   "title": "Packard 9400 Hydrogen Generator",
+   "sold_amount": 66,
+   "closing_date": "2025-07-10",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017269",
+   "title": "Parker Balston Zero Air Generator 1",
+   "sold_amount": 150,
+   "closing_date": "2025-08-05",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017270",
+   "title": "Parker Balston Zero Air Generator 2",
+   "sold_amount": 150,
+   "closing_date": "2025-08-05",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018198",
+   "title": "Honda Generator",
+   "sold_amount": 157,
+   "closing_date": "2025-10-14",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0019432",
+   "title": "Thermasol Powerpak Commercial Steambath Generator",
+   "sold_amount": 50,
+   "closing_date": "2025-12-30",
+   "city": "Banff",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5HA0017905",
+   "title": "General Radio Company Noise Generator",
+   "sold_amount": 15,
+   "closing_date": "2025-09-16",
+   "city": "Bedford",
+   "province": "NS"
+  },
+  {
+   "external_id": "gcs-R5HA0017965",
+   "title": "Agilent Generator",
+   "sold_amount": 2275,
+   "closing_date": "2025-08-29",
+   "city": "Bedford",
+   "province": "NS"
+  },
+  {
+   "external_id": "gcs-R5HA0018052",
+   "title": "Yamaha 6,300 W Gas Generator",
+   "sold_amount": 570,
+   "closing_date": "2025-09-03",
+   "city": "Bedford",
+   "province": "NS"
+  },
+  {
+   "external_id": "gcs-R5MO0018571",
+   "title": "3 kW Gas Generator",
+   "sold_amount": 121,
+   "closing_date": "2025-08-28",
+   "city": "Courcelette",
+   "province": "QC"
+  },
+  {
+   "external_id": "gcs-R5MO0018762",
+   "title": "Diesel Generator",
+   "sold_amount": 760,
+   "closing_date": "2025-09-18",
+   "city": "Courcelette",
+   "province": "QC"
+  },
+  {
+   "external_id": "gcs-R5MO0019773",
+   "title": "Zero Air Generator",
+   "sold_amount": 415,
+   "closing_date": "2025-11-12",
+   "city": "ST HYACINTHE",
+   "province": "QC"
+  },
+  {
+   "external_id": "gcs-R5OT0018022",
+   "title": "Lot of Simpower Generator and Roth Diesel Fuel Tank",
+   "sold_amount": 5100,
+   "closing_date": "2025-07-10",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0018481",
+   "title": "Wavetek Arbitrary Waveform Generator",
+   "sold_amount": 71,
+   "closing_date": "2025-07-16",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0018692",
+   "title": "Tektronix CFG280 Function Generator",
+   "sold_amount": 160,
+   "closing_date": "2025-07-29",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0018844",
+   "title": "Tektronix 2707 External Tracking Generator",
+   "sold_amount": 415,
+   "closing_date": "2025-08-01",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0018964",
+   "title": "Benchmark 4650E Portable Gas Generator",
+   "sold_amount": 406,
+   "closing_date": "2025-08-07",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0019470",
+   "title": "HP 3312A Function Generator",
+   "sold_amount": 99,
+   "closing_date": "2025-08-28",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0019572",
+   "title": "ACME/Polygon 10 kW Generator # 1",
+   "sold_amount": 620,
+   "closing_date": "2025-08-26",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0020311",
+   "title": "Honda EZ3500 Portable Generator",
+   "sold_amount": 425,
+   "closing_date": "2025-10-01",
+   "city": "Gloucester",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0020455",
+   "title": "Sweeping Waveform Generator",
+   "sold_amount": 91,
+   "closing_date": "2025-10-01",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0020483",
+   "title": "Tabor Function Generator",
+   "sold_amount": 91,
+   "closing_date": "2025-10-01",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0020587",
+   "title": "HP 8656A Signal Generator",
+   "sold_amount": 265,
+   "closing_date": "2025-10-03",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5OT0020607",
+   "title": "ACME/Polygon 10kW Generator # 2",
+   "sold_amount": 1175,
+   "closing_date": "2025-09-26",
+   "city": "Ottawa",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5ED0017609",
+   "title": "Chrysalis Hydrogen Generators - Sold for Parts",
+   "sold_amount": 72,
+   "closing_date": "2025-08-29",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017652",
+   "title": "Katolight CNL25PG6 Propane Generator - Sold for Parts",
+   "sold_amount": 560,
+   "closing_date": "2025-09-04",
+   "city": "Lake Louise",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0018966",
+   "title": "Assorted Generators - Sold for Parts",
+   "sold_amount": 460,
+   "closing_date": "2025-12-02",
+   "city": "Denwood",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5MO0018182",
+   "title": "Miller Welding Generator - Sold for Parts",
+   "sold_amount": 7300,
+   "closing_date": "2025-08-11",
+   "city": "Montreal",
+   "province": "QC"
+  },
+  {
+   "external_id": "gcs-R5MO0018722",
+   "title": "Generator - Sold for Parts",
+   "sold_amount": 120.5,
+   "closing_date": "2025-09-09",
+   "city": "Montreal",
+   "province": "QC"
+  },
+  {
+   "external_id": "gcs-R5NB0016369",
+   "title": "Rohde & Schwarz Signal Generator - Sold for Parts",
+   "sold_amount": 25,
+   "closing_date": "2025-11-12",
+   "city": "Saint John",
+   "province": "NB"
+  },
+  {
+   "external_id": "gcs-R5TO0017680",
+   "title": "2 Steele Products SP-GG750E Portable Generators - Sold for Parts",
+   "sold_amount": 470,
+   "closing_date": "2025-07-04",
+   "city": "Astra",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5TO0018653",
+   "title": "Deutz 10 kW Generators - Sold for Parts",
+   "sold_amount": 1775,
+   "closing_date": "2025-09-03",
+   "city": "Kingston",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R5ED0019168",
+   "title": "Dell Latitude 7370 Laptop",
+   "sold_amount": 200,
+   "closing_date": "2025-12-09",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0019169",
+   "title": "Dell Latitude 7390 Laptop 2-in-1",
+   "sold_amount": 211,
+   "closing_date": "2025-12-09",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0019170",
+   "title": "Dell Latitude 7400 Laptop 2-in-1",
+   "sold_amount": 305,
+   "closing_date": "2025-12-09",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0019300",
+   "title": "Dell Latitude 5480 Laptop",
+   "sold_amount": 217,
+   "closing_date": "2025-12-17",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5HA0017556",
+   "title": "10 Various Laptops",
+   "sold_amount": 620,
+   "closing_date": "2025-08-08",
+   "city": "Bedford",
+   "province": "NS"
+  },
+  {
+   "external_id": "gcs-R5HA0017559",
+   "title": "9 Various Laptops",
+   "sold_amount": 650,
+   "closing_date": "2025-08-14",
+   "city": "Bedford",
+   "province": "NS"
+  },
+  {
+   "external_id": "gcs-R5HA0017561",
+   "title": "13 Dynabook Laptops",
+   "sold_amount": 410,
+   "closing_date": "2025-08-26",
+   "city": "Bedford",
+   "province": "NS"
+  },
+  {
+   "external_id": "gcs-R5HA0019468",
+   "title": "7 Laptops",
+   "sold_amount": 365,
+   "closing_date": "2025-11-19",
+   "city": "Gander",
+   "province": "NL"
+  },
+  {
+   "external_id": "gcs-R5TO0019360",
+   "title": "Acemagic AX15 Laptop",
+   "sold_amount": 330,
+   "closing_date": "2025-10-14",
+   "city": "North York",
+   "province": "ON"
+  },
+  {
+   "external_id": "gcs-R4ED0016180",
+   "title": "Dell Latitude E5490 Laptop",
+   "sold_amount": 225,
+   "closing_date": "2025-01-03",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R4ED0016224",
+   "title": "Dell XPS 13 - 9365 Laptop",
+   "sold_amount": 243,
+   "closing_date": "2025-01-06",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R4ED0016318",
+   "title": "Dell Inspiron 17 Laptop",
+   "sold_amount": 483,
+   "closing_date": "2025-01-06",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R4ED0016362",
+   "title": "Dell Latitude 7390 - 2-in-1 Laptop",
+   "sold_amount": 286,
+   "closing_date": "2025-01-07",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R4ED0016366",
+   "title": "Dell Latitude 5300 2-in-1 Laptop",
+   "sold_amount": 280,
+   "closing_date": "2025-01-03",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R4ED0016382",
+   "title": "Dell Latitude 5400 Laptop",
+   "sold_amount": 250,
+   "closing_date": "2025-01-15",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R4ED0016585",
+   "title": "Dell Latitude E5470 Laptop",
+   "sold_amount": 178,
+   "closing_date": "2025-01-10",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R4ED0016703",
+   "title": "Dell Latitude E5480 Laptop",
+   "sold_amount": 185,
+   "closing_date": "2025-01-26",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R4ED0016757",
+   "title": "Dell 5414 Rugged Laptop Computer",
+   "sold_amount": 300,
+   "closing_date": "2025-01-30",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R4OT0020128",
+   "title": "Lot of Laptop Satchels",
+   "sold_amount": 29,
+   "closing_date": "2025-01-28",
+   "city": "Gatineau",
+   "province": "QC"
+  },
+  {
+   "external_id": "gcs-R5HA0016285",
+   "title": "4 Laptops",
+   "sold_amount": 425,
+   "closing_date": "2025-05-08",
+   "city": "Halifax",
+   "province": "NS"
+  },
+  {
+   "external_id": "gcs-R4ED0016365",
+   "title": "Panasonic CF 53 Laptop",
+   "sold_amount": 350,
+   "closing_date": "2024-12-17",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R4ED0016439",
+   "title": "Dell XPS Laptop",
+   "sold_amount": 368,
+   "closing_date": "2024-12-23",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017090",
+   "title": "40 Laptop Bags and Knapsacks",
+   "sold_amount": 99,
+   "closing_date": "2025-07-17",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0017776",
+   "title": "14 Assorted Briefcases and Laptop Bags",
+   "sold_amount": 61,
+   "closing_date": "2025-09-18",
+   "city": "Calgary",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0019278",
+   "title": "Laptop Bags",
+   "sold_amount": 15,
+   "closing_date": "2025-12-19",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5ED0019349",
+   "title": "Variety of Laptop Carry Cases",
+   "sold_amount": 25,
+   "closing_date": "2025-12-18",
+   "city": "Edmonton",
+   "province": "AB"
+  },
+  {
+   "external_id": "gcs-R5HA0017303",
+   "title": "2 Laptop Bags",
+   "sold_amount": 20,
+   "closing_date": "2025-07-16",
+   "city": "Halifax",
+   "province": "NS"
+  },
+  {
+   "external_id": "gcs-R5HA0018889",
+   "title": "11 Laptop Cases",
+   "sold_amount": 15,
+   "closing_date": "2025-10-14",
+   "city": "Bedford",
+   "province": "NS"
+  },
+  {
+   "external_id": "gcs-R5HA0019171",
+   "title": "10 Laptop Cases",
+   "sold_amount": 23,
+   "closing_date": "2025-10-29",
+   "city": "Bedford",
+   "province": "NS"
+  },
+  {
+   "external_id": "gcs-R5MO0017942",
+   "title": "Charging Cart for Mini Laptops",
+   "sold_amount": 150,
+   "closing_date": "2025-07-18",
+   "city": "ALOUETTE",
+   "province": "QC"
+  },
+  {
+   "external_id": "gcs-R5MO0018159",
+   "title": "Lot of 12 Laptop Bags",
+   "sold_amount": 15,
+   "closing_date": "2025-07-30",
+   "city": "SHERBROOKE",
+   "province": "QC"
+  },
+  {
+   "external_id": "gcs-R3VA0016371",
+   "title": "Pick-up Truck Rolling Bed",
+   "sold_amount": 25,
+   "closing_date": "2023-12-28",
+   "city": "SIDNEY",
+   "province": "BC"
+  },
+  {
+   "external_id": "gcs-R3WI0016064",
+   "title": "13' Pick-up Header",
+   "sold_amount": 100,
+   "closing_date": "2023-11-09",
+   "city": "PORTAGE LA PRAIRIE",
+   "province": "MB"
+  }
+ ]
+}

@@ -6,6 +6,7 @@
  */
 import { computeFeedFreshness, type FeedFreshness, type FeedKey } from "./freshness";
 import { toIlikePattern } from "./comps";
+import { cleanTerm, kindFilters, planSearch, plannedOrFilter, type LotKind } from "./search";
 import { startOfTodayToronto } from "./tenderKind";
 
 export type DataState<T> =
@@ -78,47 +79,107 @@ export function cleanProvince(p?: string | null): string | null {
   return PROVINCES.has(v) ? v : null;
 }
 
-export async function fetchPriceHistory(opts: {
+export type LotFilters = {
   q?: string;
   province?: string | null;
+  /** City / location text (substring, case-insensitive). */
+  city?: string | null;
   feed?: "gcsurplus_sold" | "ns_surplus" | null;
+  /** Title-heuristic kind (see lib/opendata/search.ts). */
+  kind?: LotKind | null;
+  /** Closing date range, YYYY-MM-DD. */
+  from?: string | null;
+  to?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+};
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+export function cleanDay(s?: string | null): string | null {
+  const v = (s || "").trim();
+  return ISO_DAY.test(v) && !Number.isNaN(Date.parse(v)) ? v : null;
+}
+export function cleanPrice(s?: string | null): number | null {
+  const n = Number.parseFloat((s || "").replace(/[^0-9.]/g, ""));
+  return Number.isFinite(n) && n >= 0 && n <= 100_000_000 ? n : null;
+}
+export function cleanCity(s?: string | null): string | null {
+  const v = cleanTerm(s || "").slice(0, 60);
+  return v.length >= 2 ? v : null;
+}
+
+/** Apply the shared lot filters to a PostgREST query on price_history_lots. */
+export function applyLotFilters<Q extends { or: Function; eq: Function; ilike: Function; filter: Function; not: Function; gte: Function; lte: Function }>(query: Q, f: LotFilters): Q {
+  let qy: any = query;
+  if (f.q?.trim()) {
+    const logic = plannedOrFilter(planSearch(f.q));
+    if (logic) qy = qy.or(logic);
+  }
+  const prov = cleanProvince(f.province);
+  if (prov) qy = qy.eq("province", prov);
+  const city = cleanCity(f.city);
+  if (city) qy = qy.ilike("city", `%${city}%`);
+  if (f.feed) qy = qy.eq("feed_key", f.feed);
+  if (f.kind) {
+    for (const flt of kindFilters(f.kind)) qy = flt.op === "imatch" ? qy.filter("title", "imatch", flt.pattern) : qy.not("title", "imatch", flt.pattern);
+  }
+  const from = cleanDay(f.from);
+  const to = cleanDay(f.to);
+  if (from) qy = qy.gte("closing_date", from);
+  if (to) qy = qy.lte("closing_date", to);
+  if (f.minPrice != null) qy = qy.gte("sold_amount", f.minPrice);
+  if (f.maxPrice != null) qy = qy.lte("sold_amount", f.maxPrice);
+  return qy as Q;
+}
+
+export async function fetchPriceHistory(opts: LotFilters & {
   limit?: number;
   offset?: number;
+  sort?: "recent" | "price_high" | "price_low";
 }): Promise<DataState<PriceHistoryRow>> {
   const db = await reader();
   if (!db) return { state: "not_configured" };
   const limit = Math.min(Math.max(opts.limit ?? 25, 1), 100);
   const offset = Math.max(opts.offset ?? 0, 0);
-  let query = db
-    .from("price_history_lots")
-    .select(
-      "id,external_id,feed_key,title,sold_amount,closing_date,fiscal_year,province,city,category,kind,source_url,licence_id",
-      { count: "exact" }
-    );
-  if (opts.q?.trim()) query = query.ilike("title", toIlikePattern(opts.q));
-  const prov = cleanProvince(opts.province);
-  if (prov) query = query.eq("province", prov);
-  if (opts.feed) query = query.eq("feed_key", opts.feed);
-  query = query.order("closing_date", { ascending: false, nullsFirst: false }).range(offset, offset + limit - 1);
+  let query = applyLotFilters(
+    db
+      .from("price_history_lots")
+      .select(
+        "id,external_id,feed_key,title,sold_amount,closing_date,fiscal_year,province,city,category,kind,source_url,licence_id",
+        { count: "exact" }
+      ),
+    opts
+  );
+  if (opts.sort === "price_high") query = query.order("sold_amount", { ascending: false, nullsFirst: false });
+  else if (opts.sort === "price_low") query = query.order("sold_amount", { ascending: true, nullsFirst: false });
+  query = query.order("closing_date", { ascending: false, nullsFirst: false }).order("id", { ascending: true }).range(offset, offset + limit - 1);
   const { data, error, count } = await query;
   if (error) return classify(error);
   return { state: "ok", rows: (data || []) as PriceHistoryRow[], total: count ?? (data || []).length };
 }
 
-/** All sold amounts matching a query (for comp statistics). Capped at 5,000. */
-export async function fetchSoldAmounts(opts: {
-  q: string;
-  province?: string | null;
-}): Promise<DataState<{ sold_amount: number | null }>> {
+export const MATCH_SAMPLE_CAP = 5000;
+
+/**
+ * Titles and sold amounts of every lot matching the filters (newest first, capped), for comp
+ * statistics and kind facets. `total` is the full match count, which may exceed the cap.
+ */
+export async function fetchMatchSample(opts: LotFilters): Promise<DataState<{ title: string; sold_amount: number | null }>> {
   const db = await reader();
   if (!db) return { state: "not_configured" };
-  let query = db
-    .from("price_history_lots")
-    .select("sold_amount", { count: "exact" })
-    .ilike("title", toIlikePattern(opts.q))
-    .gt("sold_amount", 0);
-  const prov = cleanProvince(opts.province);
-  if (prov) query = query.eq("province", prov);
+  const query = applyLotFilters(db.from("price_history_lots").select("title,sold_amount", { count: "exact" }), opts)
+    .order("closing_date", { ascending: false, nullsFirst: false })
+    .limit(MATCH_SAMPLE_CAP);
+  const { data, error, count } = await query;
+  if (error) return classify(error);
+  return { state: "ok", rows: data || [], total: count ?? (data || []).length };
+}
+
+/** All sold amounts matching a query (for comp statistics). Capped at 5,000. */
+export async function fetchSoldAmounts(opts: LotFilters & { q: string }): Promise<DataState<{ sold_amount: number | null }>> {
+  const db = await reader();
+  if (!db) return { state: "not_configured" };
+  const query = applyLotFilters(db.from("price_history_lots").select("sold_amount", { count: "exact" }), opts).gt("sold_amount", 0);
   const { data, error, count } = await query.limit(5000);
   if (error) return classify(error);
   return { state: "ok", rows: data || [], total: count ?? (data || []).length };

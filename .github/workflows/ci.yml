@@ -33,6 +33,8 @@ jobs:
           npm run -s idempotency | grep -E "SUMMARY"
       - name: Ingest e2e (fixtures)
         run: npx tsx scripts/db-dryrun/e2e-ingest.ts | tee ingest.txt && grep -q "SUMMARY: ALL PASS" ingest.txt
+      - name: Search filters behave the same in Postgres and JS
+        run: npx tsx scripts/db-dryrun/search-parity.ts
 
   e2e:
     runs-on: ubuntu-latest
