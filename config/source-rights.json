@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "note": "Candidate registry only. Disabled until commercial collection and derivative-pricing rights are independently approved. Public visibility/API access alone grants no rights.",
+  "sources": [
+    {
+      "id": "gcsurplus_open_sold",
+      "name": "GCSurplus official sold-history open dataset",
+      "status": "pending",
+      "active": false,
+      "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada",
+      "reviewedAt": null,
+      "approvedBy": null,
+      "allowedActions": [],
+      "priceBasis": "completed_sale"
+    },
+    {
+      "id": "gsa_auctions_api",
+      "name": "US GSA Auctions official API",
+      "status": "pending",
+      "active": false,
+      "licenceUrl": null,
+      "reviewedAt": null,
+      "approvedBy": null,
+      "allowedActions": [],
+      "priceBasis": "current_bid"
+    },
+    {
+      "id": "ebay_browse",
+      "name": "eBay Browse API",
+      "status": "restricted",
+      "active": false,
+      "licenceUrl": "https://developer.ebay.com/support/api-license-agreement",
+      "reviewedAt": null,
+      "approvedBy": null,
+      "allowedActions": [],
+      "priceBasis": "asking"
+    },
+    {
+      "id": "kijiji_site",
+      "name": "Kijiji public website",
+      "status": "restricted",
+      "active": false,
+      "licenceUrl": "https://community.kijiji.ca/t/kijiji-terms-of-use/29",
+      "reviewedAt": null,
+      "approvedBy": null,
+      "allowedActions": [],
+      "priceBasis": "asking"
+    }
+  ]
+}
