@@ -5,7 +5,9 @@ import { DataStateNotice, FeedFreshnessChip } from "@/components/DataStateNotice
 import { OGL_CANADA, OGL_NOVA_SCOTIA } from "@/lib/opendata/attribution";
 import { fetchFeedStatus, fetchMatchSample, fetchPriceHistory } from "@/lib/opendata/queries";
 import { BAND_MIN_N, computeCompStats, formatCad } from "@/lib/opendata/comps";
-import { assessHomogeneity, classifyTitle, KIND_LABEL, planSearch, RANGE_MAX_SPREAD } from "@/lib/opendata/search";
+import { assessHomogeneity, classifyLot, KIND_LABEL, planSearch, RANGE_MAX_SPREAD } from "@/lib/opendata/search";
+import { excludeOutliers } from "@/lib/opendata/outliers";
+import { ReportLink } from "@/components/ReportLink";
 import { kindFacets, lotHref, parseLotParams, toFilters } from "@/lib/opendata/lotParams";
 import { KindFacets } from "@/components/KindFacets";
 import { SaveSearchButton } from "./SaveSearchButton";
@@ -51,16 +53,27 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
     );
   }
 
-  // Same kind rules as the database filter (lib/opendata/search.ts), applied to the match sample.
-  const kindRows = params.kind ? sample.rows.filter((r) => classifyTitle(r.title) === params.kind) : sample.rows;
-  const stats = computeCompStats(kindRows.map((r) => r.sold_amount));
-  const homo = assessHomogeneity(kindRows);
+  // Same kind rules as the database filter (lib/opendata/kinds.ts), applied to the match sample.
+  const kindRows = params.kind ? sample.rows.filter((r) => classifyLot(r) === params.kind) : sample.rows;
+  const allStats = computeCompStats(kindRows.map((r) => r.sold_amount));
+  // Outliers (C$0-1, bulk / multi-item lots, hand-flagged rows, extreme prices) stay in every list
+  // but are left out of the typical range unless the user asks to include them.
+  const showAll = params.outliers === "all";
+  const out = excludeOutliers(kindRows);
+  const used = showAll ? kindRows : out.kept;
+  const stats = computeCompStats(used.map((r) => r.sold_amount)) ?? (allStats ? { ...allStats, n: 0, showBand: false } : null);
+  // Mixed kinds are judged on every match, not only the rows left after outliers: leaving out the
+  // bulk "Assorted Laptop Bags" lots must not make a laptops-and-bags search look like one kind.
+  const homoUsed = assessHomogeneity(used);
+  const homoAll = assessHomogeneity(kindRows);
+  const homo = homoUsed.ok && homoAll.reason === "mixed_kinds" ? homoAll : homoUsed;
+  const priced = kindRows.filter((r) => typeof r.sold_amount === "number" && Number.isFinite(r.sold_amount)).length;
   const facets = kindFacets(sample.rows);
   const capped = sample.total > sample.rows.length;
   const showBand = Boolean(stats?.showBand && homo.ok);
   const stale = status.state === "ok" && Object.values(status.feeds).some((f) => f.state === "stale" || f.state === "failing");
 
-  if (!stats) {
+  if (!stats || !allStats) {
     return (
       <div className="mx-auto max-w-lg px-4 py-10 text-center" data-state="empty">
         <div className="relative mx-auto mb-5 h-[200px] w-[280px] overflow-hidden rounded-[20px] shadow-raised">
@@ -173,8 +186,41 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
           )}
           <div className="mt-4 flex flex-wrap gap-2.5">
             <span className="chip"><strong className="sb-mono">n = {stats.n}</strong>&nbsp;sold comps</span>
-            <span className="chip">Range {formatCad(stats.min)} – {formatCad(stats.max)}</span>
+            {stats.n > 0 && <span className="chip">Range {formatCad(stats.min)} – {formatCad(stats.max)}</span>}
           </div>
+          {(out.excludedTotal > 0 || showAll) && (
+            <div className="mt-4 border-t border-[var(--sb-line)] pt-3 text-sm text-[var(--sb-ink-soft)]" data-testid="outlier-note" data-excluded={out.excludedTotal} data-mode={showAll ? "all" : "trimmed"}>
+              {showAll ? (
+                <p>
+                  Showing all {priced.toLocaleString("en-CA")} sales, including {out.excludedTotal.toLocaleString("en-CA")} we usually leave out of the range.
+                </p>
+              ) : (
+                <p>
+                  Leaves out {out.excludedTotal.toLocaleString("en-CA")} of {priced.toLocaleString("en-CA")} sales:{" "}
+                  {[
+                    out.excluded.nominal ? `${out.excluded.nominal.toLocaleString("en-CA")} sold for C$0–1` : null,
+                    out.excluded.bulk ? `${out.excluded.bulk.toLocaleString("en-CA")} bulk or multi-item lot${out.excluded.bulk === 1 ? "" : "s"}` : null,
+                    out.excluded.contract ? `${out.excluded.contract.toLocaleString("en-CA")} tender award${out.excluded.contract === 1 ? "" : "s"} (not item sales)` : null,
+                    out.excluded.manual ? `${out.excluded.manual.toLocaleString("en-CA")} flagged by hand` : null,
+                    out.excluded.extreme && out.fences
+                      ? `${out.excluded.extreme.toLocaleString("en-CA")} extreme price${out.excluded.extreme === 1 ? "" : "s"} (outside ${formatCad(out.fences.low)}–${formatCad(out.fences.high)})`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                  . They stay in the list below.
+                </p>
+              )}
+              <Link
+                href={lotHref("/comps", params, { outliers: showAll ? null : "all" })}
+                className="chip-link mt-2 inline-flex no-underline"
+                data-testid="outliers-toggle"
+                scroll={false}
+              >
+                {showAll ? "Leave outliers out" : `Show all ${priced.toLocaleString("en-CA")}`}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -188,6 +234,7 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
               <th className="px-2 py-2.5 font-semibold">Sold</th>
               <th className="px-2 py-2.5 font-semibold">Closed</th>
               <th className="px-2 py-2.5 font-semibold">Where</th>
+              <th className="px-2 py-2.5 font-semibold"><span className="sr-only">Report</span></th>
             </tr>
           </thead>
           <tbody>
@@ -197,6 +244,7 @@ export default async function CompsPage({ searchParams: searchParamsP }: { searc
                 <td className="sb-mono px-2 py-3 font-bold text-[var(--sb-ink)]">{formatCad(r.sold_amount)}</td>
                 <td className="px-2 py-3 text-[var(--sb-ink-soft)]">{r.closing_date || r.fiscal_year || "—"}</td>
                 <td className="px-2 py-3 text-[var(--sb-ink-soft)]">{[r.city, r.province].filter(Boolean).join(", ") || "—"}</td>
+                <td className="px-2 py-3 text-right"><ReportLink feedKey={r.feed_key} externalId={r.external_id} title={r.title} /></td>
               </tr>
             ))}
           </tbody>

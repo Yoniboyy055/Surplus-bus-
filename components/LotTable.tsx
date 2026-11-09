@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatCad } from "@/lib/opendata/comps";
 import type { PriceHistoryRow } from "@/lib/opendata/queries";
+import { ReportLink } from "./ReportLink";
 
 /** Sold-lot results table + pager. Every row links to its source dataset (OGL attribution). */
 export function LotTable({ rows, total, page, pageSize, hrefFor, label }: { rows: PriceHistoryRow[]; total: number; page: number; pageSize: number; hrefFor: (p: number) => string; label: string }) {
@@ -33,6 +34,9 @@ export function LotTable({ rows, total, page, pageSize, hrefFor, label }: { rows
                     {r.feed_key === "ns_surplus" ? "NS open data" : "GCSurplus open data"}
                     <span className="sr-only"> (opens in a new tab)</span>
                   </a>
+                  <div>
+                    <ReportLink feedKey={r.feed_key} externalId={r.external_id} title={r.title} />
+                  </div>
                 </td>
               </tr>
             ))}
