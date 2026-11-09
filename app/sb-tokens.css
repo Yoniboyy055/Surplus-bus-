@@ -121,7 +121,7 @@
   --sb-text-secondary: var(--sb-ink-soft);
   --sb-text-muted: var(--sb-muted);
   --sb-text-inverse: var(--sb-action-text);
-  --sb-text-disabled: #A89888;
+  --sb-text-disabled: #705E4C; /* was #A89888 (2.7:1); used for meta text, not just disabled controls */
   --sb-accent-hover: var(--sb-accent-700);
   --sb-accent-pressed: var(--sb-accent-800);
   --sb-accent-subtle: rgba(153, 80, 61, 0.10);

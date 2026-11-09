@@ -58,7 +58,7 @@ export function InboxClient({ initial }: { initial: InboxItem[] }) {
         {items.map((i) => {
           const external = i.url?.startsWith("http");
           return (
-            <li key={i.id} className={`card space-y-1 ${i.read_at ? "opacity-80" : "border-[rgba(132,89,36,0.35)]"}`} data-read={i.read_at ? "1" : "0"}>
+            <li key={i.id} className={`card space-y-1 ${i.read_at ? "!bg-[var(--sb-bg)] !shadow-none" : "border-[rgba(132,89,36,0.35)]"}`} data-read={i.read_at ? "1" : "0"}>
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <h2 className="text-[15px] font-semibold text-[var(--sb-ink)]">
                   {!i.read_at && <span className="sr-only">Unread: </span>}

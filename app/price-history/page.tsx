@@ -94,7 +94,7 @@ export default async function PriceHistoryPage({
           <p className="mb-3 text-sm text-[var(--sb-ink-soft)]" data-total={res.total}>
             {res.total.toLocaleString("en-CA")} sold or awarded lots{q ? ` matching “${q}”` : ""}
           </p>
-          <div className="-mx-2 overflow-x-auto px-2">
+          <div className="relative -mx-2 overflow-x-auto px-2" tabIndex={0} role="region" aria-label="Sold lots table (scrolls sideways)">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-[var(--sb-line)] text-left text-xs uppercase tracking-wider text-[var(--sb-ink-soft)]">

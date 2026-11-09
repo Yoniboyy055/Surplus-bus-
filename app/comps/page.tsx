@@ -129,7 +129,7 @@ export default async function CompsPage({ searchParams }: { searchParams: { q?: 
 
       <div className="card overflow-x-auto">
         <p className="mb-2 text-sm text-[var(--sb-ink-soft)]">Most recent matching sales</p>
-        <div className="-mx-2 overflow-x-auto px-2">
+        <div className="relative -mx-2 overflow-x-auto px-2" tabIndex={0} role="region" aria-label="Sold lots table (scrolls sideways)">
           <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b border-[var(--sb-line)] text-left text-xs uppercase tracking-wider text-[var(--sb-ink-soft)]">

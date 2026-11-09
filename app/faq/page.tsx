@@ -65,7 +65,7 @@ export default function FAQPage() {
       </div>
       <p className="text-sm text-quantum-500">
         Have another question?{" "}
-        <Link href="/landing" className="text-cyan-500 hover:text-cyan-400">
+        <Link href="/landing" className="text-cyan-500 underline hover:text-cyan-400">
           Join the beta
         </Link>{" "}
         and let us know.
